@@ -98,6 +98,27 @@ test('upstream failures become error codes with matching HTTP statuses', async (
   }
 });
 
+test('the default warning does not expose an id that matches the API key', async () => {
+  const warnings: string[] = [];
+  const originalWarn = console.warn;
+  console.warn = message => warnings.push(String(message));
+  try {
+    const handler = createPlaylistHandler({
+      apiKey: TEST_KEY,
+      fetch: sampleYouTube(() => googleError(503, 'backendError')).fetch,
+    });
+    const response = await handler(get(`?id=${TEST_KEY}`));
+    const responseBody = await response.text();
+
+    assert.equal(response.status, 502);
+    assert.ok(!warnings.join('\n').includes(TEST_KEY), warnings.join('\n'));
+    assert.ok(!responseBody.includes(TEST_KEY), responseBody);
+    assert.match(warnings.join('\n'), /request failed \(upstream\)/);
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
 test('the API key never appears in a response or a log line', async () => {
   const echoing: FetchLike[] = [
     // Upstream error bodies that quote the key back.

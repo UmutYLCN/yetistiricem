@@ -20,7 +20,7 @@ export interface PlaylistHandlerOptions {
   cacheSize?: number;
   maxPages?: number;
   now?: () => number;
-  /** Where failures are reported. Messages never contain the key. */
+  /** Where failures are reported. Messages contain only the endpoint error code. */
   log?: (message: string) => void;
 }
 
@@ -82,8 +82,7 @@ export function createPlaylistHandler(options: PlaylistHandlerOptions): WebHandl
       return json(200, data, { 'Cache-Control': 'no-store' });
     } catch (error) {
       const code = error instanceof YouTubeApiError ? error.code : 'upstream';
-      const detail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-      log(`[youtube-playlist] ${id}: ${detail.split(apiKey).join('[key]')}`);
+      log(`[youtube-playlist] request failed (${code})`);
       return errorResponse(code);
     }
   };
