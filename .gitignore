@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Secrets (YOUTUBE_API_KEY lives in .env.local or the host's environment)
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

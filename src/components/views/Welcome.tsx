@@ -10,7 +10,7 @@ interface Props {
 const STEPS = [
   {
     title: 'Kamp ekle',
-    body: 'İzleyeceğin YouTube videolarının bağlantısını ve süresini gir. Tek tek ya da liste halinde yapıştırabilirsin.',
+    body: 'Bir YouTube oynatma listesinin bağlantısını yapıştır; videolar adları ve süreleriyle gelir. İstersen tek tek de ekleyebilirsin.',
   },
   {
     title: 'Temponu ayarla',

@@ -112,7 +112,7 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
           </p>
         ) : (
           <p id={`${uid}-playlist-hint`} className="field-hint">
-            Yalnızca kaynağa dönmek için saklanır; videolar otomatik alınmaz.
+            Kaynağa dönmek için saklanır. Videoları listeden almak için “Oynatma listesi” ile içe aktar.
           </p>
         )}
       </div>

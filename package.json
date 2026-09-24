@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "tsc -p tsconfig.test.json && node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/*.test.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node --env-file-if-exists=.env.local --experimental-strip-types --disable-warning=ExperimentalWarning server/index.ts"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

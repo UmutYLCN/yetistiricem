@@ -2,11 +2,12 @@
 
 This file is the project's committed home for project-intrinsic agent knowledge: build, test, release, architecture, and sharp-edge notes that should travel with the code.
 
-- Checks: `npm run build`, `npm run lint`, `npm test` (strict type-check of `tests/` via `tsconfig.test.json`, then `node --test` with type stripping; no test framework dependency).
+- Checks: `npm run build`, `npm run lint`, `npm test` (strict type-check of `tests/` via `tsconfig.test.json`, then `node --test` with type stripping; no test framework dependency). Modules that tests or `server/` import must use explicit `.ts` import paths down their whole chain.
 - Dates are local `YYYY-MM-DD` keys; use `src/utils/date.ts`. Never `new Date('YYYY-MM-DD')` or `toISOString().split('T')[0]`: both shift the day outside UTC.
 - The schedule must not depend on completion: ticking a task only decorates `item.completed`. Shifts are stored events. See `docs/planner-engine.md` for the engine and UI contract.
 - UI code reaches the engine, storage and date helpers only through `src/lib/engine.ts`. Loading, legacy migration and backups live in `src/lib/persistence.ts`: keep the existing `yt_*` keys, and never drop stored data silently (copy it aside and show a notice).
-- Data truth: the app has no YouTube API, so it must never invent videos, links, durations or channel names. Demo templates (`src/data/demoTemplates.ts`) are labelled and link-free; old fabricated camps are detected in `src/lib/camps.ts`.
+- Data truth: never invent videos, links, durations or channel names. Video data comes from the user or from the server-side playlist endpoint (`server/`, YouTube Data API v3; contract in `src/utils/youtubePlaylist.ts`, setup in README). Demo templates (`src/data/demoTemplates.ts`) are labelled and link-free; old fabricated camps are detected in `src/lib/camps.ts`.
+- `YOUTUBE_API_KEY` is server-only: never give it a `VITE_` prefix, read it in `src/`, or echo it or upstream error text in endpoint responses. `tests/keySecrecy.test.ts` builds the bundle to check. The endpoint accepts only a validated playlist id, never a URL.
 - Modals go through `src/components/ui/Dialog.tsx` (native `<dialog>`: focus trap, Escape, focus return) and confirmations through `useConfirm`.
 
 ## Maintaining this file

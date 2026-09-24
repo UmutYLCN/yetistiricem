@@ -181,13 +181,23 @@ export function EditVideoDialog({
       return;
     }
     const link = urlCheck?.ok ? urlCheck.value : null;
+    // YouTube's thumbnail and channel describe the linked video; drop them once the link points elsewhere.
+    const sameVideo = link !== null && link.id === parseYoutubeVideoId(video.videoUrl);
+    const { channelName, ...rest } = video;
     const updated: Video = {
-      ...video,
+      ...rest,
       title: title.trim(),
       durationMinutes: durationCheck.value,
       // Keep an old non-link value (e.g. the legacy playlist link) unless the user set a real one.
       videoUrl: link ? link.url : hasRealLink ? '' : video.videoUrl,
-      thumbnailUrl: link ? youtubeThumbnailUrl(link.id) : hasRealLink ? '' : video.thumbnailUrl,
+      thumbnailUrl: link
+        ? sameVideo && video.thumbnailUrl
+          ? video.thumbnailUrl
+          : youtubeThumbnailUrl(link.id)
+        : hasRealLink
+          ? ''
+          : video.thumbnailUrl,
+      ...(sameVideo && channelName ? { channelName } : {}),
     };
     onSave(withVideos(camp, camp.videos.map(v => (v.id === video.id ? updated : v))));
     onClose();

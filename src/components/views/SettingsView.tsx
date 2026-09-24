@@ -379,8 +379,8 @@ export function SettingsView({ preferences, onSave, isDemo, campCount, onBackup,
       <section className="rounded-[14px] border border-dashed border-line-strong px-5 py-4 text-[13px] text-ink-2 sm:px-6">
         <h2 className="font-semibold text-ink">Nasıl çalışır?</h2>
         <p className="mt-1">
-          Yetiştiricem YouTube’a bağlanmaz ve oynatma listelerini okuyamaz: video bağlantılarını ve sürelerini sen girersin.
-          Plan; günlük süreni, izleme hızını ve tekrar payını hesaba katarak videoları sırayla günlere böler. Bir görevi
+          Bir oynatma listesi bağlantısı yapıştırdığında videoların adları ve süreleri sunucu üzerinden YouTube Data API ile
+          okunur; istersen videoları elle de girebilirsin. Hiçbir video, bağlantı ya da süre uydurulmaz. Plan; günlük süreni, izleme hızını ve tekrar payını hesaba katarak videoları sırayla günlere böler. Bir görevi
           işaretlemek planı kaydırmaz; geride kalanları yalnızca sen “ileri taşı” dediğinde yeniden dağıtır.
         </p>
       </section>

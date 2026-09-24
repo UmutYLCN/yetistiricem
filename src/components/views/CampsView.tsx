@@ -175,6 +175,7 @@ export function CampsView({
                             </span>
                             <span className="tnum block text-[12px] text-ink-3">
                               {formatMinutes(video.durationMinutes)}
+                              {video.channelName && video.channelName !== camp.channelName && ` · ${video.channelName}`}
                               {done && <span className="font-semibold text-forest"> · Tamamlandı</span>}
                               {link === 'sample' && <span className="text-warn"> · bağlantı çalışmıyor</span>}
                               {link === 'none' && ' · bağlantı yok'}

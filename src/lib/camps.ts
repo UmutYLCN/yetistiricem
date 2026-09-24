@@ -1,11 +1,12 @@
 import type { SubjectPlaylist, Video } from '../types';
-import type { DraftVideo } from '../utils/youtubeParser';
-import { isWatchableVideoUrl, parseYoutubeVideoId, youtubeThumbnailUrl } from '../utils/youtubeParser';
-import { defaultColorKey } from './subjects';
+import type { DraftVideo } from '../utils/youtubeParser.ts';
+import { isWatchableVideoUrl, parseYoutubeVideoId, youtubeThumbnailUrl } from '../utils/youtubeParser.ts';
+import { defaultColorKey } from './subjects.ts';
 
 /**
  * How trustworthy a camp's video data is.
- * - `manual`: every video was pasted by the user with a real YouTube link.
+ * - `manual`: every video was pasted by the user, or imported from a playlist
+ *   through the YouTube Data API, with a real YouTube link.
  * - `demo-template`: built-in sample topics without links (labelled as demo).
  * - `legacy-sample`: an old built-in preset. Its links pointed at a fake
  *   `watch?v=sample` address, its durations were random and the channel name
@@ -89,8 +90,9 @@ export function videoFromDraft(draft: DraftVideo, campId: string, position: numb
     title: draft.title.trim() || `Video ${position}`,
     durationMinutes: draft.durationMinutes,
     videoUrl: draft.url,
-    thumbnailUrl: youtubeThumbnailUrl(draft.youtubeId),
+    thumbnailUrl: draft.thumbnailUrl || youtubeThumbnailUrl(draft.youtubeId),
     completed: false,
+    ...(draft.channelName?.trim() ? { channelName: draft.channelName.trim() } : {}),
   };
 }
 

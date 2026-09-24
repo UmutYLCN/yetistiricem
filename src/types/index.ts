@@ -5,6 +5,8 @@ export interface Video {
   videoUrl: string;
   thumbnailUrl: string;
   completed: boolean;
+  /** The uploading channel, as YouTube reported it (playlist imports only). */
+  channelName?: string;
 }
 
 export interface SubjectPlaylist {
@@ -17,7 +19,8 @@ export interface SubjectPlaylist {
   colorTag: string;
   totalDurationMinutes: number;
   /**
-   * Where the camp came from. `manual`: videos the user entered. `demo-template`:
+   * Where the camp came from. `manual`: videos the user entered or imported
+   * from a YouTube playlist (real links and durations). `demo-template`:
    * a built-in sample topic list with no video links. Missing on camps saved by
    * older versions (see `src/lib/camps.ts` for how those are classified).
    */

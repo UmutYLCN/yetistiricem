@@ -18,6 +18,15 @@ export function formatMinutes(minutes: number): string {
   return `${h} sa ${m} dk`;
 }
 
+/** Exact video length: "4:05", "38:23", "1:02:03". */
+export function formatClock(totalSeconds: number): string {
+  const seconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.round(totalSeconds)) : 0;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = String(seconds % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+}
+
 /** Rounded hours for large totals: "64 sa". */
 export function formatHours(minutes: number): string {
   if (!Number.isFinite(minutes) || minutes <= 0) return '0 sa';

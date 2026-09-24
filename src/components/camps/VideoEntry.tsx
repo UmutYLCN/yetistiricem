@@ -1,10 +1,13 @@
 import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ListPlus, Plus, Trash2 } from 'lucide-react';
+import { usePlaylistFetch } from '../../hooks/usePlaylistFetch';
 import { focusFirstInvalid } from '../../lib/dom';
 import { formatMinutes } from '../../lib/format';
 import type { BulkLine, DraftVideo } from '../../utils/youtubeParser';
-import { parseBulkVideos, parseDurationInput, validateVideoUrl } from '../../utils/youtubeParser';
+import { inspectPlaylistLink, parseBulkVideos, parseDurationInput, validateVideoUrl } from '../../utils/youtubeParser';
+import type { PlaylistInfo } from '../../utils/youtubePlaylist';
+import { PlaylistImport } from './PlaylistImport';
 
 interface Props {
   drafts: DraftVideo[];
@@ -14,15 +17,20 @@ interface Props {
   /** Number of videos already in the camp, for "Video N" placeholders. */
   offset: number;
   error?: string;
+  /** After videos were imported from a playlist (e.g. to fill in the camp's name). */
+  onPlaylistImported?: (playlist: PlaylistInfo) => void;
 }
+
+type EntryMode = 'playlist' | 'single' | 'bulk';
 
 const BULK_EXAMPLE = `https://www.youtube.com/watch?v=… | Temel Kavramlar | 42
 https://youtu.be/… | Sayı Basamakları | 38:20
 https://youtu.be/… 1 sa 5 dk`;
 
-/** Adds videos to a draft list: one at a time or a pasted list. */
-export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Props) {
-  const [mode, setMode] = useState<'single' | 'bulk'>('single');
+/** Adds videos to a draft list: from a YouTube playlist, one at a time, or a pasted list. */
+export function VideoEntry({ drafts, onChange, existingIds, offset, error, onPlaylistImported }: Props) {
+  const [mode, setMode] = useState<EntryMode>('playlist');
+  const playlist = usePlaylistFetch();
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('');
@@ -37,6 +45,7 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Pro
   const duplicate = urlCheck.ok && knownIds.includes(urlCheck.value.id);
   const durationCheck = parseDurationInput(duration);
   const urlError = !tried ? null : !urlCheck.ok ? urlCheck.error : duplicate ? 'Bu video listede zaten var.' : null;
+  const urlIsPlaylist = !urlCheck.ok && inspectPlaylistLink(url).ok;
   const durationError = tried && !durationCheck.ok ? durationCheck.error : null;
 
   const addSingle = (event: FormEvent) => {
@@ -66,6 +75,19 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Pro
     setBulkResult({ added: valid.length, errors });
   };
 
+  const importPlaylist = (videos: DraftVideo[], info: PlaylistInfo) => {
+    onChange([...drafts, ...videos]);
+    onPlaylistImported?.(info);
+  };
+
+  const openAsPlaylist = () => {
+    playlist.setLink(url.trim());
+    void playlist.load(url);
+    setUrl('');
+    setTried(false);
+    setMode('playlist');
+  };
+
   const total = drafts.reduce((a, d) => a + d.durationMinutes, 0);
 
   return (
@@ -73,6 +95,7 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Pro
       <div className="segmented" role="tablist" aria-label="Video ekleme yöntemi">
         {(
           [
+            ['playlist', 'Oynatma listesi'],
             ['single', 'Tek tek'],
             ['bulk', 'Liste yapıştır'],
           ] as const
@@ -92,7 +115,15 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Pro
       </div>
 
       <div id={`${uid}-panel`} role="tabpanel" aria-labelledby={`${uid}-tab-${mode}`} className="mt-3 rounded-[12px] border border-line bg-paper/60 p-3.5 sm:p-4">
-        {mode === 'single' ? (
+        {/* Kept mounted so a fetched list survives switching tabs. */}
+        <div hidden={mode !== 'playlist'}>
+          <PlaylistImport
+            fetcher={playlist}
+            knownIds={knownIds}
+            onImport={importPlaylist}
+          />
+        </div>
+        {mode === 'playlist' ? null : mode === 'single' ? (
           <form onSubmit={addSingle} noValidate className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8.5rem]">
             <div className="sm:col-span-2">
               <label className="field-label" htmlFor={`${uid}-url`}>
@@ -114,6 +145,12 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Pro
                 <p id={`${uid}-url-error`} className="field-error">
                   {urlError}
                 </p>
+              )}
+              {urlError && urlIsPlaylist && (
+                <button type="button" className="btn btn-secondary btn-sm mt-2" onClick={openAsPlaylist}>
+                  <ListPlus aria-hidden="true" />
+                  Listeyi içe aktar
+                </button>
               )}
             </div>
             <div className="min-w-0">
@@ -179,7 +216,7 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Pro
             />
             <p id={`${uid}-bulk-hint`} className="field-hint">
               Biçim: <code className="rounded bg-sunk px-1">bağlantı | başlık | süre</code>. Başlık isteğe bağlı; süre dakika
-              (42), dk:sn (38:20) ya da “1 sa 5 dk” olabilir. Oynatma listesi bağlantısı okunamaz, videoları tek tek yapıştır.
+              (42), dk:sn (38:20) ya da “1 sa 5 dk” olabilir. Bir oynatma listesinin tamamı için “Oynatma listesi” sekmesini kullan.
             </p>
             <button type="button" className="btn btn-secondary btn-sm mt-3" onClick={addBulk} disabled={!bulkText.trim()}>
               <ListPlus aria-hidden="true" />
@@ -227,7 +264,9 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error }: Pro
                   <span className={`block truncate text-[14px] ${draft.title ? 'text-ink' : 'text-ink-3 italic'}`}>
                     {draft.title || `Video ${offset + i + 1}`}
                   </span>
-                  <span className="block truncate text-[12px] text-ink-3">youtu.be/{draft.youtubeId}</span>
+                  <span className="block truncate text-[12px] text-ink-3">
+                    {draft.channelName && `${draft.channelName} · `}youtu.be/{draft.youtubeId}
+                  </span>
                 </span>
                 <span className="tnum shrink-0 text-[13px] text-ink-2">{formatMinutes(draft.durationMinutes)}</span>
                 <button

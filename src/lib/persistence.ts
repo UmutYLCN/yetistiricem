@@ -1,5 +1,5 @@
 import type { SubjectPlaylist, UserPreferences, Video } from '../types';
-import type { ShiftEvent } from './engine';
+import type { ShiftEvent } from './engine.ts';
 import {
   STORAGE_KEYS,
   buildSchedule,
@@ -11,7 +11,7 @@ import {
   normalizeDateKey,
   normalizeShiftEvents,
   todayKey,
-} from './engine';
+} from './engine.ts';
 
 // Everything the planner keeps in localStorage. The engine owns the original
 // keys (STORAGE_KEYS); the UI adds the selected day and day notes. Loading
@@ -116,6 +116,7 @@ function normalizeVideo(raw: unknown): Video | null {
     videoUrl: typeof raw.videoUrl === 'string' ? raw.videoUrl : '',
     thumbnailUrl: typeof raw.thumbnailUrl === 'string' ? raw.thumbnailUrl : '',
     completed: raw.completed === true,
+    ...(typeof raw.channelName === 'string' && raw.channelName.trim() ? { channelName: raw.channelName } : {}),
   };
 }
 

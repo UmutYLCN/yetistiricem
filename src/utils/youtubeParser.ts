@@ -1,11 +1,11 @@
-// YouTube link and duration parsing for manual imports.
+// YouTube link and duration parsing.
 //
-// Nothing here talks to YouTube: the app has no API key, so it cannot read a
-// playlist's videos, titles or durations. Every video the user adds is one
-// they pasted, with the duration they typed.
+// Nothing here talks to YouTube. Manually added videos are the links and
+// durations the user typed; playlist contents come only from the server-side
+// YouTube Data API endpoint (see `youtubePlaylist.ts` and `server/`).
 
 const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
-const PLAYLIST_ID_RE = /^[A-Za-z0-9_-]{10,64}$/;
+export const PLAYLIST_ID_RE = /^[A-Za-z0-9_-]{10,64}$/;
 const YOUTUBE_HOSTS = new Set([
   'youtube.com',
   'www.youtube.com',
@@ -53,12 +53,55 @@ export function parseYoutubeVideoId(input: string): string | null {
   return candidate && VIDEO_ID_RE.test(candidate) ? candidate : null;
 }
 
+function isYoutubeHost(url: URL): boolean {
+  const host = url.hostname.toLowerCase();
+  return YOUTUBE_HOSTS.has(host) || SHORT_HOSTS.has(host);
+}
+
 /** The `list=` id of a YouTube playlist link, or null. */
 export function parseYoutubePlaylistId(input: string): string | null {
   const url = toUrl(input);
-  if (!url || !YOUTUBE_HOSTS.has(url.hostname.toLowerCase())) return null;
+  if (!url || !isYoutubeHost(url)) return null;
   const list = url.searchParams.get('list');
   return list && PLAYLIST_ID_RE.test(list) ? list : null;
+}
+
+/** Lists only their owner can see; a public API key cannot read them. */
+const PERSONAL_LIST_IDS = new Set(['WL', 'LL', 'LM']);
+/** Ids pasted on their own, without a link: regular, album, uploads and favourites lists. */
+const BARE_PLAYLIST_ID_RE = /^(?:PL|OL|UU|FL)[A-Za-z0-9_-]{8,62}$/;
+
+/** Why a pasted text cannot be imported as a playlist. */
+export type PlaylistLinkProblem = 'empty' | 'not-youtube' | 'video-only' | 'personal' | 'mix' | 'invalid';
+export type PlaylistLinkCheck = { ok: true; id: string; url: string } | { ok: false; problem: PlaylistLinkProblem };
+
+function checkPlaylistId(id: string): PlaylistLinkCheck {
+  if (PERSONAL_LIST_IDS.has(id)) return { ok: false, problem: 'personal' };
+  // Mixes ("RD…") are generated per viewer; the Data API does not return them.
+  if (id.startsWith('RD')) return { ok: false, problem: 'mix' };
+  if (!PLAYLIST_ID_RE.test(id)) return { ok: false, problem: 'invalid' };
+  return { ok: true, id, url: youtubePlaylistUrl(id) };
+}
+
+/** True for an id the playlist endpoint may send to YouTube. */
+export function isFetchablePlaylistId(id: string): boolean {
+  return checkPlaylistId(id).ok;
+}
+
+/**
+ * Reads a pasted playlist link (…/playlist?list=…, watch?v=…&list=…,
+ * youtu.be/…?list=…) or a bare `PL…` id, and says why it cannot be used
+ * when it cannot.
+ */
+export function inspectPlaylistLink(input: string): PlaylistLinkCheck {
+  const text = input.trim();
+  if (!text) return { ok: false, problem: 'empty' };
+  if (BARE_PLAYLIST_ID_RE.test(text) || PERSONAL_LIST_IDS.has(text)) return checkPlaylistId(text);
+  const url = toUrl(text);
+  if (!url || !isYoutubeHost(url)) return { ok: false, problem: 'not-youtube' };
+  const list = url.searchParams.get('list');
+  if (!list) return { ok: false, problem: parseYoutubeVideoId(text) ? 'video-only' : 'invalid' };
+  return checkPlaylistId(list);
 }
 
 export function youtubeWatchUrl(videoId: string): string {
@@ -85,7 +128,7 @@ export function validateVideoUrl(input: string): ParseResult<{ id: string; url: 
   const id = parseYoutubeVideoId(input);
   if (!id) {
     if (parseYoutubePlaylistId(input)) {
-      return { ok: false, error: 'Bu bir oynatma listesi bağlantısı. Videoları tek tek ekle.' };
+      return { ok: false, error: 'Bu bir oynatma listesi bağlantısı. Videolarını “Oynatma listesi” sekmesinden içe aktarabilirsin.' };
     }
     return { ok: false, error: 'Geçerli bir YouTube video bağlantısı değil. Örnek: https://www.youtube.com/watch?v=…' };
   }
@@ -163,6 +206,10 @@ export interface DraftVideo {
   /** Empty when the user gave no title; the camp numbers it on save. */
   title: string;
   durationMinutes: number;
+  /** Set for playlist imports: the video's channel as YouTube reports it. */
+  channelName?: string;
+  /** Set for playlist imports: the thumbnail YouTube returned. */
+  thumbnailUrl?: string;
 }
 
 export type BulkLine =

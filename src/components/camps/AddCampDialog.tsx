@@ -7,6 +7,7 @@ import { focusFirstInvalid } from '../../lib/dom';
 import { formatHours } from '../../lib/format';
 import { resolveColor } from '../../lib/subjects';
 import type { DraftVideo } from '../../utils/youtubeParser';
+import type { PlaylistInfo } from '../../utils/youtubePlaylist';
 import { Dialog } from '../ui/Dialog';
 import { SubjectDot } from '../ui/Bits';
 import { CampFields } from './CampFields';
@@ -55,6 +56,15 @@ export function AddCampDialog({ open, onClose, existingIds, onCreate }: Props) {
     setSubmitted(false);
     onClose();
   };
+
+  // Empty fields take the playlist's own name, channel and link; typed values stay.
+  const fillFromPlaylist = (playlist: PlaylistInfo) =>
+    setFields(current => ({
+      ...current,
+      title: current.title.trim() || playlist.title.trim().slice(0, 80),
+      channelName: current.channelName.trim() || playlist.channelTitle.trim().slice(0, 80),
+      playlistUrl: current.playlistUrl.trim() || playlist.url,
+    }));
 
   const hasDraft = fields.title.trim() !== '' || drafts.length > 0;
 
@@ -110,10 +120,17 @@ export function AddCampDialog({ open, onClose, existingIds, onCreate }: Props) {
           <div>
             <h3 className="mb-2 text-[15px] font-semibold text-ink">Videolar</h3>
             <p className="mb-3 text-[13px] text-ink-2">
-              Uygulama YouTube’a bağlanmaz; bu yüzden her videonun bağlantısını ve süresini sen girersin. Süre, planın günlere
-              doğru bölünmesi için gerekli.
+              Bir YouTube oynatma listesinin bağlantısını yapıştır: videolar sırasıyla, adları ve gerçek süreleriyle gelir. İstersen
+              videoları tek tek de ekleyebilirsin; süre, planın günlere doğru bölünmesi için gerekli.
             </p>
-            <VideoEntry drafts={drafts} onChange={setDrafts} existingIds={[]} offset={0} error={videosError} />
+            <VideoEntry
+              drafts={drafts}
+              onChange={setDrafts}
+              existingIds={[]}
+              offset={0}
+              error={videosError}
+              onPlaylistImported={fillFromPlaylist}
+            />
           </div>
         </div>
       ) : (
