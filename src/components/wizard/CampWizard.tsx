@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Plus } from 'lucide-react';
 import type { StudyCamp, SubjectPlaylist, UserPreferences } from '../../types';
 import type { CampDraft, RhythmDraft, StudyHabits } from '../../lib/campDraft';
 import {
@@ -21,6 +21,7 @@ import { Dialog } from '../ui/Dialog';
 import { BranchSources } from './BranchSources';
 import { CampDatesFields, CampNameField, WorkloadNote } from './CampDetails';
 import { PlanPreview } from './PlanPreview';
+import { WizardStepper } from './WizardStepper';
 
 interface Props {
   open: boolean;
@@ -70,7 +71,8 @@ export function CampWizard({ open, onClose, today, seed, habits, onCreate }: Pro
     if (!moved.current) return;
     moved.current = false;
     headingRef.current?.focus({ preventScroll: true });
-    headingRef.current?.scrollIntoView({ block: 'start' });
+    // Scroll only the dialog body: scrollIntoView would also shift the (overflow: hidden) dialog on phones.
+    headingRef.current?.closest('.dialog-body')?.scrollTo({ top: 0 });
   }, [step]);
 
   const goTo = (target: Step) => {
@@ -135,7 +137,16 @@ export function CampWizard({ open, onClose, today, seed, habits, onCreate }: Pro
       width={880}
       tall
       dismissOnBackdrop={false}
-      subheader={<Stepper step={step} reached={reached} canVisit={s => s <= reached && ([0, 1, 2] as Step[]).every(p => p >= s || stepValid(p))} onVisit={goTo} />}
+      subheader={
+        <WizardStepper
+          label="Kamp oluşturma adımları"
+          titles={STEPS.map(s => s.title)}
+          step={step}
+          reached={reached}
+          canVisit={s => s <= reached && ([0, 1, 2] as Step[]).every(p => p >= s || stepValid(p))}
+          onVisit={s => goTo(s as Step)}
+        />
+      }
       footer={
         <>
           <p className="tnum mr-auto min-w-0 truncate text-[12.5px] text-ink-3 max-sm:hidden">
@@ -204,51 +215,5 @@ export function CampWizard({ open, onClose, today, seed, habits, onCreate }: Pro
         )}
       </div>
     </Dialog>
-  );
-}
-
-function Stepper({
-  step,
-  reached,
-  canVisit,
-  onVisit,
-}: {
-  step: Step;
-  reached: Step;
-  canVisit: (s: Step) => boolean;
-  onVisit: (s: Step) => void;
-}) {
-  return (
-    <nav aria-label="Kamp oluşturma adımları">
-      <p className="mb-2 text-[12.5px] font-semibold text-ink-3 sm:hidden">
-        Adım {step + 1} / {STEPS.length} · <span className="text-ink">{STEPS[step].title}</span>
-      </p>
-      <ol className="flex items-center gap-1.5 sm:gap-2">
-        {STEPS.map((s, i) => {
-          const index = i as Step;
-          const done = index !== step && index < Math.max(step, reached);
-          const current = index === step;
-          const enabled = !current && canVisit(index);
-          return (
-            <li key={s.title} className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
-              <button
-                type="button"
-                className={`wizard-step ${current ? 'is-current' : done ? 'is-done' : ''}`}
-                onClick={() => onVisit(index)}
-                disabled={!enabled}
-                aria-current={current ? 'step' : undefined}
-              >
-                <span className="wizard-step-dot tnum" aria-hidden="true">
-                  {done ? <Check strokeWidth={3} /> : i + 1}
-                </span>
-                <span className="truncate max-sm:sr-only">{s.title}</span>
-                {done && <span className="sr-only">(tamamlandı)</span>}
-              </button>
-              {i < STEPS.length - 1 && <span className={`h-0.5 min-w-3 flex-1 rounded-full ${index < step ? 'bg-forest' : 'bg-line'}`} aria-hidden="true" />}
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
   );
 }

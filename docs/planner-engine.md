@@ -48,7 +48,7 @@ if (event) actions.addShiftEvent(camp.id, event);      // stored in camp.shiftEv
 - On replay, those items plus everything from `resumeDate` onwards are replanned from `resumeDate`, with the same capacity, branch, weekday-plan and rest-day rules. Every other item before `resumeDate` stays on its day, including completed items and today's tasks.
 - `resumeDate = max(date, today) + 1`: shifting a past day leaves today's plan alone and restarts tomorrow.
 - Events replay in stored order, so repeated shifts compose. Ticking or unticking any task afterwards moves nothing. No task is ever dropped. If no study day exists to move to, the event is a no-op.
-- Branches added to a running camp would land partly on past days; the app carries only those new tasks forward with one stored event (`handleAddBranches`).
+- Branches added to a running camp would land partly on past days; `withAddedBranches` (`src/lib/plannerOps.ts`) carries those new tasks, plus the new ones on today, to tomorrow with one stored event, so each new branch starts in order.
 - The legacy `yt_shifted_date` is converted once, during migration, into an event of the migrated camp.
 
 `shiftDayPlan(date, plans, preferences?, today?)` is the pure, non-persistent version (automatic mode only). It moves incomplete items on or before `date` to `date + 1` onwards and never mutates its input. Without `preferences` it assumes default rest days and a capacity of at least the busiest planned day. It reads current completion, so a derived-state shift re-run on every render **will** move tasks when they are ticked. Use the event flow for anything persisted.

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarClock, ChevronDown, CircleCheck, Coffee, Flag, Pencil, TriangleAlert } from 'lucide-react';
-import type { DailyPlan, StudyCamp } from '../../types';
-import { assessDeadline, buildCampSchedule, dailyHoursForDeadline, dayOfWeek, diffDays, planEndDate } from '../../lib/engine';
+import type { DailyPlan, DailyPlanItem, StudyCamp } from '../../types';
+import { addDays, assessDeadline, buildCampSchedule, dailyHoursForDeadline, dayOfWeek, diffDays, planEndDate } from '../../lib/engine';
 import { LONG_WEEKDAYS, SHORT_WEEKDAYS, formatHours, formatLongDate, formatMinutes, formatShortDate, formatWeekRange, startOfWeek } from '../../lib/format';
 import { resolveColor } from '../../lib/subjects';
 import { Meter } from '../ui/Bits';
@@ -22,7 +22,6 @@ const WEEKS_STEP = 2;
  * clear signal for the optional target date.
  */
 export function PlanPreview({ camp, today, onUseHours, onEditRhythm }: Props) {
-  const [weeksShown, setWeeksShown] = useState(WEEKS_STEP);
   const { result, finish, deadline, suggestion } = useMemo(() => {
     const built = buildCampSchedule(camp, { today });
     const end = planEndDate(built.plans);
@@ -41,15 +40,6 @@ export function PlanPreview({ camp, today, onUseHours, onEditRhythm }: Props) {
     return resolveColor(branch?.colorTag, branch?.subject ?? '');
   };
 
-  const weeks = useMemo(() => {
-    const map = new Map<string, DailyPlan[]>();
-    for (const plan of plans) {
-      const monday = startOfWeek(plan.date);
-      map.set(monday, [...(map.get(monday) ?? []), plan]);
-    }
-    return [...map.entries()];
-  }, [plans]);
-
   const branchFinish = new Map<string, string>();
   for (const plan of plans) for (const item of plan.items) branchFinish.set(item.playlistId, plan.date);
 
@@ -63,7 +53,7 @@ export function PlanPreview({ camp, today, onUseHours, onEditRhythm }: Props) {
         {[
           { label: 'İlk ders günü', value: studyDays[0] ? formatShortDate(studyDays[0].date) : '—', note: studyDays[0] ? LONG_WEEKDAYS[dayOfWeek(studyDays[0].date)] : '' },
           { label: 'Tahmini bitiş', value: finish ? formatShortDate(finish) : '—', note: finish ? `${diffDays(today, finish) >= 0 ? `${diffDays(today, finish)} gün sonra` : formatLongDate(finish)}` : '' },
-          { label: 'Ders günü', value: String(studyDays.length), note: `${weeks.length} hafta` },
+          { label: 'Ders günü', value: String(studyDays.length), note: `${new Set(plans.map(p => startOfWeek(p.date))).size} hafta` },
           { label: 'Toplam çalışma', value: formatHours(totalMinutes), note: `günde en çok ${formatMinutes(capacityMinutes)}` },
         ].map(stat => (
           <div key={stat.label} className="min-w-0 rounded-[12px] border border-line bg-card px-3.5 py-3">
@@ -107,38 +97,84 @@ export function PlanPreview({ camp, today, onUseHours, onEditRhythm }: Props) {
         </ul>
       </section>
 
-      <section aria-labelledby="preview-days" className="space-y-5">
-        <h3 id="preview-days" className="sr-only">
-          Günlük plan
-        </h3>
-        {weeks.slice(0, weeksShown).map(([monday, days], weekIndex) => (
-          <div key={monday}>
-            <div className="mb-2 flex items-baseline justify-between gap-3">
-              <p className="text-[14px] font-semibold text-ink">
-                {weekIndex + 1}. hafta <span className="font-normal text-ink-3">· {formatWeekRange(monday)}</span>
-              </p>
-              <p className="tnum text-[12.5px] text-ink-3">{formatMinutes(days.reduce((acc, d) => acc + d.totalMinutes, 0))}</p>
-            </div>
-            <ol className="grid gap-2.5 md:grid-cols-2">
-              {days.map(day => (
-                <PreviewDay key={day.date} day={day} capacity={capacityMinutes} colorOf={colorOf} />
-              ))}
-            </ol>
-          </div>
-        ))}
-        {weeks.length > weeksShown && (
-          <button type="button" className="btn btn-secondary w-full" onClick={() => setWeeksShown(n => n + WEEKS_STEP)}>
-            <ChevronDown aria-hidden="true" />
-            Sonraki {Math.min(WEEKS_STEP, weeks.length - weeksShown)} haftayı göster
-            <span className="font-normal text-ink-3">({weeks.length - weeksShown} hafta daha)</span>
-          </button>
-        )}
-      </section>
+      <PreviewWeeks plans={plans} capacity={capacityMinutes} colorOf={colorOf} />
     </div>
   );
 }
 
-function PreviewDay({ day, capacity, colorOf }: { day: DailyPlan; capacity: number; colorOf: (id: string) => { solid: string } }) {
+/**
+ * Day cards grouped by week, two weeks at a time. `today` labels the weeks
+ * relative to it (a running camp); without it they are numbered from the
+ * first. `isNew` marks the tasks an addition brings.
+ */
+export function PreviewWeeks({
+  plans,
+  capacity,
+  colorOf,
+  today,
+  isNew,
+}: {
+  plans: DailyPlan[];
+  capacity: number;
+  colorOf: (branchId: string) => { solid: string };
+  today?: string;
+  isNew?: (item: DailyPlanItem) => boolean;
+}) {
+  const [weeksShown, setWeeksShown] = useState(WEEKS_STEP);
+  const weeks = useMemo(() => {
+    const map = new Map<string, DailyPlan[]>();
+    for (const plan of plans) {
+      const monday = startOfWeek(plan.date);
+      map.set(monday, [...(map.get(monday) ?? []), plan]);
+    }
+    return [...map.entries()];
+  }, [plans]);
+  const thisMonday = today ? startOfWeek(today) : null;
+  const weekTitle = (monday: string, index: number) =>
+    !thisMonday ? `${index + 1}. hafta` : monday === thisMonday ? 'Bu hafta' : monday === addDays(thisMonday, 7) ? 'Gelecek hafta' : `${diffDays(thisMonday, monday) / 7} hafta sonra`;
+
+  return (
+    <section aria-labelledby="preview-days" className="space-y-5">
+      <h3 id="preview-days" className="sr-only">
+        Günlük plan
+      </h3>
+      {weeks.slice(0, weeksShown).map(([monday, days], weekIndex) => (
+        <div key={monday}>
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <p className="text-[14px] font-semibold text-ink">
+              {weekTitle(monday, weekIndex)} <span className="font-normal text-ink-3">· {formatWeekRange(monday)}</span>
+            </p>
+            <p className="tnum text-[12.5px] text-ink-3">{formatMinutes(days.reduce((acc, d) => acc + d.totalMinutes, 0))}</p>
+          </div>
+          <ol className="grid gap-2.5 md:grid-cols-2">
+            {days.map(day => (
+              <PreviewDay key={day.date} day={day} capacity={capacity} colorOf={colorOf} isNew={isNew} />
+            ))}
+          </ol>
+        </div>
+      ))}
+      {weeks.length > weeksShown && (
+        <button type="button" className="btn btn-secondary w-full" onClick={() => setWeeksShown(n => n + WEEKS_STEP)}>
+          <ChevronDown aria-hidden="true" />
+          Sonraki {Math.min(WEEKS_STEP, weeks.length - weeksShown)} haftayı göster
+          <span className="font-normal text-ink-3">({weeks.length - weeksShown} hafta daha)</span>
+        </button>
+      )}
+    </section>
+  );
+}
+
+function PreviewDay({
+  day,
+  capacity,
+  colorOf,
+  isNew,
+}: {
+  day: DailyPlan;
+  capacity: number;
+  colorOf: (id: string) => { solid: string };
+  isNew?: (item: DailyPlanItem) => boolean;
+}) {
   const dow = dayOfWeek(day.date);
   if (day.items.length === 0) {
     const label = day.isMockExamDay ? 'Deneme günü' : day.isFreeDay ? 'Bu günün branşları bitti' : 'Dinlenme';
@@ -176,12 +212,14 @@ function PreviewDay({ day, capacity, colorOf }: { day: DailyPlan; capacity: numb
       <ul className="space-y-1 px-2.5 pb-2.5">
         {day.items.map(item => {
           const color = colorOf(item.playlistId).solid;
+          const added = isNew?.(item) ?? false;
           return (
             <li key={item.id} className="flex items-start gap-2.5 rounded-[8px] bg-paper/70 py-1.5 pr-2.5 pl-2">
               <span className="mt-0.5 w-1 shrink-0 self-stretch rounded-full" style={{ background: color }} aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[11.5px] font-bold" style={{ color }}>
                   {item.subject}
+                  {added && <span className="chip chip-forest ml-1.5 h-[18px] px-1.5 align-[1px] text-[10.5px]">Yeni</span>}
                 </span>
                 <span className="line-clamp-2 text-[13px] leading-snug text-ink">{item.title}</span>
               </span>
@@ -194,7 +232,7 @@ function PreviewDay({ day, capacity, colorOf }: { day: DailyPlan; capacity: numb
   );
 }
 
-function DeadlineSignal({
+export function DeadlineSignal({
   deadline,
   suggestion,
   onUseHours,

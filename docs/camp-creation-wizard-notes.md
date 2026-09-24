@@ -4,9 +4,9 @@ What shipped in the first camp/branch slice, and its deliberate V1 boundaries. T
 
 ## Model
 
-- **Camp** (`StudyCamp`): the whole study program, e.g. "TYT 2027". It owns its branches, its **tempo** (`CampSchedule`: dates, daily time, weekly form) and its shift events. Several camps can exist; every plan screen shows the **open camp** (`yt_active_camp`), chosen from the sidebar / mobile top bar or the Kamplar page.
+- **Camp** (`StudyCamp`): the whole study program, e.g. "TYT 2027". It owns its branches, its **tempo** (`CampSchedule`: dates, daily time, weekly form) and its shift events. Several camps can exist; every plan screen shows the **open camp** (`yt_active_camp`), chosen from the compact sidebar switcher (shown with two or more camps), the mobile top bar or the Kamplar page. The plan screens carry no camp/tempo summary bar.
 - **Branch** (`SubjectPlaylist`, unchanged shape): one ordered list of videos, normally one YouTube playlist. `subject` is the branch name shown in the plan (Matematik); `title`, `channelName` and `playlistUrl` describe the source list.
-- Tempo is per camp only. It is edited with **Tempoyu düzenle** (camp bar above Bugün/Haftalık/İlerleme, the sidebar card, the Kamplar section header). Ayarlar holds app-level options only (backup, restore, demo, reset). A new camp starts from the Dengeli preset and borrows only watch speed and practice share from the open camp; the first camp built from an older version's saved settings starts from those settings.
+- Tempo is per camp only. It is edited with **Tempoyu düzenle** in the Kamplar section of the open camp (İlerleme also links to it when the plan runs late or has unplaced branches). Ayarlar holds app-level options only (backup, restore, demo, reset). A new camp starts from the Dengeli preset and borrows only watch speed and practice share from the open camp; the first camp built from an older version's saved settings starts from those settings.
 
 ## Wizard (`src/components/wizard/`, rules in `src/lib/campDraft.ts`)
 
@@ -20,6 +20,16 @@ What shipped in the first camp/branch slice, and its deliberate V1 boundaries. T
 
 The draft survives closing the dialog until the camp is created. The stepper allows going back freely and forward only through valid steps; a blocked step scrolls to its first error.
 
+## Adding branches to a camp (`AddBranchWizard`, saved by `addBranches` in `src/lib/plannerOps.ts`)
+
+Every “Branş ekle” (Kamplar, an empty Bugün day, an empty plan page) opens this wizard for the open camp, whose id is fixed when it opens. It never asks for a camp name, dates or a rhythm and never creates a camp; the header shows the camp's name and saved tempo.
+
+1. **Kaynaklar**: the same composer and checks as the new-camp wizard (videos already in the camp are flagged as duplicates).
+2. **Günler** (manual camps only): the weekdays the new branches join, next to the camp's current week; mock days are disabled, and a chosen rest day becomes a study day.
+3. **Önizleme**: the new branches and their videos, the extra work, the first new task, the finish date before and after, the target-date signal, and the coming days with the new tasks marked.
+
+Saving keeps the camp's id, name, dates and tempo, its branches, completion marks and shift events, and touches no other camp. The plan is relaid with the camp's own schedule; in a running camp the new tasks that would fall on past days (and today) are carried to tomorrow with one stored shift event, so each new branch starts at its first video.
+
 ## Migration and data safety (`src/lib/persistence.ts`)
 
 - New keys: `yt_camps` (`{ version: 1, camps }`) and `yt_active_camp`. `yt_completed`, `yt_day_notes`, `yt_selected_date` keep their keys and stay shared.
@@ -30,7 +40,7 @@ The draft survives closing the dialog until the camp is created. The stepper all
 
 ## V1 boundaries
 
-- Completion and day notes are shared across camps (videos have unique ids; a note belongs to a calendar day, so it shows in every camp).
+- Completion is shared across camps (videos have unique ids). Day notes are no longer shown or edited, but stored notes (`yt_day_notes`) are kept and still travel in backups.
 - In automatic mode two branches with the same name count as one for the daily branch cap (the wizard says so on the card).
 - A branch keeps one source link, so every imported playlist becomes its own branch; merging lists into one branch is manual (single/pasted videos). Importing into an existing branch via "Video ekle" fills the link only if the branch had none.
 - Manual days take their branches in camp order, round-robin until the day is full; there is no per-branch time share or fixed video count per day, and no drag-and-drop of branches or videos.

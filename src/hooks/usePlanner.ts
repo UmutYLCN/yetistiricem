@@ -73,13 +73,12 @@ export function usePlanner(today: string) {
       renameCamp: (campId: string, name: string) => update(d => ops.renameCamp(d, campId, name)),
       setCampSchedule: (campId: string, schedule: CampSchedule) => update(d => ops.setCampSchedule(d, campId, schedule)),
       removeCamp: (campId: string) => update(d => ops.removeCamp(d, campId)),
-      addBranch: (campId: string, branch: SubjectPlaylist, options?: { weekdays?: number[]; shift?: ShiftEvent | null }) =>
-        update(d => ops.addBranch(d, campId, branch, options)),
+      addBranches: (campId: string, branches: SubjectPlaylist[], options: { weekdays?: number[]; today: string }) =>
+        update(d => ops.addBranches(d, campId, branches, options)),
       updateBranch: (campId: string, branch: SubjectPlaylist) => update(d => ops.updateBranch(d, campId, branch)),
       removeBranch: (campId: string, branchId: string) => update(d => ops.removeBranch(d, campId, branchId)),
       addShiftEvent: (campId: string, event: ShiftEvent) => update(d => ops.addShiftEvent(d, campId, event)),
       removeShiftEvent: (campId: string, event: ShiftEvent) => update(d => ops.removeShiftEvent(d, campId, event)),
-      setDayNote: (date: string, text: string) => update(d => ops.setDayNote(d, date, text)),
 
       /** Replaces the saved data with a validated backup. */
       restore: (data: PlannerData, selectedDate: string | null) =>

@@ -3,7 +3,6 @@ import type { RoadmapStats, UserPreferences } from '../../types';
 import { addDays, assessDeadline, dayOfWeek, diffDays } from '../../lib/engine';
 import {
   SHORT_WEEKDAYS,
-  compactDayLabel,
   formatHours,
   formatLongDate,
   formatMinutes,
@@ -11,8 +10,8 @@ import {
   formatSpeed,
   formatWeekRange,
 } from '../../lib/format';
-import type { CampInfo, DaySummary, ScheduledItem } from '../../lib/planView';
-import { Meter, SubjectDot } from '../ui/Bits';
+import type { DaySummary } from '../../lib/planView';
+import { Meter } from '../ui/Bits';
 
 export function ProgressCard({
   stats,
@@ -145,55 +144,6 @@ export function WeekCard({
           );
         })}
       </div>
-    </section>
-  );
-}
-
-export function NextUpCard({
-  items,
-  camps,
-  today,
-  onSelect,
-}: {
-  items: ScheduledItem[];
-  camps: Map<string, CampInfo>;
-  today: string;
-  onSelect: (date: string) => void;
-}) {
-  return (
-    <section className="card p-5" aria-labelledby="rail-next">
-      <h2 id="rail-next" className="eyebrow">
-        Sıradaki
-      </h2>
-      {items.length === 0 ? (
-        <p className="mt-2 text-[14px] text-ink-2">Önünde bekleyen görev yok.</p>
-      ) : (
-        <ol className="mt-2 -mx-2">
-          {items.map(({ item, date }) => {
-            const color = camps.get(item.playlistId)?.color.solid ?? '#5c6970';
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(date)}
-                  className="flex w-full items-start gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-sunk"
-                >
-                  <SubjectDot color={color} className="mt-[7px]" />
-                  <span className="min-w-0 flex-1">
-                    <span className="line-clamp-2 text-[14px] leading-snug font-medium text-ink">{item.title}</span>
-                    <span className="tnum mt-0.5 block text-[12px] text-ink-3">
-                      <span className={date === today ? 'font-semibold text-accent-strong' : ''}>
-                        {compactDayLabel(date, today)}
-                      </span>{' '}
-                      · {item.subject} · {formatMinutes(item.effectiveMinutes)}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      )}
     </section>
   );
 }

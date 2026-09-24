@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import type { ComponentType, SVGProps } from 'react';
-import { CalendarCheck, CalendarRange, ChartColumn, Gauge, Library, Plus, Settings } from 'lucide-react';
+import { CalendarCheck, CalendarRange, ChartColumn, Library, Plus, Settings } from 'lucide-react';
 
 export type View = 'today' | 'week' | 'progress' | 'camps' | 'settings';
 
@@ -39,7 +39,6 @@ interface NavProps {
   camps: CampOption[];
   activeCampId: string | null;
   onSelectCamp: (campId: string) => void;
-  onEditTempo: () => void;
   isDemo: boolean;
 }
 
@@ -83,7 +82,7 @@ export function CampSwitcher({
   );
 }
 
-export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, onEditTempo, isDemo }: NavProps) {
+export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, isDemo }: NavProps) {
   const campCount = camps.length;
   const item = ({ view: target, label, icon: Icon }: NavItem) => {
     const active = view === target;
@@ -117,18 +116,14 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSe
         </div>
       </div>
 
-      {campCount > 0 && (
-        <section className="mt-6 rounded-[12px] border border-line bg-card p-3" aria-label="Açık kamp">
-          <p className="eyebrow mb-1.5">Açık kamp</p>
-          <CampSwitcher camps={camps} activeCampId={activeCampId} onSelectCamp={onSelectCamp} />
-          <button type="button" className="btn btn-ghost btn-sm mt-2 w-full justify-start" onClick={onEditTempo}>
-            <Gauge aria-hidden="true" />
-            Tempoyu düzenle
-          </button>
-        </section>
+      {/* With several camps, switch the open one here (the plan screens show it). */}
+      {campCount > 1 && (
+        <div className="mt-5">
+          <CampSwitcher camps={camps} activeCampId={activeCampId} onSelectCamp={onSelectCamp} compact />
+        </div>
       )}
 
-      <button type="button" className={`btn mt-4 w-full ${campCount > 0 ? 'btn-secondary' : 'btn-primary'}`} onClick={onAddCamp}>
+      <button type="button" className={`btn mt-5 w-full ${campCount > 0 ? 'btn-secondary' : 'btn-primary'}`} onClick={onAddCamp}>
         <Plus aria-hidden="true" />
         {isDemo ? 'Kendi planını kur' : 'Yeni kamp'}
       </button>
@@ -147,7 +142,7 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSe
   );
 }
 
-export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, isDemo }: Omit<NavProps, 'onEditTempo'>) {
+export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, isDemo }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/95 px-4 backdrop-blur-sm lg:hidden">
       <BrandMark size={28} />

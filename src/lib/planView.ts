@@ -101,11 +101,6 @@ export function describeDay(day: DaySummary, today: string): string {
   return parts.join(', ');
 }
 
-/** The next incomplete tasks from today on. */
-export function nextUp(index: PlanIndex, today: string, limit: number): ScheduledItem[] {
-  return index.items.filter(s => s.date >= today && !s.item.completed).slice(0, limit);
-}
-
 export interface CampProgress {
   total: number;
   done: number;

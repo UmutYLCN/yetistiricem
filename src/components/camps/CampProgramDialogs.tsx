@@ -1,16 +1,14 @@
 import { useId, useMemo, useState } from 'react';
-import { CalendarClock, CircleCheck, Plus, TriangleAlert } from 'lucide-react';
-import type { CampSchedule, StudyCamp, SubjectPlaylist } from '../../types';
+import { CalendarClock, CircleCheck, TriangleAlert } from 'lucide-react';
+import type { CampSchedule, StudyCamp } from '../../types';
 import type { RhythmDraft } from '../../lib/campDraft';
-import { detailErrors, hasRhythmErrors, hasSourceErrors, rhythmDraftOf, rhythmErrors, sameSchedule, scheduleOf, sourceErrors } from '../../lib/campDraft';
-import { youtubeIdsOf } from '../../lib/camps';
+import { detailErrors, hasRhythmErrors, rhythmDraftOf, rhythmErrors, sameSchedule, scheduleOf } from '../../lib/campDraft';
 import { focusFirstInvalid } from '../../lib/dom';
 import { assessDeadline, buildCampSchedule, planEndDate } from '../../lib/engine';
-import { LONG_WEEKDAYS, formatLongDate } from '../../lib/format';
-import { MAX_CAMP_NAME, WEEKDAYS } from '../../lib/studyCamp';
-import { RhythmEditor, WeekdayToggles } from '../rhythm/RhythmEditor';
+import { formatLongDate } from '../../lib/format';
+import { MAX_CAMP_NAME } from '../../lib/studyCamp';
+import { RhythmEditor } from '../rhythm/RhythmEditor';
 import { Dialog } from '../ui/Dialog';
-import { BranchSources } from '../wizard/BranchSources';
 import { CampDatesFields } from '../wizard/CampDetails';
 
 /**
@@ -174,105 +172,6 @@ export function RenameCampDialog({ camp, onSave, onClose }: { camp: StudyCamp; o
           </p>
         )}
       </form>
-    </Dialog>
-  );
-}
-
-/**
- * Adds branches to an existing camp. In manual mode the new branches need
- * weekdays, or their videos could not be placed.
- */
-export function AddBranchesDialog({
-  camp,
-  onAdd,
-  onClose,
-}: {
-  camp: StudyCamp;
-  onAdd: (branches: SubjectPlaylist[], weekdays: number[] | undefined) => void;
-  onClose: () => void;
-}) {
-  const uid = useId();
-  const [branches, setBranches] = useState<SubjectPlaylist[]>([]);
-  const [weekdays, setWeekdays] = useState<number[]>([]);
-  const [tried, setTried] = useState(false);
-  const manual = camp.schedule.mode === 'manual';
-  const errors = sourceErrors(branches);
-  const weekdayError = manual && weekdays.length === 0 ? 'Yeni branşların hangi günlerde çalışılacağını seç.' : undefined;
-  const mock = camp.schedule.mockExamDays;
-
-  const save = () => {
-    setTried(true);
-    if (hasSourceErrors(errors) || weekdayError) {
-      focusFirstInvalid(document.querySelector('dialog[open]'));
-      return;
-    }
-    onAdd(branches, manual ? weekdays : undefined);
-    onClose();
-  };
-
-  const videoCount = branches.reduce((acc, b) => acc + b.videos.length, 0);
-
-  return (
-    <Dialog
-      open
-      onClose={onClose}
-      title="Branş ekle"
-      description={
-        <>
-          Yeni listeler ya da videolar <span className="font-semibold text-ink">“{camp.name}”</span> içine eklenir; her liste bir branş olur.
-        </>
-      }
-      width={760}
-      dismissOnBackdrop={false}
-      footer={
-        <>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
-          <button type="button" className="btn btn-primary" onClick={save}>
-            <Plus aria-hidden="true" />
-            {branches.length > 0 ? `${branches.length} branşı ekle (${videoCount} video)` : 'Branş ekle'}
-          </button>
-        </>
-      }
-    >
-      <div className="space-y-6 pt-2">
-        <BranchSources
-          branches={branches}
-          onChange={setBranches}
-          errors={errors}
-          showErrors={tried}
-          campYoutubeIds={camp.branches.flatMap(youtubeIdsOf)}
-          usedColors={camp.branches.map(b => b.colorTag)}
-        />
-        {manual && (
-          <fieldset className="rounded-[14px] border border-line bg-card p-4">
-            <legend id={`${uid}-days`} className="px-1 text-[14px] font-semibold text-ink">
-              Hangi günlerde çalışılsın?
-            </legend>
-            <p className="mb-2.5 text-[12.5px] text-ink-3">
-              Bu kampın haftasını sen kuruyorsun. Seçtiğin günlere yeni branşlar eklenir; sonra “Tempoyu düzenle”den ince ayar
-              yapabilirsin.
-            </p>
-            <WeekdayToggles
-              labelledBy={`${uid}-days`}
-              selected={weekdays}
-              disabledDays={mock}
-              onToggle={dow => setWeekdays(days => (days.includes(dow) ? days.filter(d => d !== dow) : [...days, dow]))}
-            />
-            {mock.length > 0 && (
-              <p className="field-hint">
-                {WEEKDAYS.filter(d => mock.includes(d)).map(d => LONG_WEEKDAYS[d]).join(', ')} deneme günü; oraya video konmaz.
-              </p>
-            )}
-            {tried && weekdayError && (
-              <p className="field-error" role="alert">
-                {weekdayError}
-              </p>
-            )}
-          </fieldset>
-        )}
-      </div>
     </Dialog>
   );
 }

@@ -79,7 +79,7 @@ export function CampsView({
         subtitle={allCamps.length > 0 ? `${allCamps.length} kamp · her birinin kendi branşları ve temposu var` : undefined}
         actions={
           allCamps.length > 0 && (
-            <button type="button" className="btn btn-primary" onClick={onAddCamp}>
+            <button type="button" className={`btn ${isDemo ? 'btn-primary' : 'btn-secondary'}`} onClick={onAddCamp}>
               <Plus aria-hidden="true" />
               {isDemo ? 'Kendi planını kur' : 'Yeni kamp'}
             </button>

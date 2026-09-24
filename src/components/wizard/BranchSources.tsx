@@ -15,10 +15,12 @@ interface Props {
   /** YouTube ids already in the camp (when adding to an existing camp). */
   campYoutubeIds?: string[];
   usedColors?: string[];
+  /** Adding to an existing camp: the list holds only the new branches. */
+  adding?: boolean;
 }
 
 /** Source composer on top, the resulting branch cards below. */
-export function BranchSources({ branches, onChange, errors, showErrors, campYoutubeIds, usedColors }: Props) {
+export function BranchSources({ branches, onChange, errors, showErrors, campYoutubeIds, usedColors, adding = false }: Props) {
   const confirm = useConfirm();
   const shared = sharedBranchNames(branches);
 
@@ -48,7 +50,7 @@ export function BranchSources({ branches, onChange, errors, showErrors, campYout
       <section aria-labelledby="branch-list-title">
         <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-3">
           <h3 id="branch-list-title" className="text-[15px] font-semibold text-ink">
-            Branşların
+            {adding ? 'Eklenecek branşlar' : 'Branşların'}
           </h3>
           {branches.length > 0 && (
             <p className="tnum text-[12.5px] text-ink-3">
@@ -57,7 +59,7 @@ export function BranchSources({ branches, onChange, errors, showErrors, campYout
           )}
         </div>
         {branches.length === 0 ? (
-          <NoSourcesYet error={showErrors ? errors.empty : undefined} />
+          <NoSourcesYet error={showErrors ? errors.empty : undefined} adding={adding} />
         ) : (
           <>
             <p className="mb-2.5 text-[12.5px] text-ink-3">Adına dokunarak branşı yeniden adlandır; ok ile videolarını ve rengini gör.</p>

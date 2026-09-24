@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { CalendarCheck, Eye, Info, LogOut, TriangleAlert, X } from 'lucide-react';
 import type { CampSchedule, DailyPlanItem, StudyCamp, SubjectPlaylist } from './types';
@@ -8,18 +8,17 @@ import { addDays, buildCampSchedule, calculateStats, countCompletedVideos, creat
 import { classifyCamp, isLegacyKind } from './lib/camps';
 import { formatDayTitle, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
-import { indexCamps, indexPlans, nextUp, summarizeDay, weeksOverview } from './lib/planView';
-import { allBranches, defaultSchedule, withBranchOnWeekdays } from './lib/studyCamp';
-import { DayNote } from './components/day/DayNote';
+import { indexCamps, indexPlans, summarizeDay, weeksOverview } from './lib/planView';
+import { withAddedBranches } from './lib/plannerOps';
+import { allBranches, defaultSchedule } from './lib/studyCamp';
 import { DayPanel } from './components/day/DayPanel';
 import { WeekStrip } from './components/day/WeekStrip';
 import { AddVideosDialog, EditBranchDialog, EditVideoDialog } from './components/camps/CampDialogs';
-import { AddBranchesDialog, CampTempoDialog, RenameCampDialog } from './components/camps/CampProgramDialogs';
-import { CampBar } from './components/layout/CampBar';
+import { CampTempoDialog, RenameCampDialog } from './components/camps/CampProgramDialogs';
 import type { View } from './components/layout/Navigation';
 import { MobileTabBar, MobileTopBar, Sidebar } from './components/layout/Navigation';
 import { PageHeader } from './components/layout/PageHeader';
-import { NextUpCard, OverdueCard, ProgressCard, WeekCard } from './components/rail/RightRail';
+import { OverdueCard, ProgressCard, WeekCard } from './components/rail/RightRail';
 import { ConfirmProvider, useConfirm } from './components/ui/ConfirmDialog';
 import { ToastProvider, useToast } from './components/ui/Toast';
 import { CampsView } from './components/views/CampsView';
@@ -27,6 +26,7 @@ import { ProgressView } from './components/views/ProgressView';
 import { SettingsView } from './components/views/SettingsView';
 import { WeekView } from './components/views/WeekView';
 import { NoCampsYet, Welcome } from './components/views/Welcome';
+import { AddBranchWizard } from './components/wizard/AddBranchWizard';
 import { CampWizard } from './components/wizard/CampWizard';
 
 type OpenDialog =
@@ -34,7 +34,8 @@ type OpenDialog =
   | { kind: 'addVideos'; branchId: string }
   | { kind: 'editVideo'; branchId: string; videoId: string }
   | { kind: 'tempo' }
-  | { kind: 'addBranches' }
+  /** Adds branches to this existing camp (fixed when the wizard opens). */
+  | { kind: 'addBranches'; campId: string }
   | { kind: 'rename'; campId: string }
   | null;
 
@@ -105,6 +106,10 @@ function Planner() {
     if (camp) setDialog({ kind: 'tempo' });
   };
 
+  const openAddBranches = () => {
+    if (camp) setDialog({ kind: 'addBranches', campId: camp.id });
+  };
+
   const selectCamp = (campId: string) => {
     if (campId === camp?.id) return;
     actions.setActiveCamp(campId);
@@ -171,32 +176,18 @@ function Planner() {
     });
   };
 
-  const handleAddBranches = (added: SubjectPlaylist[], weekdays: number[] | undefined) => {
-    if (!camp || added.length === 0) return;
-    // The plan is laid out from its start date, so branches added mid-plan
-    // would land partly on past days. Carry only those new tasks forward, as a
-    // normal stored shift event (today's plan stays as it is).
-    let next: StudyCamp = camp;
-    for (const branch of added) {
-      next = {
-        ...next,
-        branches: [...next.branches, branch],
-        schedule: weekdays ? withBranchOnWeekdays(next.schedule, branch.id, weekdays) : next.schedule,
-      };
-    }
-    const newIds = new Set(added.map(b => b.id));
-    const { plans } = buildCampSchedule(next, { completedMap: data.completedMap, today });
-    const pastIds = plans
-      .filter(plan => plan.date < today)
-      .flatMap(plan => plan.items.filter(item => newIds.has(item.playlistId) && !item.completed).map(item => item.id));
-    const shift = pastIds.length > 0 ? { date: addDays(today, -1), resumeDate: addDays(today, 1), itemIds: pastIds } : null;
-    added.forEach((branch, i) => actions.addBranch(camp.id, branch, { weekdays, shift: i === added.length - 1 ? shift : null }));
+  // Adds to the camp the wizard was opened for; never creates a camp.
+  const handleAddBranches = (campId: string, added: SubjectPlaylist[], weekdays: number[] | undefined) => {
+    const target = data.camps.find(c => c.id === campId);
+    if (!target || added.length === 0) return;
+    const { carried } = withAddedBranches(target, added, { weekdays, completedMap: data.completedMap, today });
+    actions.addBranches(campId, added, { weekdays, today });
     const names = added.map(b => `“${b.subject}”`).join(', ');
     notify({
       message:
-        pastIds.length > 0
-          ? `${names} eklendi; geçmiş günlere düşen ${pastIds.length} görev yarından itibaren planlandı.`
-          : `${names} eklendi.`,
+        carried > 0
+          ? `${names} “${target.name}” kampına eklendi; ${carried} yeni görev yarından itibaren sırayla planlandı.`
+          : `${names} “${target.name}” kampına eklendi.`,
       tone: 'info',
     });
   };
@@ -253,8 +244,6 @@ function Planner() {
     actions.setCampSchedule(camp.id, next);
     notify({ message: `“${camp.name}” temposu kaydedildi; plan yeniden dağıtıldı.`, tone: 'info' });
   };
-
-  const handleSaveNote = useCallback((date: string, text: string) => actions.setDayNote(date, text), [actions]);
 
   const handleBackup = () => {
     const blob = new Blob([JSON.stringify(createBackup(data, selectedDate), null, 2)], { type: 'application/json' });
@@ -353,16 +342,14 @@ function Planner() {
 
   const summary = summarizeDay(selectedDate, index, prefs);
   const isToday = selectedDate === today;
-  const campBar = camp && <CampBar camp={camp} onEditTempo={openTempo} />;
   const noPlanYet = (title: string) => (
     <div className="mx-auto max-w-[920px]">
-      {campBar}
       <PageHeader title={title} />
       {camp ? (
         <div className="card flex flex-col items-center px-6 py-12 text-center">
           <p className="font-display text-[21px] text-ink">Bu kampta branş yok</p>
           <p className="mt-1 max-w-sm text-[14px] text-ink-2">Bir oynatma listesi ekle; her liste bir branş olur ve plan kendiliğinden kurulur.</p>
-          <button type="button" className="btn btn-primary mt-5" onClick={() => setDialog({ kind: 'addBranches' })}>
+          <button type="button" className="btn btn-primary mt-5" onClick={openAddBranches}>
             Branş ekle
           </button>
         </div>
@@ -379,7 +366,6 @@ function Planner() {
     ) : (
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
-          {campBar}
           <PageHeader
             eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(selectedDate, today)}</span>}
             title={formatDayTitle(selectedDate)}
@@ -407,30 +393,22 @@ function Planner() {
             onToggle={handleToggle}
             onShift={handleShift}
             onEditLink={handleEditLink}
-            onAddBranches={() => setDialog({ kind: 'addBranches' })}
-          />
-          <DayNote
-            key={`${isDemo ? 'demo' : 'real'}-${selectedDate}`}
-            date={selectedDate}
-            value={data.dayNotes[selectedDate] ?? ''}
-            onSave={handleSaveNote}
-            isDemo={isDemo}
+            onAddBranches={openAddBranches}
           />
         </div>
-        <aside aria-label="Özet" className="min-w-0 space-y-4">
+        {/* Side by side under the day below xl; a column beside it from xl. */}
+        <aside aria-label="Özet" className="grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:grid-cols-1">
           <div className="hidden xl:block">
             <OverdueCard count={index.overdue.length} today={today} onShift={() => handleShift(addDays(today, -1))} />
           </div>
           <ProgressCard stats={stats} prefs={prefs} today={today} targetEndDate={camp.schedule.targetEndDate} />
           <WeekCard days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
-          <NextUpCard items={nextUp(index, today, 4)} camps={camps} today={today} onSelect={openDay} />
         </aside>
       </div>
     );
   } else if (view === 'week') {
     content = hasBranches ? (
       <div className="mx-auto max-w-[920px]">
-        {campBar}
         <WeekView
           days={weekDays}
           today={today}
@@ -450,7 +428,6 @@ function Planner() {
     content =
       hasBranches && camp ? (
         <div className="mx-auto max-w-[920px]">
-          {campBar}
           <ProgressView
             stats={stats}
             prefs={prefs}
@@ -487,7 +464,7 @@ function Planner() {
         onEditTempo={openTempo}
         onRenameCamp={campId => setDialog({ kind: 'rename', campId })}
         onDeleteCamp={handleDeleteCamp}
-        onAddBranches={() => setDialog({ kind: 'addBranches' })}
+        onAddBranches={openAddBranches}
         onEditBranch={branchId => setDialog({ kind: 'editBranch', branchId })}
         onAddVideos={branchId => setDialog({ kind: 'addVideos', branchId })}
         onEditVideo={(branchId, videoId) => setDialog({ kind: 'editVideo', branchId, videoId })}
@@ -516,6 +493,7 @@ function Planner() {
   const dialogBranch = dialog && 'branchId' in dialog ? branches.find(p => p.id === dialog.branchId) : undefined;
   const dialogVideo = dialog?.kind === 'editVideo' ? dialogBranch?.videos.find(v => v.id === dialog.videoId) : undefined;
   const renameTarget = dialog?.kind === 'rename' ? data.camps.find(c => c.id === dialog.campId) : undefined;
+  const addTarget = dialog?.kind === 'addBranches' ? data.camps.find(c => c.id === dialog.campId) : undefined;
   const closeDialog = () => setDialog(null);
   const saveBranch = (branch: SubjectPlaylist) => camp && actions.updateBranch(camp.id, branch);
 
@@ -531,7 +509,6 @@ function Planner() {
         camps={campOptions}
         activeCampId={camp?.id ?? null}
         onSelectCamp={selectCamp}
-        onEditTempo={openTempo}
         isDemo={isDemo}
       />
       <div className="min-w-0 flex-1">
@@ -617,7 +594,16 @@ function Planner() {
       {dialog?.kind === 'tempo' && camp && (
         <CampTempoDialog key={camp.id} camp={camp} today={today} onSave={handleSaveTempo} onClose={closeDialog} />
       )}
-      {dialog?.kind === 'addBranches' && camp && <AddBranchesDialog key={camp.id} camp={camp} onAdd={handleAddBranches} onClose={closeDialog} />}
+      {addTarget && (
+        <AddBranchWizard
+          key={addTarget.id}
+          camp={addTarget}
+          today={today}
+          completedMap={data.completedMap}
+          onAdd={(added, weekdays) => handleAddBranches(addTarget.id, added, weekdays)}
+          onClose={closeDialog}
+        />
+      )}
       {renameTarget && (
         <RenameCampDialog
           key={renameTarget.id}
