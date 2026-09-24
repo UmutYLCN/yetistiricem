@@ -1,8 +1,8 @@
 import type { CampSchedule, DailyPlan, DailyPlanItem, SubjectPlaylist, UserPreferences } from '../types';
 import type { CampKind } from './camps';
 import { classifyCamp, displayChannel } from './camps';
-import { dayOfWeek } from './engine';
-import { SHORT_WEEKDAYS, WEEK_ORDER, formatMinutes, startOfWeek } from './format';
+import { dayOfWeek, formatDateKey } from './engine';
+import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatMinutes, startOfWeek } from './format';
 import type { SubjectColor } from './subjects';
 import { resolveColor } from './subjects';
 
@@ -87,6 +87,18 @@ export function summarizeDay(date: string, index: PlanIndex, prefs: UserPreferen
     minutes: items.reduce((acc, i) => acc + i.effectiveMinutes, 0),
     doneMinutes: doneItems.reduce((acc, i) => acc + i.effectiveMinutes, 0),
   };
+}
+
+/** Screen-reader summary of a day: date, today, kind and task progress. */
+export function describeDay(day: DaySummary, today: string): string {
+  const parts = [`${LONG_WEEKDAYS[dayOfWeek(day.date)]} ${formatDateKey(day.date)}`];
+  if (day.date === today) parts.push('bugün');
+  if (day.kind === 'rest') parts.push('dinlenme günü');
+  else if (day.kind === 'mock') parts.push('deneme günü');
+  else if (day.total > 0) parts.push(`${day.total} görevden ${day.done} tamamlandı`);
+  else if (day.plan) parts.push('görev yok');
+  if (day.date < today && day.done < day.total) parts.push('geciken görev var');
+  return parts.join(', ');
 }
 
 /** The next incomplete tasks from today on. */

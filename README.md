@@ -6,7 +6,7 @@ Bir **kamp** (ör. “TYT 2027”) çalışma programının tamamıdır: birden 
 
 - **Yeni kamp:** dört adımlı sihirbaz. Kaynaklar (her oynatma listesi bir branş olur; tek video, liste yapıştırma ve demo şablon da var) → kamp adı, başlangıç ve isteğe bağlı hedef bitiş tarihi → ritim (önce “Otomatik dağıt” ya da “Branşları günlere ben yerleştireceğim”) → kaydetmeden önce günlük plan önizlemesi ve hedefe yetişme durumu.
 - **Bugün:** açık kamp ve temposu, haftalık gün şeridi, seçili günün görevleri, gün notu, ilerleme özeti ve sıradaki görevler.
-- **Haftalık:** haftanın yedi günü ve görevleri; buradan da işaretleyebilirsin.
+- **Haftalık:** haftanın rotası (her güne bir tamamlanma halkası; dokununca o günün kartına gider) ve Pazar’a kadar yatay kaydırılan yedi gün kartı; görevleri buradan da işaretleyebilirsin.
 - **İlerleme:** genel yüzde, kalan çalışma süresi, tahmini bitiş, hedef tarihe göre durum, branş ve hafta bazında ilerleme.
 - **Kamplar:** kamplar arasında geçiş, yeniden adlandırma, silme; açık kampın branşları (branş ekleme/düzenleme/kaldırma, video ekleme/düzenleme/silme) ve “Tempoyu düzenle”.
 - **Ayarlar:** uygulama düzeyi: yedek indirme, yedekten geri yükleme, demo, sıfırlama. Tempo ayarları kampa aittir, burada değil.

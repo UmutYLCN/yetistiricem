@@ -1,26 +1,16 @@
 import { useEffect, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Check, ChevronLeft, ChevronRight, Flag, Moon } from 'lucide-react';
-import { addDays, dayOfWeek, formatDateKey } from '../../lib/engine';
-import { LONG_WEEKDAYS, SHORT_WEEKDAYS, formatWeekRange } from '../../lib/format';
+import { addDays, dayOfWeek } from '../../lib/engine';
+import { SHORT_WEEKDAYS, formatWeekRange } from '../../lib/format';
 import type { DaySummary } from '../../lib/planView';
+import { describeDay } from '../../lib/planView';
 
 interface Props {
   days: DaySummary[];
   selectedDate: string;
   today: string;
   onSelect: (date: string) => void;
-}
-
-function describe(day: DaySummary, today: string): string {
-  const parts = [`${LONG_WEEKDAYS[dayOfWeek(day.date)]} ${formatDateKey(day.date)}`];
-  if (day.date === today) parts.push('bugün');
-  if (day.kind === 'rest') parts.push('dinlenme günü');
-  else if (day.kind === 'mock') parts.push('deneme günü');
-  else if (day.total > 0) parts.push(`${day.total} görevden ${day.done} tamamlandı`);
-  else if (day.plan) parts.push('görev yok');
-  if (day.date < today && day.done < day.total) parts.push('geciken görev var');
-  return parts.join(', ');
 }
 
 /**
@@ -92,7 +82,7 @@ export function WeekStrip({ days, selectedDate, today, onSelect }: Props) {
               id={`day-tab-${day.date}`}
               aria-selected={selected}
               aria-controls="day-panel"
-              aria-label={describe(day, today)}
+              aria-label={describeDay(day, today)}
               tabIndex={selected ? 0 : -1}
               onClick={() => onSelect(day.date)}
               onKeyDown={event => move(event, day.date)}

@@ -708,6 +708,39 @@
     color: var(--color-forest-strong);
   }
 
+  /* Week canvas: one horizontal track of day cards ---------------------------- */
+  .week-track {
+    /* Contains absolutely positioned descendants (e.g. sr-only text), which
+       would otherwise widen the page from off-screen cards. */
+    position: relative;
+    display: flex;
+    gap: 12px;
+    /* Room for card rings, focus outlines and the scrollbar inside the scrollport;
+       the negative margin keeps cards aligned with the page edge. */
+    margin: 0 -4px;
+    padding: 4px 4px 14px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  .week-card {
+    /* Wide enough for real titles; on phones one card plus a peek of the next. */
+    flex: 0 0 min(23.75rem, calc(100% - 3rem));
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+  .week-card:focus-visible {
+    outline-offset: 1px;
+  }
+  @media (min-width: 640px) {
+    .week-track {
+      gap: 16px;
+    }
+  }
+
   /* Camp picker ----------------------------------------------------------------- */
   .camp-select {
     min-height: 40px;
