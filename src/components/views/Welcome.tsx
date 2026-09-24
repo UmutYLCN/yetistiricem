@@ -4,17 +4,16 @@ import { BrandMark } from '../layout/Navigation';
 interface Props {
   onAddCamp: () => void;
   onStartDemo: () => void;
-  onOpenSettings: () => void;
 }
 
 const STEPS = [
   {
-    title: 'Kamp ekle',
-    body: 'Bir YouTube oynatma listesinin bağlantısını yapıştır; videolar adları ve süreleriyle gelir. İstersen tek tek de ekleyebilirsin.',
+    title: 'Kaynaklarını ekle',
+    body: 'YouTube oynatma listelerini yapıştır; her liste adı ve gerçek süreleriyle bir branş olur (Matematik, Fizik…).',
   },
   {
-    title: 'Temponu ayarla',
-    body: 'Günlük çalışma süreni, izleme hızını, soru çözme payını ve dinlenme günlerini seç.',
+    title: 'Kampını ve ritmini kur',
+    body: 'Kampına ad ve tarih ver. Branşları otomatik dağıt ya da hangi gün hangi branşın geleceğini kendin seç.',
   },
   {
     title: 'Her gün işaretle',
@@ -23,7 +22,7 @@ const STEPS = [
 ];
 
 /** First-run screen. Nothing is created until the user asks for it. */
-export function Welcome({ onAddCamp, onStartDemo, onOpenSettings }: Props) {
+export function Welcome({ onAddCamp, onStartDemo }: Props) {
   return (
     <div className="mx-auto max-w-[760px] py-4 sm:py-10">
       <div className="card overflow-hidden">
@@ -33,13 +32,13 @@ export function Welcome({ onAddCamp, onStartDemo, onOpenSettings }: Props) {
             Planını kur, her gün biraz yetiştir.
           </h1>
           <p className="mt-3 max-w-[560px] text-[15.5px] text-ink-2">
-            Yetiştiricem, izlemek istediğin ders videolarını günlük çalışma süreni aşmayacak şekilde günlere böler ve
-            nerede olduğunu gösterir. Planın şu an boş.
+            Yetiştiricem, bir kampın tüm branşlarındaki ders videolarını günlük çalışma süreni aşmayacak şekilde günlere böler
+            ve nerede olduğunu gösterir. Planın şu an boş.
           </p>
           <div className="mt-6 flex flex-wrap gap-2.5">
             <button type="button" className="btn btn-primary" onClick={onAddCamp}>
               <Plus aria-hidden="true" />
-              İlk kampını ekle
+              İlk kampını kur
             </button>
             <button type="button" className="btn btn-secondary" onClick={onStartDemo}>
               <Eye aria-hidden="true" />
@@ -62,12 +61,6 @@ export function Welcome({ onAddCamp, onStartDemo, onOpenSettings }: Props) {
           ))}
         </ol>
       </div>
-      <p className="mt-4 text-center text-[13px] text-ink-3">
-        Önce temponu mu ayarlamak istersin?{' '}
-        <button type="button" className="font-semibold text-forest underline-offset-2 hover:underline" onClick={onOpenSettings}>
-          Ayarlara git
-        </button>
-      </p>
     </div>
   );
 }
@@ -77,11 +70,11 @@ export function NoCampsYet({ onAddCamp, onStartDemo }: { onAddCamp: () => void; 
   return (
     <div className="card flex flex-col items-center px-6 py-12 text-center">
       <p className="font-display text-[21px] text-ink">Henüz kamp yok</p>
-      <p className="mt-1 max-w-sm text-[14px] text-ink-2">Bir kamp eklediğinde planın, haftan ve ilerlemen burada görünür.</p>
+      <p className="mt-1 max-w-sm text-[14px] text-ink-2">Bir kamp kurduğunda planın, haftan ve ilerlemen burada görünür.</p>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         <button type="button" className="btn btn-primary" onClick={onAddCamp}>
           <Plus aria-hidden="true" />
-          Kamp ekle
+          Kamp kur
         </button>
         <button type="button" className="btn btn-secondary" onClick={onStartDemo}>
           <Eye aria-hidden="true" />

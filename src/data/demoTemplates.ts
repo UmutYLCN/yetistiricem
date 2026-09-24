@@ -1,4 +1,5 @@
 import type { SubjectPlaylist } from '../types';
+import { newId } from '../lib/camps';
 import { defaultColorKey } from '../lib/subjects';
 
 // Built-in demo templates: a sample order of TYT topics per subject.
@@ -166,7 +167,20 @@ function build(spec: TemplateSpec): SubjectPlaylist {
 
 export const DEMO_TEMPLATES: SubjectPlaylist[] = SPECS.map(build);
 
-/** A fresh copy, so edits to an added template never touch the constant. */
+/** A copy with the template's own ids (the in-memory demo preview). */
 export function cloneTemplate(template: SubjectPlaylist): SubjectPlaylist {
   return { ...template, videos: template.videos.map(v => ({ ...v })) };
+}
+
+/**
+ * A copy with fresh branch and video ids, for adding a template to a camp:
+ * the same template may sit in several camps without sharing ids or progress.
+ */
+export function instantiateTemplate(template: SubjectPlaylist): SubjectPlaylist {
+  const id = newId('branch');
+  return {
+    ...template,
+    id,
+    videos: template.videos.map((v, i) => ({ ...v, id: `${id}-v${String(i + 1).padStart(2, '0')}` })),
+  };
 }

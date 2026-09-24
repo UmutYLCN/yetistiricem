@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { SubjectPlaylist, UserPreferences } from '../types';
+import type { CampSchedule, StudyCamp, SubjectPlaylist } from '../types';
 import type { ShiftEvent } from '../lib/engine';
 import { STORAGE_KEYS } from '../lib/engine';
 import { buildDemoData } from '../lib/demo';
+import * as ops from '../lib/plannerOps';
 import type { Notice, PlannerData } from '../lib/persistence';
-import { MAX_NOTE_LENGTH, UI_KEYS, clearAllStorage, emptyData, loadPlannerOnce, writeKey } from '../lib/persistence';
+import { CAMP_KEYS, UI_KEYS, campStore, clearAllStorage, emptyData, loadPlannerOnce, writeKey } from '../lib/persistence';
 
 interface StoreState {
   real: PlannerData;
@@ -15,24 +16,16 @@ interface StoreState {
 }
 
 /** Saves `value` under `key` whenever it changes after the first load. */
-function usePersist(key: string, value: unknown, onFail: () => void) {
+function usePersist(key: string, value: unknown, onFail: () => void, serialize: (value: unknown) => unknown = v => v) {
   const last = useRef(value);
   useEffect(() => {
     if (value === last.current) return;
     last.current = value;
-    if (!writeKey(key, value)) onFail();
-  }, [key, value, onFail]);
+    if (!writeKey(key, serialize(value))) onFail();
+  }, [key, value, onFail, serialize]);
 }
 
-/** Removes completion marks that belonged only to the given videos. */
-function pruneCompletion(completed: Record<string, boolean>, removedIds: string[], remaining: SubjectPlaylist[]) {
-  const stillUsed = new Set(remaining.flatMap(p => p.videos.map(v => v.id)));
-  const next = { ...completed };
-  for (const id of removedIds) {
-    if (!stillUsed.has(id)) delete next[id];
-  }
-  return next;
-}
+const serializeCamps = (camps: unknown) => campStore(camps as StudyCamp[]);
 
 export function usePlanner(today: string) {
   const [state, setState] = useState<StoreState>(() => {
@@ -41,6 +34,7 @@ export function usePlanner(today: string) {
   });
   const [notices, setNotices] = useState<Notice[]>(() => loadPlannerOnce().notices);
   const storageAvailable = loadPlannerOnce().storageAvailable;
+  const seedPreferences = loadPlannerOnce().seedPreferences;
 
   const reportSaveFailure = useCallback(() => {
     setNotices(current =>
@@ -58,10 +52,9 @@ export function usePlanner(today: string) {
     );
   }, []);
 
-  usePersist(STORAGE_KEYS.preferences, state.real.preferences, reportSaveFailure);
-  usePersist(STORAGE_KEYS.playlists, state.real.playlists, reportSaveFailure);
+  usePersist(CAMP_KEYS.camps, state.real.camps, reportSaveFailure, serializeCamps);
+  usePersist(CAMP_KEYS.activeCamp, state.real.activeCampId, reportSaveFailure);
   usePersist(STORAGE_KEYS.completed, state.real.completedMap, reportSaveFailure);
-  usePersist(STORAGE_KEYS.shiftEvents, state.real.shiftEvents, reportSaveFailure);
   usePersist(UI_KEYS.dayNotes, state.real.dayNotes, reportSaveFailure);
   usePersist(UI_KEYS.selectedDate, state.realSelected, reportSaveFailure);
 
@@ -74,48 +67,19 @@ export function usePlanner(today: string) {
       setSelectedDate: (date: string) =>
         setState(s => (s.demo ? { ...s, demoSelected: date } : { ...s, realSelected: date })),
 
-      setCompleted: (videoId: string, done: boolean) =>
-        update(d => {
-          const completedMap = { ...d.completedMap };
-          if (done) completedMap[videoId] = true;
-          else delete completedMap[videoId];
-          return { ...d, completedMap };
-        }),
-
-      addCamp: (camp: SubjectPlaylist) => update(d => ({ ...d, playlists: [...d.playlists, camp] })),
-
-      updateCamp: (camp: SubjectPlaylist) =>
-        update(d => {
-          const before = d.playlists.find(p => p.id === camp.id);
-          const playlists = d.playlists.map(p => (p.id === camp.id ? camp : p));
-          const keptIds = new Set(camp.videos.map(v => v.id));
-          const removed = before ? before.videos.filter(v => !keptIds.has(v.id)).map(v => v.id) : [];
-          return { ...d, playlists, completedMap: pruneCompletion(d.completedMap, removed, playlists) };
-        }),
-
-      removeCamp: (campId: string) =>
-        update(d => {
-          const camp = d.playlists.find(p => p.id === campId);
-          const playlists = d.playlists.filter(p => p.id !== campId);
-          const removed = camp ? camp.videos.map(v => v.id) : [];
-          return { ...d, playlists, completedMap: pruneCompletion(d.completedMap, removed, playlists) };
-        }),
-
-      addShiftEvent: (event: ShiftEvent) => update(d => ({ ...d, shiftEvents: [...d.shiftEvents, event] })),
-
-      removeShiftEvent: (event: ShiftEvent) =>
-        update(d => ({ ...d, shiftEvents: d.shiftEvents.filter(e => e !== event) })),
-
-      setPreferences: (preferences: UserPreferences) => update(d => ({ ...d, preferences })),
-
-      setDayNote: (date: string, text: string) =>
-        update(d => {
-          const dayNotes = { ...d.dayNotes };
-          const value = text.slice(0, MAX_NOTE_LENGTH);
-          if (value.trim()) dayNotes[date] = value;
-          else delete dayNotes[date];
-          return { ...d, dayNotes };
-        }),
+      setCompleted: (videoId: string, done: boolean) => update(d => ops.setCompleted(d, videoId, done)),
+      createCamp: (camp: StudyCamp) => update(d => ops.createCamp(d, camp)),
+      setActiveCamp: (campId: string) => update(d => ops.setActiveCamp(d, campId)),
+      renameCamp: (campId: string, name: string) => update(d => ops.renameCamp(d, campId, name)),
+      setCampSchedule: (campId: string, schedule: CampSchedule) => update(d => ops.setCampSchedule(d, campId, schedule)),
+      removeCamp: (campId: string) => update(d => ops.removeCamp(d, campId)),
+      addBranch: (campId: string, branch: SubjectPlaylist, options?: { weekdays?: number[]; shift?: ShiftEvent | null }) =>
+        update(d => ops.addBranch(d, campId, branch, options)),
+      updateBranch: (campId: string, branch: SubjectPlaylist) => update(d => ops.updateBranch(d, campId, branch)),
+      removeBranch: (campId: string, branchId: string) => update(d => ops.removeBranch(d, campId, branchId)),
+      addShiftEvent: (campId: string, event: ShiftEvent) => update(d => ops.addShiftEvent(d, campId, event)),
+      removeShiftEvent: (campId: string, event: ShiftEvent) => update(d => ops.removeShiftEvent(d, campId, event)),
+      setDayNote: (date: string, text: string) => update(d => ops.setDayNote(d, date, text)),
 
       /** Replaces the saved data with a validated backup. */
       restore: (data: PlannerData, selectedDate: string | null) =>
@@ -124,7 +88,7 @@ export function usePlanner(today: string) {
       /** Deletes every saved key and starts empty. */
       reset: (todayKeyNow: string) => {
         clearAllStorage();
-        setState(s => ({ ...s, demo: null, real: emptyData(todayKeyNow), realSelected: todayKeyNow }));
+        setState(s => ({ ...s, demo: null, real: emptyData(), realSelected: todayKeyNow }));
       },
 
       startDemo: (todayKeyNow: string) =>
@@ -145,6 +109,7 @@ export function usePlanner(today: string) {
     selectedDate: isDemo ? state.demoSelected : state.realSelected,
     notices,
     storageAvailable,
+    seedPreferences,
     actions,
   };
 }

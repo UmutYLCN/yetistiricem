@@ -120,7 +120,13 @@ export function WeekView({ days, today, selectedDate, camps, oversizedIds, onSel
                     </div>
                   ) : (
                     <p className="mt-0.5 text-[12.5px] text-ink-3">
-                      {day.kind === 'study' ? (day.plan ? 'Görevler ileri taşındı' : 'Planlanmış görev yok') : 'Video yok'}
+                      {day.kind === 'study'
+                        ? day.plan?.isFreeDay
+                          ? 'Bu günün branşları bitti'
+                          : day.plan
+                            ? 'Görevler ileri taşındı'
+                            : 'Planlanmış görev yok'
+                        : 'Video yok'}
                     </p>
                   )}
                 </div>

@@ -7,6 +7,7 @@ import { focusFirstInvalid } from '../../lib/dom';
 import { defaultColorKey } from '../../lib/subjects';
 import type { DraftVideo } from '../../utils/youtubeParser';
 import { parseDurationInput, parseYoutubeVideoId, validateVideoUrl, youtubeThumbnailUrl } from '../../utils/youtubeParser';
+import type { PlaylistInfo } from '../../utils/youtubePlaylist';
 import { useConfirm } from '../ui/ConfirmDialog';
 import { Dialog } from '../ui/Dialog';
 import { CampFields } from './CampFields';
@@ -21,7 +22,7 @@ function durationText(minutes: number): string {
   return `${whole}:${String(seconds).padStart(2, '0')}`;
 }
 
-export function EditCampDialog({
+export function EditBranchDialog({
   camp,
   onSave,
   onClose,
@@ -50,7 +51,7 @@ export function EditCampDialog({
     onSave({
       ...camp,
       title: fields.title.trim(),
-      subject: fields.subject,
+      subject: fields.subject.trim(),
       colorTag: fields.colorKey || (camp.colorTag.startsWith('bg-') ? camp.colorTag : defaultColorKey(fields.subject)),
       // Legacy samples used real people's names as a fake source; don't keep showing them.
       channelName: kind === 'manual' ? fields.channelName.trim() : camp.channelName,
@@ -63,7 +64,7 @@ export function EditCampDialog({
     <Dialog
       open
       onClose={onClose}
-      title="Kampı düzenle"
+      title="Branşı düzenle"
       width={600}
       dismissOnBackdrop={false}
       footer={
@@ -78,7 +79,9 @@ export function EditCampDialog({
       }
     >
       <CampFields values={fields} onChange={setFields} errors={errors} showErrors={submitted} />
-      <p className="field-hint mt-4">Dersi değiştirmek planı yeniden dağıtabilir; tamamlanan görevler korunur.</p>
+      <p className="field-hint mt-4">
+        Branşın adını değiştirmek otomatik dağıtımı etkileyebilir (aynı adlı branşlar tek branş sayılır); tamamlanan görevler korunur.
+      </p>
     </Dialog>
   );
 }
@@ -93,6 +96,7 @@ export function AddVideosDialog({
   onClose: () => void;
 }) {
   const [drafts, setDrafts] = useState<DraftVideo[]>([]);
+  const [source, setSource] = useState<PlaylistInfo | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const save = () => {
@@ -100,7 +104,9 @@ export function AddVideosDialog({
     if (drafts.length === 0) return;
     const start = camp.videos.length;
     const added = drafts.map((draft, i) => videoFromDraft(draft, camp.id, start + i + 1));
-    onSave(withVideos(camp, [...camp.videos, ...added]));
+    // A branch keeps one source link: fill it only if the branch has none.
+    const link = !camp.playlistUrl && source ? { playlistUrl: source.url, channelName: camp.channelName || source.channelTitle.trim() } : {};
+    onSave({ ...withVideos(camp, [...camp.videos, ...added]), ...link });
     onClose();
   };
 
@@ -111,7 +117,7 @@ export function AddVideosDialog({
       title="Video ekle"
       description={
         <>
-          <span className="font-semibold text-ink">{camp.title}</span> kampının sonuna eklenir.
+          <span className="font-semibold text-ink">{camp.subject}</span> branşının sonuna, sırayla eklenir.
         </>
       }
       width={640}
@@ -134,7 +140,14 @@ export function AddVideosDialog({
         existingIds={youtubeIdsOf(camp)}
         offset={camp.videos.length}
         error={submitted && drafts.length === 0 ? 'En az bir video ekle.' : undefined}
+        onPlaylistImported={info => setSource(current => current ?? info)}
       />
+      {camp.playlistUrl && source && source.url !== camp.playlistUrl && (
+        <p className="field-hint mt-3">
+          Videolar kendi bağlantılarıyla eklenir; branşın kaynak listesi değişmez. Bir listeyi kendi bağlantısıyla ayrı tutmak için
+          Kamplar’dan “Branş ekle”yi kullan.
+        </p>
+      )}
     </Dialog>
   );
 }
@@ -167,10 +180,10 @@ export function EditVideoDialog({
     ? !urlCheck.ok
       ? urlCheck.error
       : otherIds.includes(urlCheck.value.id)
-        ? 'Bu video kampta zaten var.'
+        ? 'Bu video branşta zaten var.'
         : null
     : linkRequired
-      ? 'Bu kampta her videonun bağlantısı olmalı.'
+      ? 'Bu branşta her videonun bağlantısı olmalı.'
       : null;
   const invalid = Boolean(titleError || !durationCheck.ok || urlError);
 
@@ -208,7 +221,7 @@ export function EditVideoDialog({
       title: 'Video silinsin mi?',
       body: (
         <p>
-          <span className="font-semibold text-ink">{video.title}</span> kamptan çıkarılır ve tamamlanma kaydı silinir. Sonraki
+          <span className="font-semibold text-ink">{video.title}</span> branştan çıkarılır ve tamamlanma kaydı silinir. Sonraki
           görevler yeniden dağıtılır.
         </p>
       ),
@@ -227,7 +240,7 @@ export function EditVideoDialog({
       open
       onClose={onClose}
       title="Videoyu düzenle"
-      description={camp.title}
+      description={`${camp.subject} · ${camp.title}`}
       width={540}
       dismissOnBackdrop={false}
       footer={

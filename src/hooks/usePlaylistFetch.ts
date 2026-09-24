@@ -63,7 +63,16 @@ export function usePlaylistFetch() {
     setState(current => (current.status === 'invalid' ? { status: 'idle' } : current));
   }, []);
 
-  return { link, setLink, state, load, cancel };
+  /** Back to an empty field, e.g. after the list was imported. */
+  const reset = useCallback(() => {
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    lastLoadedRef.current = { status: 'idle' };
+    setLinkValue('');
+    setState({ status: 'idle' });
+  }, []);
+
+  return { link, setLink, state, load, cancel, reset };
 }
 
 export type PlaylistFetch = ReturnType<typeof usePlaylistFetch>;

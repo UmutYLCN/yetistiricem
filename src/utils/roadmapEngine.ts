@@ -1,5 +1,14 @@
-import type { DailyPlan, DailyPlanItem, RoadmapStats, SubjectPlaylist, UserPreferences, Video } from '../types';
-import { addDays, dayOfWeek, maxDateKey, todayKey, weekdayName } from './date.ts';
+import type {
+  DailyPlan,
+  DailyPlanItem,
+  RoadmapStats,
+  ShiftEvent,
+  StudyCamp,
+  SubjectPlaylist,
+  UserPreferences,
+  Video,
+} from '../types';
+import { addDays, dayOfWeek, diffDays, maxDateKey, todayKey, weekdayName } from './date.ts';
 import { defaultPreferences, inspectPreferences, normalizeShiftEvents } from './storage.ts';
 
 // Scheduling contract
@@ -10,20 +19,17 @@ import { defaultPreferences, inspectPreferences, normalizeShiftEvents } from './
 //   `createShiftEvent`). Replaying the stored events keeps later completion
 //   toggles from moving anything.
 // - Dates are local `YYYY-MM-DD` keys (see ./date.ts).
+// - Two ways to form the week: automatic (every branch round-robin over the
+//   study weekdays, capped by `maxSubjectsPerDay`) or manual (`weekPlan`: the
+//   user picks the branches of each weekday). See docs/planner-engine.md.
 
-/** Durable record of one "shift incomplete tasks" action. */
-export interface ShiftEvent {
-  /** Items still incomplete on or before this day were carried forward. */
-  date: string;
-  /** First day the carried items (and everything after) were replanned onto. */
-  resumeDate: string;
-  /** `DailyPlanItem.id`s carried forward, frozen when the shift was made. */
-  itemIds: string[];
-}
+export type { ShiftEvent };
 
 export type ScheduleIssue =
   | { kind: 'invalid-preference'; field: keyof UserPreferences }
   | { kind: 'no-study-days'; unscheduledCount: number }
+  /** Manual mode: a branch with videos that no study weekday includes. */
+  | { kind: 'unassigned-branch'; playlistId: string; unscheduledCount: number }
   | { kind: 'oversized-item'; itemId: string; date: string; effectiveMinutes: number; capacityMinutes: number };
 
 export interface ScheduleOptions {
@@ -31,6 +37,13 @@ export interface ScheduleOptions {
   shiftEvents?: readonly ShiftEvent[];
   /** Local day used for `isToday`/`isPast`; defaults to the real today. */
   today?: string;
+  /**
+   * Manual mode: branch (playlist) ids per weekday, index 0 = Sunday. Only
+   * those branches are studied on that weekday, and the study weekdays are
+   * exactly the ones with a branch (mock exam days still win). Null or
+   * missing = automatic distribution.
+   */
+  weekPlan?: readonly (readonly string[])[] | null;
 }
 
 export interface ScheduleResult {
@@ -38,16 +51,26 @@ export interface ScheduleResult {
   /** Preferences after validation; these are what the schedule used. */
   preferences: UserPreferences;
   capacityMinutes: number;
-  /** Items that could not be placed because no weekday is a study day. */
+  /**
+   * Items that could not be placed: no weekday is a study day, or (manual
+   * mode) their branch is on no study weekday.
+   */
   unscheduledItems: DailyPlanItem[];
   issues: ScheduleIssue[];
 }
 
-type DayKind = 'study' | 'rest' | 'mock';
+/** `free`: a manual-mode study day whose branches have nothing left. */
+type DayKind = 'study' | 'rest' | 'mock' | 'free';
+
+/** How days are filled: the validated preferences plus the manual week plan, if any. */
+interface PackRules {
+  pref: UserPreferences;
+  weekPlan: string[][] | null;
+}
 
 const EPSILON = 1e-9;
 
-export function getEffectiveMinutes(durationMinutes: number, pref: UserPreferences): number {
+export function getEffectiveMinutes(durationMinutes: number, pref: Pick<UserPreferences, 'playbackSpeed' | 'practiceMultiplier'>): number {
   const minutes = Number.isFinite(durationMinutes) && durationMinutes > 0 ? durationMinutes : 0;
   return (minutes / pref.playbackSpeed) * (1 + pref.practiceMultiplier);
 }
@@ -63,7 +86,8 @@ export function isOversizedItem(item: DailyPlanItem, pref: UserPreferences): boo
 
 /**
  * Mock exam days win over rest days. A day outside `activeDays` counts as a
- * rest day. Only the remaining days receive videos.
+ * rest day. Only the remaining days receive videos. (In manual mode
+ * `resolveRules` has already turned the week plan into `activeDays`.)
  */
 function dayKindOf(date: string, pref: UserPreferences): DayKind {
   const dow = dayOfWeek(date);
@@ -80,6 +104,42 @@ function hasStudyWeekday(pref: UserPreferences): boolean {
   return pref.activeDays.some(d => !pref.restDays.includes(d) && !pref.mockExamDays.includes(d));
 }
 
+const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
+
+/**
+ * Cleans a manual week plan against the branches that exist: seven lists,
+ * unknown and repeated ids dropped, each list in branch order.
+ */
+export function sanitizeWeekPlan(weekPlan: readonly (readonly string[])[] | null | undefined, branchIds: readonly string[]): string[][] {
+  return WEEKDAYS.map(dow => {
+    const day = Array.isArray(weekPlan?.[dow]) ? new Set(weekPlan[dow]) : new Set<string>();
+    return branchIds.filter(id => day.has(id));
+  });
+}
+
+/**
+ * Manual mode: study weekdays are exactly the weekdays with a branch (mock
+ * exam days still win); every other weekday rests. Auto mode is unchanged.
+ */
+function resolveRules(
+  pref: UserPreferences,
+  weekPlan: readonly (readonly string[])[] | null | undefined,
+  playlists: SubjectPlaylist[]
+): PackRules {
+  if (!weekPlan) return { pref, weekPlan: null };
+  const plan = sanitizeWeekPlan(
+    weekPlan,
+    playlists.map(pl => pl.id)
+  );
+  const mock = pref.mockExamDays;
+  const activeDays = WEEKDAYS.filter(d => plan[d].length > 0 && !mock.includes(d));
+  const restDays = WEEKDAYS.filter(d => !activeDays.includes(d) && !mock.includes(d));
+  return {
+    pref: { ...pref, activeDays, restDays },
+    weekPlan: WEEKDAYS.map(d => (activeDays.includes(d) ? plan[d] : [])),
+  };
+}
+
 function makeDay(date: string, kind: DayKind, items: DailyPlanItem[], today: string): DailyPlan {
   return {
     date,
@@ -88,6 +148,7 @@ function makeDay(date: string, kind: DayKind, items: DailyPlanItem[], today: str
     isPast: date < today,
     isRestDay: kind === 'rest',
     isMockExamDay: kind === 'mock',
+    ...(kind === 'free' ? { isFreeDay: true } : {}),
     items,
     totalMinutes: items.reduce((acc, item) => acc + item.effectiveMinutes, 0),
     isAllCompleted: items.length > 0 && items.every(item => item.completed),
@@ -97,6 +158,7 @@ function makeDay(date: string, kind: DayKind, items: DailyPlanItem[], today: str
 function kindOfPlan(plan: DailyPlan): DayKind {
   if (plan.isMockExamDay) return 'mock';
   if (plan.isRestDay) return 'rest';
+  if (plan.isFreeDay) return 'free';
   return 'study';
 }
 
@@ -134,26 +196,48 @@ interface PackResult {
   unscheduled: DailyPlanItem[];
 }
 
+interface Queue {
+  playlistId: string;
+  subject: string;
+  items: DailyPlanItem[];
+  pos: number;
+}
+
 /**
  * Lays `items` out on days from `startDate`. Items keep their order within a
- * playlist. Each study day is filled by round-robin passes over the playlists,
- * starting after the playlist that got the last item the day before, so every
- * subject keeps moving even under `maxSubjectsPerDay`. A playlist whose next
- * item is longer than a whole day gets the next study day to itself. Every
- * study day places at least one item, so this always finishes. Completion is
- * ignored here on purpose.
+ * playlist (branch).
+ *
+ * Automatic mode: each study day is filled by round-robin passes over every
+ * branch, starting after the branch that got the last item the day before, so
+ * every subject keeps moving even under `maxSubjectsPerDay`.
+ *
+ * Manual mode: a study day only takes the branches its weekday lists, again
+ * round-robin in branch order until the day is full. A weekday whose branches
+ * have nothing left becomes a `free` day. Branches on no study weekday cannot
+ * be placed and come back as `unscheduled`.
+ *
+ * Either way a branch whose next item is longer than a whole day gets the
+ * next (eligible) study day to itself, and each 7-day window places at least
+ * one item, so this always finishes. Completion is ignored here on purpose.
  */
-function packItems(items: DailyPlanItem[], startDate: string, pref: UserPreferences, today: string): PackResult {
+function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, today: string): PackResult {
+  const { pref, weekPlan } = rules;
   const plans: DailyPlan[] = [];
   if (items.length === 0) return { plans, unscheduled: [] };
   if (!hasStudyWeekday(pref)) return { plans, unscheduled: [...items] };
 
-  const queues: { subject: string; items: DailyPlanItem[]; pos: number }[] = [];
-  const queueByPlaylist = new Map<string, (typeof queues)[number]>();
+  const assigned = weekPlan ? new Set(weekPlan.flat()) : null;
+  const queues: Queue[] = [];
+  const queueByPlaylist = new Map<string, Queue>();
+  const unassigned: DailyPlanItem[] = [];
   for (const item of items) {
+    if (assigned && !assigned.has(item.playlistId)) {
+      unassigned.push({ ...item });
+      continue;
+    }
     let queue = queueByPlaylist.get(item.playlistId);
     if (!queue) {
-      queue = { subject: item.subject, items: [], pos: 0 };
+      queue = { playlistId: item.playlistId, subject: item.subject, items: [], pos: 0 };
       queueByPlaylist.set(item.playlistId, queue);
       queues.push(queue);
     }
@@ -161,12 +245,19 @@ function packItems(items: DailyPlanItem[], startDate: string, pref: UserPreferen
   }
 
   const capacity = getDailyCapacityMinutes(pref);
-  const maxSubjects = pref.maxSubjectsPerDay;
-  let remaining = items.length;
+  // Manual days pick their branches themselves, so only auto mode caps them.
+  const maxSubjects = weekPlan ? Number.POSITIVE_INFINITY : pref.maxSubjectsPerDay;
+  const queuesOn = (dow: number): number[] => {
+    if (!weekPlan) return queues.map((_, i) => i);
+    const ids = new Set(weekPlan[dow]);
+    return queues.flatMap((q, i) => (ids.has(q.playlistId) ? [i] : []));
+  };
+  let remaining = items.length - unassigned.length;
   let start = 0;
   let date = startDate;
-  // Each 7-day window has a study day and each study day places an item, so
-  // this bound is never reached; it only guards against a future regression.
+  // Each 7-day window has a study day for every remaining branch and each
+  // such day places an item, so this bound is never reached; it only guards
+  // against a future regression.
   const maxDays = items.length * 7 + 7;
 
   for (let dayIndex = 0; remaining > 0 && dayIndex < maxDays; dayIndex++, date = addDays(date, 1)) {
@@ -176,7 +267,9 @@ function packItems(items: DailyPlanItem[], startDate: string, pref: UserPreferen
       continue;
     }
 
-    const order = queues.map((_, i) => (start + i) % queues.length);
+    const eligible = queuesOn(dayOfWeek(date));
+    // Rotation only matters in auto mode; manual days keep branch order.
+    const order = weekPlan ? eligible : eligible.map((_, i) => eligible[(start + i) % eligible.length]);
     const dayItems: DailyPlanItem[] = [];
     const subjects = new Set<string>();
     let used = 0;
@@ -212,11 +305,11 @@ function packItems(items: DailyPlanItem[], startDate: string, pref: UserPreferen
     }
 
     remaining -= dayItems.length;
-    start = (lastQueue + 1) % queues.length;
-    plans.push(makeDay(date, 'study', dayItems, today));
+    if (!weekPlan) start = (lastQueue + 1) % queues.length;
+    plans.push(makeDay(date, weekPlan && dayItems.length === 0 ? 'free' : 'study', dayItems, today));
   }
 
-  const unscheduled = queues.flatMap(q => q.items.slice(q.pos));
+  const unscheduled = [...queues.flatMap(q => q.items.slice(q.pos)), ...unassigned];
   return { plans, unscheduled };
 }
 
@@ -234,26 +327,35 @@ function withCompletion(plans: DailyPlan[], completedMap: Record<string, boolean
 /**
  * Full scheduler: validated preferences, deterministic layout of every video,
  * the stored shift events replayed in order, then completion flags.
+ * Pass `options.weekPlan` for manual mode (see `buildCampSchedule`).
  */
 export function buildSchedule(
   playlists: SubjectPlaylist[],
   preferences: UserPreferences,
   options: ScheduleOptions = {}
 ): ScheduleResult {
-  const { preferences: pref, invalidFields } = inspectPreferences(preferences);
+  const { preferences: validated, invalidFields } = inspectPreferences(preferences);
+  const rules = resolveRules(validated, options.weekPlan, playlists);
+  const pref = rules.pref;
   const today = options.today ?? todayKey();
-  const packed = packItems(buildItems(playlists, pref), pref.startDate, pref, today);
+  const packed = packItems(buildItems(playlists, pref), pref.startDate, rules, today);
 
   let plans = packed.plans;
   for (const event of normalizeShiftEvents(options.shiftEvents ?? [])) {
-    plans = applyShift(plans, event, pref, today);
+    plans = applyShift(plans, event, rules, today);
   }
   plans = withCompletion(plans, options.completedMap ?? {}, today);
 
   const capacityMinutes = getDailyCapacityMinutes(pref);
   const issues: ScheduleIssue[] = invalidFields.map(field => ({ kind: 'invalid-preference', field }));
   if (packed.unscheduled.length > 0) {
-    issues.push({ kind: 'no-study-days', unscheduledCount: packed.unscheduled.length });
+    if (!hasStudyWeekday(pref)) {
+      issues.push({ kind: 'no-study-days', unscheduledCount: packed.unscheduled.length });
+    } else {
+      const counts = new Map<string, number>();
+      for (const item of packed.unscheduled) counts.set(item.playlistId, (counts.get(item.playlistId) ?? 0) + 1);
+      for (const [playlistId, unscheduledCount] of counts) issues.push({ kind: 'unassigned-branch', playlistId, unscheduledCount });
+    }
   }
   for (const plan of plans) {
     for (const item of plan.items) {
@@ -271,6 +373,21 @@ export function buildSchedule(
     unscheduledItems: packed.unscheduled.map(item => ({ ...item, completed: completedMap[item.videoId] === true })),
     issues,
   };
+}
+
+/**
+ * A camp's plan: its branches, its schedule (automatic or manual week) and
+ * its own shift events. This is what every screen shows.
+ */
+export function buildCampSchedule(
+  camp: Pick<StudyCamp, 'branches' | 'schedule' | 'shiftEvents'>,
+  options: Omit<ScheduleOptions, 'shiftEvents' | 'weekPlan'> = {}
+): ScheduleResult {
+  return buildSchedule(camp.branches, camp.schedule, {
+    ...options,
+    shiftEvents: camp.shiftEvents,
+    weekPlan: camp.schedule.mode === 'manual' ? camp.schedule.weekPlan : null,
+  });
 }
 
 /**
@@ -304,7 +421,7 @@ export function createShiftEvent(date: string, plans: DailyPlan[], today: string
   return { date, resumeDate: addDays(maxDateKey(date, today), 1), itemIds };
 }
 
-function applyShift(plans: DailyPlan[], event: ShiftEvent, pref: UserPreferences, today: string): DailyPlan[] {
+function applyShift(plans: DailyPlan[], event: ShiftEvent, rules: PackRules, today: string): DailyPlan[] {
   const carried = new Set(event.itemIds);
   const sorted = [...plans].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const kept: DailyPlan[] = [];
@@ -320,7 +437,7 @@ function applyShift(plans: DailyPlan[], event: ShiftEvent, pref: UserPreferences
     }
   }
 
-  const packed = packItems(replan, event.resumeDate, pref, today);
+  const packed = packItems(replan, event.resumeDate, rules, today);
   if (packed.unscheduled.length > 0) {
     // No study day to move to: leave the plan as it was rather than drop tasks.
     return sorted.map(plan => makeDay(plan.date, kindOfPlan(plan), plan.items.map(item => ({ ...item })), today));
@@ -332,7 +449,8 @@ function applyShift(plans: DailyPlan[], event: ShiftEvent, pref: UserPreferences
  * Applies one shift event to a plan list without mutating it. Items on days
  * before `event.resumeDate` stay unless carried; carried items and every
  * later item are replanned from `resumeDate` with the normal capacity, rest
- * day and subject rules. No item is dropped.
+ * day and subject rules. No item is dropped. (Automatic mode only; camps
+ * replay their events through `buildCampSchedule`.)
  */
 export function applyShiftEvent(
   plans: DailyPlan[],
@@ -340,9 +458,8 @@ export function applyShiftEvent(
   preferences?: UserPreferences,
   today: string = todayKey()
 ): DailyPlan[] {
-  return applyShift(plans, event, resolveShiftPreferences(plans, preferences), today);
+  return applyShift(plans, event, { pref: resolveShiftPreferences(plans, preferences), weekPlan: null }, today);
 }
-
 function resolveShiftPreferences(plans: DailyPlan[], preferences?: UserPreferences): UserPreferences {
   if (preferences) return inspectPreferences(preferences).preferences;
   // Without preferences, don't make days tighter than the ones already planned.
@@ -401,4 +518,67 @@ export function calculateStats(dailyPlans: DailyPlan[], totalVideosOverall: numb
     daysRemaining: daysWithWork.length,
     progressPercent: totalVideos === 0 ? 0 : Math.round((completedVideos / totalVideos) * 100),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Target end date. A deadline never changes the layout: it is only compared
+// with where the plan ends, so nothing is dropped or squeezed to meet it.
+
+/** Last day holding a task (done or not), or null for an empty plan. */
+export function planEndDate(plans: DailyPlan[]): string | null {
+  let end: string | null = null;
+  for (const plan of plans) if (plan.items.length > 0 && (end === null || plan.date > end)) end = plan.date;
+  return end;
+}
+
+export type DeadlineStatus =
+  | { kind: 'none' }
+  /** Some videos cannot be placed at all (see the schedule issues). */
+  | { kind: 'incomplete'; targetEndDate: string; unscheduledCount: number }
+  | { kind: 'on-track'; finishDate: string; targetEndDate: string; spareDays: number }
+  | { kind: 'late'; finishDate: string; targetEndDate: string; lateDays: number };
+
+export function assessDeadline(input: {
+  finishDate: string | null;
+  targetEndDate: string | null | undefined;
+  unscheduledCount?: number;
+}): DeadlineStatus {
+  const { finishDate, targetEndDate, unscheduledCount = 0 } = input;
+  if (!targetEndDate) return { kind: 'none' };
+  if (unscheduledCount > 0) return { kind: 'incomplete', targetEndDate, unscheduledCount };
+  if (finishDate === null) return { kind: 'none' };
+  const gap = diffDays(targetEndDate, finishDate);
+  return gap > 0
+    ? { kind: 'late', finishDate, targetEndDate, lateDays: gap }
+    : { kind: 'on-track', finishDate, targetEndDate, spareDays: Math.max(0, -gap) };
+}
+
+/**
+ * The smallest daily study time (in `step`-hour steps above the current one,
+ * at most `maxHours`) with which the camp's plan ends by its target date, or
+ * null when no such time exists (e.g. manual weekdays are the bottleneck).
+ */
+export function dailyHoursForDeadline(
+  camp: Pick<StudyCamp, 'branches' | 'schedule' | 'shiftEvents'>,
+  options: { today?: string; maxHours?: number; step?: number } = {}
+): number | null {
+  const target = camp.schedule.targetEndDate;
+  if (!target) return null;
+  const step = options.step ?? 0.5;
+  const finishesWith = (hours: number) => {
+    const result = buildCampSchedule({ ...camp, schedule: { ...camp.schedule, dailyStudyHours: hours } }, { today: options.today });
+    if (result.unscheduledItems.length > 0) return false;
+    const end = planEndDate(result.plans);
+    return end === null || end <= target;
+  };
+  let lo = Math.floor(camp.schedule.dailyStudyHours / step + EPSILON) + 1;
+  let hi = Math.floor((options.maxHours ?? 16) / step + EPSILON);
+  if (lo > hi || !finishesWith(hi * step)) return null;
+  // Packing is almost monotonic in the capacity; the answer is checked either way.
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (finishesWith(mid * step)) hi = mid;
+    else lo = mid + 1;
+  }
+  return lo * step;
 }

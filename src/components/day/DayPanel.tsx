@@ -19,14 +19,16 @@ interface Props {
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onShift: (date: string) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  onAddBranches: () => void;
 }
 
-function EmptyDay({ icon, title, body }: { icon: ReactNode; title: string; body: string }) {
+function EmptyDay({ icon, title, body, action }: { icon: ReactNode; title: string; body: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
       <span className="mb-3 flex size-11 items-center justify-center rounded-full bg-sunk text-ink-2">{icon}</span>
       <p className="font-display text-[19px] text-ink">{title}</p>
       <p className="mt-1 max-w-sm text-[14px] text-ink-2">{body}</p>
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }
@@ -43,6 +45,7 @@ export function DayPanel({
   onToggle,
   onShift,
   onEditLink,
+  onAddBranches,
 }: Props) {
   const { date, plan, kind, total, done, minutes, doneMinutes } = summary;
   const items = plan?.items ?? [];
@@ -83,6 +86,14 @@ export function DayPanel({
         body="Bugün video yok. Bir deneme çöz, yanlışlarını analiz et ve not al."
       />
     );
+  } else if (plan?.isFreeDay) {
+    body = (
+      <EmptyDay
+        icon={<CircleCheck className="size-5" aria-hidden="true" />}
+        title="Bu günün branşları bitti"
+        body="Bu güne yerleştirdiğin branşların videoları tamamlandı. Diğer branşlar kendi günlerinde devam ediyor."
+      />
+    );
   } else if (plan) {
     body = (
       <EmptyDay
@@ -96,7 +107,12 @@ export function DayPanel({
       <EmptyDay
         icon={<Coffee className="size-5" aria-hidden="true" />}
         title="Bu gün boş"
-        body="Henüz plan yok. Bir kamp eklediğinde görevler buraya gelir."
+        body="Bu kampta henüz video yok. Bir branş eklediğinde görevler buraya gelir."
+        action={
+          <button type="button" className="btn btn-primary btn-sm" onClick={onAddBranches}>
+            Branş ekle
+          </button>
+        }
       />
     );
   } else if (date < (firstDate ?? startDate)) {
@@ -112,7 +128,7 @@ export function DayPanel({
       <EmptyDay
         icon={<CircleCheck className="size-5" aria-hidden="true" />}
         title="Planın bu tarihten önce bitiyor"
-        body={lastDate ? `Son görevlerin ${formatLongDate(lastDate)} tarihinde. Yeni kamp ekleyerek planı uzatabilirsin.` : ''}
+        body={lastDate ? `Son görevlerin ${formatLongDate(lastDate)} tarihinde. Yeni branş ekleyerek planı uzatabilirsin.` : ''}
       />
     );
   }
@@ -164,7 +180,7 @@ export function DayPanel({
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
               <p className="text-[13.5px] text-ink-2">
                 <span className="font-semibold text-ink">Bazı görevlerin bağlantısı çalışmıyor.</span> Önceki sürümün örnek
-                kamplarındaki videolar gerçek değildi. Gerçek videoyu biliyorsan “Bağlantı ekle” ile ekleyebilirsin.
+                listelerindeki videolar gerçek değildi. Gerçek videoyu biliyorsan “Bağlantı ekle” ile ekleyebilirsin.
               </p>
             </div>
           )}

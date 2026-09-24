@@ -1,7 +1,7 @@
-import { Forward, TriangleAlert } from 'lucide-react';
-import type { RoadmapStats, UserPreferences } from '../../types';
+import { CircleCheck, Forward, Gauge, TriangleAlert } from 'lucide-react';
+import type { RoadmapStats, StudyCamp, UserPreferences } from '../../types';
 import type { ScheduleIssue } from '../../lib/engine';
-import { addDays, diffDays, formatDateKey } from '../../lib/engine';
+import { addDays, assessDeadline, diffDays, formatDateKey } from '../../lib/engine';
 import {
   formatHours,
   formatLongDate,
@@ -18,6 +18,7 @@ import { KindBadge, Meter, SubjectDot } from '../ui/Bits';
 interface Props {
   stats: RoadmapStats;
   prefs: UserPreferences;
+  camp: StudyCamp;
   today: string;
   index: PlanIndex;
   camps: Map<string, CampInfo>;
@@ -25,15 +26,20 @@ interface Props {
   issues: ScheduleIssue[];
   onShiftOverdue: () => void;
   onOpenWeek: (monday: string) => void;
-  onOpenSettings: () => void;
+  onEditTempo: () => void;
 }
 
-export function ProgressView({ stats, prefs, today, index, camps, weeks, issues, onShiftOverdue, onOpenWeek, onOpenSettings }: Props) {
+export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, issues, onShiftOverdue, onOpenWeek, onEditTempo }: Props) {
   const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
   const daysLeft = diffDays(today, stats.estimatedFinishDate);
   const thisMonday = startOfWeek(today);
   const oversized = issues.filter(i => i.kind === 'oversized-item');
   const noStudyDays = issues.find(i => i.kind === 'no-study-days');
+  const unassigned = issues.flatMap(i => (i.kind === 'unassigned-branch' ? [i] : []));
+  const unscheduled = unassigned.reduce((acc, i) => acc + i.unscheduledCount, 0) + (noStudyDays?.kind === 'no-study-days' ? noStudyDays.unscheduledCount : 0);
+  const deadline = finished
+    ? null
+    : assessDeadline({ finishDate: stats.estimatedFinishDate, targetEndDate: camp.schedule.targetEndDate, unscheduledCount: unscheduled });
 
   const tiles = [
     {
@@ -63,7 +69,7 @@ export function ProgressView({ stats, prefs, today, index, camps, weeks, issues,
     <div className="mx-auto max-w-[920px] space-y-5">
       <PageHeader
         title="İlerleme"
-        subtitle={`Plan ${formatLongDate(prefs.startDate)} tarihinde başladı`}
+        subtitle={`Plan ${formatLongDate(prefs.startDate)} tarihinde ${prefs.startDate > today ? 'başlıyor' : 'başladı'}`}
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -92,7 +98,36 @@ export function ProgressView({ stats, prefs, today, index, camps, weeks, issues,
         </div>
       )}
 
-      {(oversized.length > 0 || noStudyDays) && (
+      {deadline && deadline.kind !== 'none' && deadline.kind !== 'incomplete' && (
+        <div className={`callout ${deadline.kind === 'late' ? 'callout-accent' : 'callout-info'} flex-wrap items-center`}>
+          {deadline.kind === 'late' ? (
+            <TriangleAlert className="size-4 shrink-0 text-accent-strong" aria-hidden="true" />
+          ) : (
+            <CircleCheck className="size-4 shrink-0 text-forest" aria-hidden="true" />
+          )}
+          <p className="min-w-[14rem] flex-1 text-[14px] text-ink-2">
+            {deadline.kind === 'late' ? (
+              <>
+                <span className="font-semibold text-ink">Hedefin {deadline.lateDays} gün gerisindesin.</span> Plan{' '}
+                {formatLongDate(deadline.finishDate)} tarihinde bitiyor; hedefin {formatLongDate(deadline.targetEndDate)}.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-ink">Hedefe yetişiyorsun.</span> Plan {formatLongDate(deadline.finishDate)} tarihinde
+                bitiyor{deadline.spareDays > 0 ? `, hedeften ${deadline.spareDays} gün önce` : ''}.
+              </>
+            )}
+          </p>
+          {deadline.kind === 'late' && (
+            <button type="button" className="btn btn-sm btn-secondary" onClick={onEditTempo}>
+              <Gauge aria-hidden="true" />
+              Tempoyu düzenle
+            </button>
+          )}
+        </div>
+      )}
+
+      {(oversized.length > 0 || noStudyDays || unassigned.length > 0) && (
         <section className="callout callout-warn" aria-labelledby="plan-issues">
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
           <div className="min-w-0 flex-1 text-[14px] text-ink-2">
@@ -103,11 +138,20 @@ export function ProgressView({ stats, prefs, today, index, camps, weeks, issues,
               {noStudyDays && noStudyDays.kind === 'no-study-days' && (
                 <li>
                   Haftada hiç çalışma günü yok; {noStudyDays.unscheduledCount} video planlanamadı.{' '}
-                  <button type="button" className="font-semibold text-forest underline" onClick={onOpenSettings}>
+                  <button type="button" className="font-semibold text-forest underline" onClick={onEditTempo}>
                     Çalışma günü seç
                   </button>
                 </li>
               )}
+              {unassigned.map(issue => (
+                <li key={issue.playlistId}>
+                  {camps.get(issue.playlistId)?.camp.subject ?? 'Bir branş'} hiçbir güne yerleşmemiş; {issue.unscheduledCount} videosu
+                  planda yok.{' '}
+                  <button type="button" className="font-semibold text-forest underline" onClick={onEditTempo}>
+                    Günlere yerleştir
+                  </button>
+                </li>
+              ))}
               {oversized.length > 0 && (
                 <li>
                   {oversized.length} video günlük çalışma sürenden ({formatMinutes(prefs.dailyStudyHours * 60)}) uzun; her biri
@@ -121,7 +165,7 @@ export function ProgressView({ stats, prefs, today, index, camps, weeks, issues,
 
       <section className="card" aria-labelledby="progress-camps">
         <h2 id="progress-camps" className="border-b border-line px-5 py-3.5 text-[15px] font-semibold text-ink">
-          Kamplara göre
+          Branşlara göre
         </h2>
         <ul>
           {[...camps.values()].map(info => {
@@ -130,17 +174,17 @@ export function ProgressView({ stats, prefs, today, index, camps, weeks, issues,
               <li key={info.camp.id} className="border-t border-line px-5 py-4 first:border-t-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <SubjectDot color={info.color.solid} />
-                  <p className="min-w-0 flex-1 truncate font-semibold text-ink">{info.camp.title}</p>
+                  <p className="min-w-0 flex-1 truncate font-semibold text-ink">{info.camp.subject}</p>
                   <KindBadge kind={info.kind} />
                   <p className="tnum text-[13px] font-semibold text-ink-2">
                     {progress.done}/{progress.total}
                   </p>
                 </div>
                 <div className="mt-2.5">
-                  <Meter value={progress.done} max={progress.total} label={`${info.camp.title} ilerlemesi`} color={info.color.solid} />
+                  <Meter value={progress.done} max={progress.total} label={`${info.camp.subject} ilerlemesi`} color={info.color.solid} />
                 </div>
                 <p className="tnum mt-2 text-[12.5px] text-ink-3">
-                  {info.camp.subject}
+                  {info.camp.title}
                   {progress.remainingMinutes > 0
                     ? ` · ${formatMinutes(progress.remainingMinutes)} kaldı · bitiş ${progress.finishDate ? formatShortDate(progress.finishDate) : '—'}`
                     : progress.total > 0

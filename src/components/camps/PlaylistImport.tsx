@@ -20,17 +20,31 @@ import type { PlaylistInfo, PlaylistResponse } from '../../utils/youtubePlaylist
 
 interface Props {
   fetcher: PlaylistFetch;
-  /** YouTube ids already in the camp or the draft list. */
+  /** YouTube ids already in the branch or the draft list. */
   knownIds: string[];
   onImport: (drafts: DraftVideo[], playlist: PlaylistInfo) => void;
+  /** Button text for the selected videos. */
+  importLabel?: (count: number) => string;
+  /** Empty the field after an import (for adding several lists in a row). */
+  clearAfterImport?: boolean;
 }
 
+const defaultImportLabel = (count: number) => `Seçilen ${count} videoyu ekle`;
+
 /** Paste a playlist link → fetch → review and select → add to the draft list. */
-export function PlaylistImport({ fetcher, knownIds, onImport }: Props) {
-  const { link, setLink, state, load, cancel } = fetcher;
+export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defaultImportLabel, clearAfterImport = false }: Props) {
+  const { link, setLink, state, load, cancel, reset } = fetcher;
   const uid = useId();
   const loading = state.status === 'loading';
   const problem = state.status === 'invalid' ? LINK_PROBLEM_TEXT[state.problem] : null;
+  const [imported, setImported] = useState<{ title: string; count: number } | null>(null);
+
+  const handleImport = (drafts: DraftVideo[], playlist: PlaylistInfo) => {
+    onImport(drafts, playlist);
+    if (!clearAfterImport) return;
+    reset();
+    setImported({ title: playlist.title || 'Liste', count: drafts.length });
+  };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -63,7 +77,10 @@ export function PlaylistImport({ fetcher, knownIds, onImport }: Props) {
             spellCheck={false}
             placeholder="https://www.youtube.com/playlist?list=…"
             value={link}
-            onChange={e => setLink(e.target.value)}
+            onChange={e => {
+              setLink(e.target.value);
+              setImported(null);
+            }}
             onPaste={handlePaste}
             aria-invalid={problem ? true : undefined}
             aria-describedby={`${uid}-link-${problem ? 'error' : 'hint'}`}
@@ -87,6 +104,14 @@ export function PlaylistImport({ fetcher, knownIds, onImport }: Props) {
       </form>
 
       <div role="status" aria-live="polite">
+        {imported && !loading && (
+          <p className="mt-3 flex items-center gap-2 rounded-[10px] bg-forest-tint px-3.5 py-2.5 text-[13px] font-semibold text-forest-strong">
+            <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 break-words">
+              “{imported.title}” eklendi ({imported.count} video). Başka bir liste yapıştırabilirsin.
+            </span>
+          </p>
+        )}
         {loading && (
           <div className="mt-3 flex items-center gap-3 rounded-[10px] border border-line bg-card px-3.5 py-3 text-[13px] text-ink-2">
             <LoaderCircle className="size-4 shrink-0 animate-spin text-forest" aria-hidden="true" />
@@ -117,7 +142,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport }: Props) {
       )}
 
       {state.status === 'loaded' && (
-        <PlaylistReview key={state.version} data={state.data} knownIds={knownIds} onImport={onImport} />
+        <PlaylistReview key={state.version} data={state.data} knownIds={knownIds} onImport={handleImport} importLabel={importLabel} />
       )}
     </div>
   );
@@ -127,10 +152,12 @@ function PlaylistReview({
   data,
   knownIds,
   onImport,
+  importLabel,
 }: {
   data: PlaylistResponse;
   knownIds: string[];
   onImport: (drafts: DraftVideo[], playlist: PlaylistInfo) => void;
+  importLabel: (count: number) => string;
 }) {
   const uid = useId();
   const rows = reviewPlaylist(data.entries, knownIds);
@@ -230,7 +257,7 @@ function PlaylistReview({
       <footer className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line bg-paper/50 px-3.5 py-3">
         <button type="button" className="btn btn-secondary btn-sm" onClick={importSelected} disabled={chosen.length === 0}>
           <ListPlus aria-hidden="true" />
-          {chosen.length > 0 ? `Seçilen ${chosen.length} videoyu ekle` : 'Eklemek için video seç'}
+          {chosen.length > 0 ? importLabel(chosen.length) : 'Eklemek için video seç'}
         </button>
         <p role="status" className="text-[12.5px] text-forest">
           {lastImport !== null && (

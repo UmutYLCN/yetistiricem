@@ -1,5 +1,4 @@
-import type { SubjectPlaylist, UserPreferences, Video } from '../types';
-import type { ShiftEvent } from './engine.ts';
+import type { StudyCamp, UserPreferences } from '../types';
 import {
   STORAGE_KEYS,
   buildSchedule,
@@ -12,26 +11,45 @@ import {
   normalizeShiftEvents,
   todayKey,
 } from './engine.ts';
+import type { LegacyData } from './studyCamp.ts';
+import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } from './studyCamp.ts';
 
-// Everything the planner keeps in localStorage. The engine owns the original
-// keys (STORAGE_KEYS); the UI adds the selected day and day notes. Loading
-// never throws away data silently: unreadable values are copied aside and
-// reported as notices.
+// Everything the planner keeps in localStorage.
+//
+// - `yt_camps` holds the study camps (`{ version, camps }`): each camp owns its
+//   branches, schedule and shift events. `yt_active_camp` names the camp the
+//   screens show.
+// - `yt_completed`, `yt_day_notes` and `yt_selected_date` are shared by all
+//   camps (video ids are unique, notes belong to a calendar day).
+// - The older flat keys (`yt_playlists`, `yt_prefs`, `yt_shift_events`,
+//   `yt_shifted_date`) are only read, once, to build the first camp when
+//   `yt_camps` does not exist yet. They are never written or removed here, so
+//   they stay as a snapshot of the pre-camp data (Reset clears them).
+//
+// Loading never throws away data silently: unreadable values are copied
+// aside and reported as notices.
 
 export const UI_KEYS = {
   selectedDate: 'yt_selected_date',
   dayNotes: 'yt_day_notes',
 } as const;
 
-export const ALL_KEYS = [...Object.values(STORAGE_KEYS), ...Object.values(UI_KEYS)];
+export const CAMP_KEYS = {
+  camps: 'yt_camps',
+  activeCamp: 'yt_active_camp',
+} as const;
+
+export const CAMPS_VERSION = 1;
+
+export const ALL_KEYS = [...Object.values(STORAGE_KEYS), ...Object.values(UI_KEYS), ...Object.values(CAMP_KEYS)];
 
 export const MAX_NOTE_LENGTH = 2000;
 
 export interface PlannerData {
-  preferences: UserPreferences;
-  playlists: SubjectPlaylist[];
+  camps: StudyCamp[];
+  /** The camp the screens show; null only when there is no camp. */
+  activeCampId: string | null;
   completedMap: Record<string, boolean>;
-  shiftEvents: ShiftEvent[];
   dayNotes: Record<string, string>;
 }
 
@@ -47,23 +65,31 @@ export interface LoadResult {
   selectedDate: string;
   notices: Notice[];
   storageAvailable: boolean;
+  /**
+   * Preferences saved by an older version that had no camp to carry them;
+   * the camp wizard starts from them.
+   */
+  seedPreferences: UserPreferences | null;
 }
 
-export function emptyData(today: string = todayKey()): PlannerData {
-  return {
-    preferences: { ...defaultPreferences, startDate: today },
-    playlists: [],
-    completedMap: {},
-    shiftEvents: [],
-    dayNotes: {},
-  };
+export function emptyData(): PlannerData {
+  return { camps: [], activeCampId: null, completedMap: {}, dayNotes: {} };
 }
 
-const PREF_LABELS: Record<keyof UserPreferences, string> = {
+export function campStore(camps: StudyCamp[]) {
+  return { version: CAMPS_VERSION, camps };
+}
+
+/** The camp the screens show: the active one, else the first. */
+export function activeCampOf(data: PlannerData): StudyCamp | null {
+  return data.camps.find(c => c.id === data.activeCampId) ?? data.camps[0] ?? null;
+}
+
+export const PREF_LABELS: Record<keyof UserPreferences, string> = {
   dailyStudyHours: 'günlük çalışma süresi',
   playbackSpeed: 'izleme hızı',
   practiceMultiplier: 'tekrar payı',
-  maxSubjectsPerDay: 'günlük ders sayısı',
+  maxSubjectsPerDay: 'günlük branş sayısı',
   activeDays: 'çalışma günleri',
   restDays: 'dinlenme günleri',
   mockExamDays: 'deneme günleri',
@@ -106,55 +132,6 @@ export function writeKey(key: string, value: unknown): boolean {
   }
 }
 
-function normalizeVideo(raw: unknown): Video | null {
-  if (!isRecord(raw) || typeof raw.id !== 'string' || !raw.id) return null;
-  const duration = typeof raw.durationMinutes === 'number' && Number.isFinite(raw.durationMinutes) ? raw.durationMinutes : 0;
-  return {
-    id: raw.id,
-    title: typeof raw.title === 'string' && raw.title.trim() ? raw.title : 'Başlıksız video',
-    durationMinutes: Math.max(0, duration),
-    videoUrl: typeof raw.videoUrl === 'string' ? raw.videoUrl : '',
-    thumbnailUrl: typeof raw.thumbnailUrl === 'string' ? raw.thumbnailUrl : '',
-    completed: raw.completed === true,
-    ...(typeof raw.channelName === 'string' && raw.channelName.trim() ? { channelName: raw.channelName } : {}),
-  };
-}
-
-interface PlaylistNormalization {
-  playlists: SubjectPlaylist[];
-  droppedCamps: number;
-  droppedVideos: number;
-}
-
-export function normalizePlaylists(raw: unknown): PlaylistNormalization {
-  const result: PlaylistNormalization = { playlists: [], droppedCamps: 0, droppedVideos: 0 };
-  if (!Array.isArray(raw)) return result;
-  const seen = new Set<string>();
-  for (const item of raw) {
-    if (!isRecord(item) || typeof item.id !== 'string' || !item.id || seen.has(item.id)) {
-      result.droppedCamps++;
-      continue;
-    }
-    seen.add(item.id);
-    const rawVideos = Array.isArray(item.videos) ? item.videos : [];
-    const videos = rawVideos.map(normalizeVideo).filter((v): v is Video => v !== null);
-    result.droppedVideos += rawVideos.length - videos.length;
-    const subject = typeof item.subject === 'string' && item.subject.trim() ? item.subject : 'Diğer';
-    result.playlists.push({
-      id: item.id,
-      title: typeof item.title === 'string' && item.title.trim() ? item.title : 'Adsız kamp',
-      subject,
-      channelName: typeof item.channelName === 'string' ? item.channelName : '',
-      playlistUrl: typeof item.playlistUrl === 'string' ? item.playlistUrl : '',
-      videos,
-      colorTag: typeof item.colorTag === 'string' ? item.colorTag : '',
-      totalDurationMinutes: videos.reduce((acc, v) => acc + v.durationMinutes, 0),
-      ...(item.source === 'manual' || item.source === 'demo-template' ? { source: item.source } : {}),
-    });
-  }
-  return result;
-}
-
 export function normalizeDayNotes(raw: unknown): Record<string, string> {
   if (!isRecord(raw)) return {};
   const notes: Record<string, string> = {};
@@ -175,21 +152,38 @@ function unreadableNotice(key: string, copyKey: string, what: string): Notice {
   };
 }
 
-function loadFromStorage(): LoadResult {
-  const today = todayKey();
-  const notices: Notice[] = [];
-  const data = emptyData(today);
+/** The stored camp list, or null when the value is not a camp store this version understands. */
+function readCampStore(value: unknown): unknown[] | null {
+  if (!isRecord(value) || !Array.isArray(value.camps)) return null;
+  if (typeof value.version === 'number' && value.version > CAMPS_VERSION) return null;
+  return value.camps;
+}
+
+interface LegacyRead extends LegacyData {
+  /** The preferences were actually stored (not defaults). */
+  hasPreferences: boolean;
+}
+
+/** Reads the older flat keys, with the same repair notices as before. */
+function readLegacy(notices: Notice[], completedMap: Record<string, boolean>, today: string): LegacyRead {
+  const legacy: LegacyRead = {
+    preferences: { ...defaultPreferences, startDate: today },
+    playlists: [],
+    shiftEvents: [],
+    hasPreferences: false,
+  };
 
   const prefs = readRaw(STORAGE_KEYS.preferences);
   if (prefs.status === 'ok') {
     const inspected = inspectPreferences(prefs.value);
-    data.preferences = inspected.preferences;
+    legacy.preferences = inspected.preferences;
+    legacy.hasPreferences = true;
     if (inspected.invalidFields.length > 0) {
       notices.push({
         id: 'prefs-invalid',
         tone: 'warn',
         title: 'Bazı ayarlar varsayılana döndü',
-        body: `Kayıtlı ayarlarda kullanılamayan değerler vardı: ${inspected.invalidFields.map(f => PREF_LABELS[f]).join(', ')}. Ayarlar sayfasından kontrol edebilirsin.`,
+        body: `Kayıtlı ayarlarda kullanılamayan değerler vardı: ${inspected.invalidFields.map(f => PREF_LABELS[f]).join(', ')}. Kampının “Tempoyu düzenle” ekranından kontrol edebilirsin.`,
       });
     }
   } else if (prefs.status === 'unreadable') {
@@ -199,32 +193,66 @@ function loadFromStorage(): LoadResult {
   const playlists = readRaw(STORAGE_KEYS.playlists);
   if (playlists.status === 'ok') {
     const normalized = normalizePlaylists(playlists.value);
-    data.playlists = normalized.playlists;
+    legacy.playlists = normalized.playlists;
     if (normalized.droppedCamps > 0 || normalized.droppedVideos > 0 || !Array.isArray(playlists.value)) {
       const copyKey = keepUnreadable(STORAGE_KEYS.playlists, JSON.stringify(playlists.value));
       notices.push({
         id: 'playlists-partial',
         tone: 'warn',
         title: 'Kamp verisinin bir kısmı okunamadı',
-        body: `${normalized.droppedCamps} kamp ve ${normalized.droppedVideos} video kimliksiz ya da bozuk olduğu için gösterilmiyor. Orijinal kayıt “${copyKey}” anahtarında duruyor.`,
+        body: `${normalized.droppedCamps} liste ve ${normalized.droppedVideos} video kimliksiz ya da bozuk olduğu için gösterilmiyor. Orijinal kayıt “${copyKey}” anahtarında duruyor.`,
       });
     }
   } else if (playlists.status === 'unreadable') {
     notices.push(unreadableNotice(STORAGE_KEYS.playlists, keepUnreadable(STORAGE_KEYS.playlists, playlists.raw), 'kamplar'));
   }
 
+  const events = readRaw(STORAGE_KEYS.shiftEvents);
+  if (events.status === 'ok') {
+    legacy.shiftEvents = normalizeShiftEvents(events.value);
+  } else if (events.status === 'unreadable') {
+    notices.push(unreadableNotice(STORAGE_KEYS.shiftEvents, keepUnreadable(STORAGE_KEYS.shiftEvents, events.raw), 'kaydırmalar'));
+  }
+
+  // The oldest app re-applied `yt_shifted_date` on every render, so a completed
+  // task could jump back. It becomes one durable shift event of the camp.
+  const legacyShift = readRaw(STORAGE_KEYS.shiftedDate);
+  if (legacyShift.status === 'ok' && legacyShift.value !== null && legacy.playlists.length > 0) {
+    const legacyDate = normalizeDateKey(legacyShift.value, '');
+    if (legacyDate) {
+      // As documented in docs/planner-engine.md: resume the day after the
+      // legacy date, which is where the old app showed those tasks.
+      const { plans } = buildSchedule(legacy.playlists, legacy.preferences, {
+        completedMap,
+        shiftEvents: legacy.shiftEvents,
+        today: legacyDate,
+      });
+      const event = createShiftEvent(legacyDate, plans, legacyDate);
+      if (event) {
+        legacy.shiftEvents = [...legacy.shiftEvents, event];
+        notices.push({
+          id: 'legacy-shift',
+          tone: 'info',
+          title: 'Eski telafi kaydırman korundu',
+          body: `Önceki sürümde ${event.itemIds.length} görevi ileri kaydırmıştın. Bu kaydırma artık kalıcı: görev işaretledikçe yerinden oynamayacak.`,
+        });
+      }
+    }
+  }
+  return legacy;
+}
+
+function loadFromStorage(): LoadResult {
+  const today = todayKey();
+  const notices: Notice[] = [];
+  const data = emptyData();
+  let seedPreferences: UserPreferences | null = null;
+
   const completed = readRaw(STORAGE_KEYS.completed);
   if (completed.status === 'ok') {
     data.completedMap = normalizeCompletedMap(completed.value);
   } else if (completed.status === 'unreadable') {
     notices.push(unreadableNotice(STORAGE_KEYS.completed, keepUnreadable(STORAGE_KEYS.completed, completed.raw), 'tamamlananlar'));
-  }
-
-  const events = readRaw(STORAGE_KEYS.shiftEvents);
-  if (events.status === 'ok') {
-    data.shiftEvents = normalizeShiftEvents(events.value);
-  } else if (events.status === 'unreadable') {
-    notices.push(unreadableNotice(STORAGE_KEYS.shiftEvents, keepUnreadable(STORAGE_KEYS.shiftEvents, events.raw), 'kaydırmalar'));
   }
 
   const notes = readRaw(UI_KEYS.dayNotes);
@@ -234,47 +262,71 @@ function loadFromStorage(): LoadResult {
     notices.push(unreadableNotice(UI_KEYS.dayNotes, keepUnreadable(UI_KEYS.dayNotes, notes.raw), 'gün notları'));
   }
 
-  // The old app re-applied `yt_shifted_date` on every render, so a completed
-  // task could jump back. Turn it into one durable shift event, once.
-  const legacyShift = readRaw(STORAGE_KEYS.shiftedDate);
-  if (legacyShift.status === 'ok' && legacyShift.value !== null) {
-    const legacyDate = normalizeDateKey(legacyShift.value, '');
-    if (legacyDate) {
-      // As documented in docs/planner-engine.md: resume the day after the
-      // legacy date, which is where the old app showed those tasks.
-      const { plans } = buildSchedule(data.playlists, data.preferences, {
-        completedMap: data.completedMap,
-        shiftEvents: data.shiftEvents,
-        today: legacyDate,
+  const stored = readRaw(CAMP_KEYS.camps);
+  const storedCamps = stored.status === 'ok' ? readCampStore(stored.value) : null;
+
+  if (storedCamps) {
+    const normalized = normalizeCamps(storedCamps, today);
+    data.camps = normalized.camps;
+    if (normalized.droppedCamps > 0 || normalized.droppedBranches > 0 || normalized.droppedVideos > 0) {
+      const copyKey = keepUnreadable(CAMP_KEYS.camps, JSON.stringify(stored.status === 'ok' ? stored.value : null));
+      notices.push({
+        id: 'camps-partial',
+        tone: 'warn',
+        title: 'Kamp verisinin bir kısmı okunamadı',
+        body: `${normalized.droppedCamps} kamp, ${normalized.droppedBranches} branş ve ${normalized.droppedVideos} video kimliksiz ya da bozuk olduğu için gösterilmiyor. Orijinal kayıt “${copyKey}” anahtarında duruyor.`,
       });
-      const event = createShiftEvent(legacyDate, plans, legacyDate);
-      if (event) {
-        data.shiftEvents = [...data.shiftEvents, event];
-        if (writeKey(STORAGE_KEYS.shiftEvents, data.shiftEvents)) {
-          writeKey(STORAGE_KEYS.shiftedDate, null);
-        }
-        notices.push({
-          id: 'legacy-shift',
-          tone: 'info',
-          title: 'Eski telafi kaydırman korundu',
-          body: `Önceki sürümde ${event.itemIds.length} görevi ileri kaydırmıştın. Bu kaydırma artık kalıcı: görev işaretledikçe yerinden oynamayacak.`,
-        });
-      } else {
-        writeKey(STORAGE_KEYS.shiftedDate, null);
-      }
+    }
+    for (const invalid of normalized.invalidSchedules) {
+      notices.push({
+        id: `schedule-invalid-${invalid.name}`,
+        tone: 'warn',
+        title: 'Bazı ayarlar varsayılana döndü',
+        body: `“${invalid.name}” temposunda kullanılamayan değerler vardı: ${invalid.fields.map(f => PREF_LABELS[f]).join(', ')}. “Tempoyu düzenle” ekranından kontrol edebilirsin.`,
+      });
+    }
+  } else {
+    if (stored.status !== 'missing') {
+      // Corrupt, or written by a newer version: keep it aside and rebuild from
+      // the older flat keys if they are still there.
+      const raw = stored.status === 'unreadable' ? stored.raw : JSON.stringify(stored.value);
+      notices.push(unreadableNotice(CAMP_KEYS.camps, keepUnreadable(CAMP_KEYS.camps, raw), 'kamplar'));
+    }
+    const legacy = readLegacy(notices, data.completedMap, today);
+    if (legacy.playlists.length > 0) {
+      const camp = migrateLegacyData(legacy, today);
+      data.camps = [camp];
+      data.activeCampId = camp.id;
+      // Save the new layout first; the older keys stay untouched either way.
+      const saved = writeKey(CAMP_KEYS.camps, campStore(data.camps)) && writeKey(CAMP_KEYS.activeCamp, camp.id);
+      notices.push(
+        saved
+          ? {
+              id: 'camps-migrated',
+              tone: 'info',
+              title: `Kampların “${camp.name}” altında toplandı`,
+              body: `Önceki ${camp.branches.length} kampın artık bu kampın branşları. Videoların, ilerlemen, notların, ileri taşımaların ve ayarların aynen korundu. Kampın adını Kamplar’dan değiştirebilir, temposunu “Tempoyu düzenle” ile ayarlayabilirsin.`,
+            }
+          : {
+              id: 'camps-migrated-unsaved',
+              tone: 'warn',
+              title: 'Yeni kamp düzeni kaydedilemedi',
+              body: 'Verilerin eski kayıtlarından okundu ve yerinde duruyor, ancak tarayıcı depolaması yeni düzeni kaydetmedi. Ayarlar’dan yedek indirmeni öneririz.',
+            }
+      );
+    } else if (legacy.hasPreferences) {
+      seedPreferences = legacy.preferences;
     }
   }
 
-  // Camps without saved settings would restart the plan from "today" on every
-  // visit. Pin the defaults the plan is using right now.
-  if (prefs.status === 'missing' && data.playlists.length > 0) {
-    writeKey(STORAGE_KEYS.preferences, data.preferences);
-  }
+  const active = readRaw(CAMP_KEYS.activeCamp);
+  const activeId = active.status === 'ok' && typeof active.value === 'string' ? active.value : null;
+  data.activeCampId = data.camps.find(c => c.id === activeId)?.id ?? data.activeCampId ?? data.camps[0]?.id ?? null;
 
   const selected = readRaw(UI_KEYS.selectedDate);
   const selectedDate = selected.status === 'ok' && isDateKey(selected.value) ? selected.value : today;
 
-  return { data, selectedDate, notices, storageAvailable: true };
+  return { data, selectedDate, notices, storageAvailable: true, seedPreferences };
 }
 
 let cached: LoadResult | null = null;
@@ -282,14 +334,21 @@ let cached: LoadResult | null = null;
 /** Reads storage once per page load (safe under StrictMode double renders). */
 export function loadPlannerOnce(): LoadResult {
   if (cached) return cached;
+  cached = loadPlanner();
+  return cached;
+}
+
+/** Reads storage now. Prefer `loadPlannerOnce` in the app. */
+export function loadPlanner(): LoadResult {
   try {
-    cached = loadFromStorage();
+    return loadFromStorage();
   } catch (error) {
     console.error('Storage unavailable', error);
-    cached = {
+    return {
       data: emptyData(),
       selectedDate: todayKey(),
       storageAvailable: false,
+      seedPreferences: null,
       notices: [
         {
           id: 'storage-unavailable',
@@ -300,7 +359,6 @@ export function loadPlannerOnce(): LoadResult {
       ],
     };
   }
-  return cached;
 }
 
 export function clearAllStorage() {
@@ -313,14 +371,26 @@ export function clearAllStorage() {
   }
 }
 
+/** Drops completion marks of videos that are no longer in any camp. */
+export function pruneCompletion(completed: Record<string, boolean>, removedIds: Iterable<string>, camps: readonly StudyCamp[]) {
+  const stillUsed = new Set(allBranches(camps).flatMap(b => b.videos.map(v => v.id)));
+  const next = { ...completed };
+  for (const id of removedIds) {
+    if (!stillUsed.has(id)) delete next[id];
+  }
+  return next;
+}
+
 // ---------------------------------------------------------------------------
 // Backups
 
 export const BACKUP_APP = 'yetistiricem';
-export const BACKUP_VERSION = 2;
+/** 3: camps. 2 and 1 (flat playlists + preferences) are still read. */
+export const BACKUP_VERSION = 3;
 
 export interface BackupSummary {
   camps: number;
+  branches: number;
   videos: number;
   completed: number;
   shifts: number;
@@ -334,10 +404,9 @@ export function createBackup(data: PlannerData, selectedDate: string) {
     app: BACKUP_APP,
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    preferences: data.preferences,
-    playlists: data.playlists,
+    camps: data.camps,
+    activeCampId: data.activeCampId,
     completedMap: data.completedMap,
-    shiftEvents: data.shiftEvents,
     dayNotes: data.dayNotes,
     selectedDate,
   };
@@ -352,10 +421,11 @@ export type BackupParse =
   | { ok: false; error: string };
 
 /**
- * Validates a backup file. Accepts this version's files and the older
- * `{ preferences, playlists, completedMap }` files.
+ * Validates a backup file. Accepts this version's camp backups and the older
+ * flat ones (`{ preferences, playlists, completedMap, shiftEvents? }`), which
+ * become one camp exactly as stored data does.
  */
-export function parseBackup(text: string): BackupParse {
+export function parseBackup(text: string, today: string = todayKey()): BackupParse {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -370,46 +440,70 @@ export function parseBackup(text: string): BackupParse {
   if (version > BACKUP_VERSION) {
     return { ok: false, error: 'Bu yedek daha yeni bir sürümle alınmış; bu sürüm açamıyor.' };
   }
-  if (!Array.isArray(raw.playlists)) {
-    return { ok: false, error: 'Yedekte kamp listesi yok; dosya eksik ya da farklı bir biçimde.' };
-  }
 
   const warnings: string[] = [];
-  const playlists = normalizePlaylists(raw.playlists);
-  if (playlists.droppedCamps > 0 || playlists.droppedVideos > 0) {
-    return {
-      ok: false,
-      error: `Yedekteki ${playlists.droppedCamps} kamp ve ${playlists.droppedVideos} video bozuk. Eksik veriyle geri yüklemek yerine işlem durduruldu.`,
-    };
-  }
-
-  let preferences = { ...defaultPreferences, startDate: todayKey() };
-  if (raw.preferences !== undefined) {
-    const inspected = inspectPreferences(raw.preferences);
-    preferences = inspected.preferences;
-    if (inspected.invalidFields.length > 0) {
-      warnings.push(`Şu ayarlar varsayılana dönecek: ${inspected.invalidFields.map(f => PREF_LABELS[f]).join(', ')}.`);
+  let camps: StudyCamp[];
+  if (version >= 3) {
+    if (!Array.isArray(raw.camps)) {
+      return { ok: false, error: 'Yedekte kamp listesi yok; dosya eksik ya da farklı bir biçimde.' };
+    }
+    const normalized = normalizeCamps(raw.camps, today);
+    if (normalized.droppedCamps > 0 || normalized.droppedBranches > 0 || normalized.droppedVideos > 0) {
+      return {
+        ok: false,
+        error: `Yedekteki ${normalized.droppedCamps} kamp, ${normalized.droppedBranches} branş ve ${normalized.droppedVideos} video bozuk. Eksik veriyle geri yüklemek yerine işlem durduruldu.`,
+      };
+    }
+    camps = normalized.camps;
+    for (const invalid of normalized.invalidSchedules) {
+      warnings.push(`“${invalid.name}” içinde şu ayarlar varsayılana dönecek: ${invalid.fields.map(f => PREF_LABELS[f]).join(', ')}.`);
     }
   } else {
-    warnings.push('Yedekte ayar yok; varsayılan ayarlar kullanılacak.');
+    if (!Array.isArray(raw.playlists)) {
+      return { ok: false, error: 'Yedekte kamp listesi yok; dosya eksik ya da farklı bir biçimde.' };
+    }
+    const playlists = normalizePlaylists(raw.playlists);
+    if (playlists.droppedCamps > 0 || playlists.droppedVideos > 0) {
+      return {
+        ok: false,
+        error: `Yedekteki ${playlists.droppedCamps} kamp ve ${playlists.droppedVideos} video bozuk. Eksik veriyle geri yüklemek yerine işlem durduruldu.`,
+      };
+    }
+    let preferences: UserPreferences = { ...defaultPreferences, startDate: today };
+    if (raw.preferences !== undefined) {
+      const inspected = inspectPreferences(raw.preferences);
+      preferences = inspected.preferences;
+      if (inspected.invalidFields.length > 0) {
+        warnings.push(`Şu ayarlar varsayılana dönecek: ${inspected.invalidFields.map(f => PREF_LABELS[f]).join(', ')}.`);
+      }
+    } else {
+      warnings.push('Yedekte ayar yok; varsayılan ayarlar kullanılacak.');
+    }
+    camps =
+      playlists.playlists.length > 0
+        ? [migrateLegacyData({ preferences, playlists: playlists.playlists, shiftEvents: normalizeShiftEvents(raw.shiftEvents) }, today)]
+        : [];
+    if (camps.length > 0) warnings.push(`Eski biçimli yedek: ${camps[0].branches.length} kamp, “${camps[0].name}” altında branş olarak açılacak.`);
   }
 
   const completedMap = normalizeCompletedMap(raw.completedMap);
-  const shiftEvents = normalizeShiftEvents(raw.shiftEvents);
   const dayNotes = normalizeDayNotes(raw.dayNotes);
-  const videoIds = new Set(playlists.playlists.flatMap(p => p.videos.map(v => v.id)));
+  const videoIds = new Set(allBranches(camps).flatMap(p => p.videos.map(v => v.id)));
   const completed = Object.keys(completedMap).filter(id => videoIds.has(id)).length;
+  const activeCampId =
+    typeof raw.activeCampId === 'string' && camps.some(c => c.id === raw.activeCampId) ? raw.activeCampId : (camps[0]?.id ?? null);
 
   return {
     ok: true,
-    data: { preferences, playlists: playlists.playlists, completedMap, shiftEvents, dayNotes },
+    data: { camps, activeCampId, completedMap, dayNotes },
     selectedDate: isDateKey(raw.selectedDate) ? raw.selectedDate : null,
     warnings,
     summary: {
-      camps: playlists.playlists.length,
+      camps: camps.length,
+      branches: allBranches(camps).length,
       videos: videoIds.size,
       completed,
-      shifts: shiftEvents.length,
+      shifts: camps.reduce((acc, c) => acc + c.shiftEvents.length, 0),
       notes: Object.keys(dayNotes).length,
       exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : null,
       version,

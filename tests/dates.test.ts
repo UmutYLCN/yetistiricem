@@ -60,12 +60,23 @@ test('schedules and dates are identical in every time zone', () => {
   const dates = reference.layout.map((d: { date: string }) => d.date);
   dates.forEach((date: string, i: number) => i > 0 && assert.equal(date, addDays(dates[i - 1], 1)));
   assert.ok(reference.layout.filter((d: { isRestDay: boolean }) => d.isRestDay).every((d: { date: string }) => dayOfWeek(d.date) === 0));
+  // Manual week: only the assigned weekdays hold videos, Sundays are mock exams.
+  for (const day of reference.manual as { date: string; isMockExamDay: boolean; items: string[] }[]) {
+    const dow = dayOfWeek(day.date);
+    if (day.items.length > 0) assert.ok([1, 2, 3, 6].includes(dow), `${day.date} is an assigned weekday`);
+    if (dow === 1 || dow === 3) assert.ok(day.items.every(id => id.startsWith('mat-')), day.date);
+    if (dow === 2 || dow === 6) assert.ok(day.items.every(id => id.startsWith('geo-')), day.date);
+    if (dow === 0) assert.ok(day.isMockExamDay, day.date);
+  }
+  assert.deepEqual(reference.manualDeadline, { kind: 'late', finishDate: '2026-11-25', targetEndDate: '2026-11-15', lateDays: 10 });
 
   for (const [tz, expected] of Object.entries(zones)) {
     const r = results[tz];
     assert.deepEqual(r.layout, reference.layout, `${tz} layout`);
     assert.deepEqual(r.dayNames, reference.dayNames, `${tz} day names`);
     assert.deepEqual(r.shifted, reference.shifted, `${tz} shifted layout`);
+    assert.deepEqual(r.manual, reference.manual, `${tz} manual week layout`);
+    assert.deepEqual(r.manualDeadline, reference.manualDeadline, `${tz} deadline`);
     assert.deepEqual(r.dstWalk, reference.dstWalk, `${tz} addDays across DST`);
     assert.equal(r.dow, 0, `${tz} weekday`);
     assert.equal(r.plainKey, '2026-09-24', tz);

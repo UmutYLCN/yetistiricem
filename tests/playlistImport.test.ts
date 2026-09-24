@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createPlaylistHandler } from '../server/playlistEndpoint.ts';
-import { createManualCamp } from '../src/lib/camps.ts';
-import { normalizePlaylists } from '../src/lib/persistence.ts';
+import { createBranch } from '../src/lib/camps.ts';
+import { normalizePlaylists } from '../src/lib/studyCamp.ts';
 import type { PlaylistFailure } from '../src/lib/playlistImport.ts';
 import {
   FAILURE_TEXT,
@@ -186,10 +186,10 @@ test('selected videos become drafts in playlist order with exact durations', () 
   assert.deepEqual(selectedDrafts(rows, new Set()), []);
 });
 
-test('an imported camp keeps order and metadata through storage and schedules like any camp', () => {
+test('an imported branch keeps order and metadata through storage and schedules like any branch', () => {
   const entries: PlaylistEntry[] = [video(1, 50 * 60), video(2, 70 * 60, { channelTitle: 'Konuk' }), video(3, 30 * 60)];
   const drafts = selectedDrafts(reviewPlaylist(entries, []), new Set([0, 1, 2]));
-  const camp = createManualCamp({
+  const camp = createBranch({
     title: 'Kamp',
     subject: 'Matematik',
     channelName: 'Kanal',

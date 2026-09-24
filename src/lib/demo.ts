@@ -1,23 +1,32 @@
+import type { StudyCamp } from '../types';
 import { DEMO_TEMPLATES, cloneTemplate } from '../data/demoTemplates';
 import type { PlannerData } from './persistence';
-import { addDays, buildSchedule, defaultPreferences } from './engine';
+import { addDays, buildCampSchedule } from './engine';
+import { defaultSchedule } from './studyCamp';
 
 const DEMO_TEMPLATE_IDS = ['demo-tyt-matematik', 'demo-tyt-fizik', 'demo-tyt-turkce'];
 
 /**
- * In-memory sample plan for the demo preview. It is never written to storage.
+ * In-memory sample camp for the demo preview. It is never written to storage.
  * It starts four days ago so past, overdue, done and upcoming days all show.
  */
 export function buildDemoData(today: string): PlannerData {
-  const playlists = DEMO_TEMPLATES.filter(t => DEMO_TEMPLATE_IDS.includes(t.id)).map(cloneTemplate);
-  const preferences = {
-    ...defaultPreferences,
-    dailyStudyHours: 3,
-    playbackSpeed: 1.25,
-    practiceMultiplier: 0.2,
-    startDate: addDays(today, -4),
+  const branches = DEMO_TEMPLATES.filter(t => DEMO_TEMPLATE_IDS.includes(t.id)).map(cloneTemplate);
+  const camp: StudyCamp = {
+    id: 'demo-camp',
+    name: 'Demo: TYT kampı',
+    createdAt: today,
+    branches,
+    schedule: {
+      ...defaultSchedule(addDays(today, -4)),
+      dailyStudyHours: 3,
+      playbackSpeed: 1.25,
+      practiceMultiplier: 0.2,
+      targetEndDate: addDays(today, 40),
+    },
+    shiftEvents: [],
   };
-  const { plans } = buildSchedule(playlists, preferences, { today });
+  const { plans } = buildCampSchedule(camp, { today });
 
   const completedMap: Record<string, boolean> = {};
   let leftOpen = 0;
@@ -39,10 +48,9 @@ export function buildDemoData(today: string): PlannerData {
   }
 
   return {
-    preferences,
-    playlists,
+    camps: [camp],
+    activeCampId: camp.id,
     completedMap,
-    shiftEvents: [],
     dayNotes: {
       [today]: 'Demo notu: Her konudan sonra 15–20 soru çöz, yanlışlarını deftere yaz.',
     },

@@ -16,8 +16,12 @@ interface DialogProps {
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  /** Stays above the scrolling body, under the title (e.g. a step indicator). */
+  subheader?: ReactNode;
   /** Panel width in px on larger screens. */
   width?: number;
+  /** Keep the panel at full height on larger screens (multi-step flows, so it does not jump). */
+  tall?: boolean;
   /** Element to focus on open; defaults to `[data-autofocus]`, then the first control. */
   initialFocus?: RefObject<HTMLElement | null>;
   /** Close when the backdrop is clicked. Off for forms, so a stray click keeps the input. */
@@ -37,7 +41,9 @@ export function Dialog({
   description,
   children,
   footer,
+  subheader,
   width = 560,
+  tall = false,
   initialFocus,
   dismissOnBackdrop = true,
   tone = 'default',
@@ -121,7 +127,7 @@ export function Dialog({
       onMouseDown={handleMouseDown}
     >
       {open && (
-        <div className="dialog-panel" style={{ ['--dialog-width' as string]: `${width}px` }}>
+        <div className={`dialog-panel ${tall ? 'dialog-panel-tall' : ''}`} style={{ ['--dialog-width' as string]: `${width}px` }}>
           <header className="flex items-start gap-4 px-6 pt-5 pb-4 max-sm:px-4">
             <div className="min-w-0 flex-1">
               <h2
@@ -140,7 +146,8 @@ export function Dialog({
               <X aria-hidden="true" />
             </button>
           </header>
-          <div className="dialog-body">{children}</div>
+          {subheader && <div className="border-b border-line px-6 pb-3.5 max-sm:px-4">{subheader}</div>}
+          <div className="dialog-body flex-1">{children}</div>
           {footer && (
             <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-card px-6 py-4 max-sm:px-4">
               {footer}

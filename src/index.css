@@ -400,6 +400,11 @@
     box-shadow: var(--shadow-pop);
     overflow: hidden;
   }
+  @media (min-width: 640px) {
+    .dialog-panel-tall {
+      height: min(100% - 48px, 860px);
+    }
+  }
   .dialog-body {
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -413,6 +418,9 @@
       width: 100%;
       max-height: calc(100% - 24px);
       border-radius: 18px 18px 0 0;
+    }
+    .dialog-panel-tall {
+      height: calc(100% - 24px);
     }
     .dialog-body {
       padding: 4px 16px 20px;
@@ -457,6 +465,269 @@
   .check:focus-visible {
     outline: 2px solid var(--color-forest);
     outline-offset: 2px;
+  }
+
+  /* Choice cards (radio groups with a description) ------------------------ */
+  .choice-card {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-height: 44px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--color-line);
+    border-radius: 14px;
+    background: var(--color-card);
+    cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+  }
+  .choice-card:hover {
+    border-color: var(--color-line-strong);
+  }
+  .choice-card.is-checked {
+    border-color: var(--color-forest);
+    background: var(--color-forest-tint);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-forest) 12%, transparent);
+  }
+  .choice-card:has(input:focus-visible) {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 2px;
+  }
+  .choice-card-sm {
+    padding: 11px 13px;
+  }
+  .choice-card-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--color-sunk);
+    color: var(--color-ink-2);
+  }
+  .choice-card-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+  .choice-card.is-checked .choice-card-icon {
+    background: var(--color-forest);
+    color: #fff;
+  }
+  .choice-card-check {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-line-strong);
+    background: #fff;
+    color: #fff;
+  }
+  .choice-card-check svg {
+    width: 13px;
+    height: 13px;
+  }
+  .choice-card.is-checked .choice-card-check {
+    border-color: var(--color-forest);
+    background: var(--color-forest);
+  }
+
+  /* Weekday toggles -------------------------------------------------------- */
+  .day-toggle {
+    min-width: 0;
+    height: 44px;
+    border-radius: 11px;
+    border: 1.5px solid var(--color-line-strong);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--color-ink-2);
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+  .day-toggle:hover:not(:disabled) {
+    border-color: var(--color-forest);
+  }
+  .day-toggle.is-on {
+    background: var(--color-forest);
+    border-color: var(--color-forest);
+    color: #fff;
+  }
+  .day-toggle:disabled {
+    opacity: 0.4;
+    background: var(--color-sunk);
+  }
+
+  /* Stepper ----------------------------------------------------------------- */
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .stepper > button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 38px;
+    border-radius: 9px;
+    color: var(--color-ink-2);
+    background: var(--color-sunk);
+  }
+  .stepper > button:hover:not(:disabled) {
+    background: var(--color-forest-soft);
+    color: var(--color-forest-strong);
+  }
+  .stepper > button:disabled {
+    opacity: 0.4;
+  }
+  .stepper > button svg {
+    width: 16px;
+    height: 16px;
+  }
+  .stepper > output {
+    min-width: 7.5rem;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 650;
+    color: var(--color-ink);
+  }
+
+  /* Branch toggle chips (manual week) --------------------------------------- */
+  .branch-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-line-strong);
+    background: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-ink-2);
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+  .branch-chip:hover {
+    border-color: var(--color-ink-3);
+  }
+
+  /* Inline branch name ------------------------------------------------------ */
+  .branch-name-input {
+    display: block;
+    width: calc(100% + 8px);
+    min-height: 36px;
+    margin: -5px 0 0 -8px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    font-size: 16.5px;
+    font-weight: 650;
+    transition: border-color 120ms ease, background-color 120ms ease;
+  }
+  .branch-name-input:not(:focus):not([aria-invalid="true"]) {
+    border-bottom: 1px dashed var(--color-line-strong);
+    border-radius: 9px 9px 0 0;
+  }
+  .branch-name-input:hover {
+    border-color: var(--color-line);
+    background: #fff;
+  }
+  .branch-name-input:focus {
+    outline: none;
+    border-color: var(--color-forest);
+    background: #fff;
+    color: var(--color-ink) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-forest) 18%, transparent);
+  }
+  .branch-name-input[aria-invalid="true"] {
+    border-color: var(--color-danger);
+    background: #fff;
+  }
+
+  /* Wizard steps -------------------------------------------------------------- */
+  .wizard-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 36px;
+    padding: 2px 4px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-ink-3);
+  }
+  .wizard-step:not(:disabled):hover {
+    color: var(--color-ink);
+  }
+  .wizard-step:disabled {
+    cursor: default;
+  }
+  .wizard-step-dot {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-line-strong);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .wizard-step-dot svg {
+    width: 14px;
+    height: 14px;
+  }
+  .wizard-step.is-current {
+    color: var(--color-ink);
+  }
+  .wizard-step.is-current .wizard-step-dot {
+    border-color: var(--color-forest);
+    background: var(--color-forest);
+    color: #fff;
+    box-shadow: 0 0 0 4px var(--color-forest-soft);
+  }
+  .wizard-step.is-done {
+    color: var(--color-forest-strong);
+  }
+  .wizard-step.is-done .wizard-step-dot {
+    border-color: var(--color-forest-soft);
+    background: var(--color-forest-soft);
+    color: var(--color-forest-strong);
+  }
+
+  /* Camp picker ----------------------------------------------------------------- */
+  .camp-select {
+    min-height: 40px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+  }
+  .camp-select-compact {
+    min-height: 38px;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 400;
+    border-color: transparent;
+    background-color: transparent;
+    padding-left: 6px;
+  }
+  .camp-select-compact:hover {
+    border-color: var(--color-line);
+    background-color: #fff;
   }
 
   .visually-hidden {

@@ -3,8 +3,11 @@ import type { DraftVideo } from '../utils/youtubeParser.ts';
 import { isWatchableVideoUrl, parseYoutubeVideoId, youtubeThumbnailUrl } from '../utils/youtubeParser.ts';
 import { defaultColorKey } from './subjects.ts';
 
+// Branches (`SubjectPlaylist`): one ordered video list of a study camp.
+// Older versions called each of these a camp; the ids and shape are unchanged.
+
 /**
- * How trustworthy a camp's video data is.
+ * How trustworthy a branch's video data is.
  * - `manual`: every video was pasted by the user, or imported from a playlist
  *   through the YouTube Data API, with a real YouTube link.
  * - `demo-template`: built-in sample topics without links (labelled as demo).
@@ -72,7 +75,7 @@ export function displayChannel(camp: SubjectPlaylist, kind: CampKind): string | 
   return name ? name : null;
 }
 
-function newId(prefix: string): string {
+export function newId(prefix: string): string {
   const random =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID().slice(0, 8)
@@ -96,8 +99,10 @@ export function videoFromDraft(draft: DraftVideo, campId: string, position: numb
   };
 }
 
-export interface NewCampInput {
+export interface NewBranchInput {
+  /** Source list name (e.g. the YouTube playlist title). */
   title: string;
+  /** Branch name shown in the plan (e.g. Matematik). */
   subject: string;
   colorTag?: string;
   channelName: string;
@@ -105,8 +110,9 @@ export interface NewCampInput {
   videos: DraftVideo[];
 }
 
-export function createManualCamp(input: NewCampInput): SubjectPlaylist {
-  const id = newId('camp');
+/** A branch of the user's own videos (typed in or imported from YouTube). */
+export function createBranch(input: NewBranchInput): SubjectPlaylist {
+  const id = newId('branch');
   const videos = input.videos.map((draft, i) => videoFromDraft(draft, id, i + 1));
   return {
     id,

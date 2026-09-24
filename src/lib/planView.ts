@@ -1,8 +1,8 @@
-import type { DailyPlan, DailyPlanItem, SubjectPlaylist, UserPreferences } from '../types';
+import type { CampSchedule, DailyPlan, DailyPlanItem, SubjectPlaylist, UserPreferences } from '../types';
 import type { CampKind } from './camps';
 import { classifyCamp, displayChannel } from './camps';
 import { dayOfWeek } from './engine';
-import { startOfWeek } from './format';
+import { SHORT_WEEKDAYS, WEEK_ORDER, formatMinutes, startOfWeek } from './format';
 import type { SubjectColor } from './subjects';
 import { resolveColor } from './subjects';
 
@@ -134,4 +134,24 @@ export function weeksOverview(index: PlanIndex): WeekOverview[] {
     weeks.set(monday, week);
   }
   return [...weeks.values()].sort((a, b) => (a.monday < b.monday ? -1 : 1));
+}
+
+/** "Pzt–Cmt", "Pzt, Çar, Cum" or "Her gün" for a set of weekdays. */
+export function weekdaysLabel(days: readonly number[]): string {
+  const order = WEEK_ORDER.filter(d => days.includes(d));
+  if (order.length === 0) return 'Gün yok';
+  if (order.length === 7) return 'Her gün';
+  const positions = order.map(d => WEEK_ORDER.indexOf(d));
+  const contiguous = positions.every((p, i) => i === 0 || p === positions[i - 1] + 1);
+  if (contiguous && order.length >= 3) return `${SHORT_WEEKDAYS[order[0]]}–${SHORT_WEEKDAYS[order[order.length - 1]]}`;
+  return order.map(d => SHORT_WEEKDAYS[d]).join(', ');
+}
+
+/** One-line description of a camp's tempo. */
+export function tempoSummary(schedule: CampSchedule): string {
+  const hours = formatMinutes(schedule.dailyStudyHours * 60);
+  const study = schedule.activeDays.filter(d => !schedule.restDays.includes(d) && !schedule.mockExamDays.includes(d));
+  const mock = schedule.mockExamDays.length > 0 ? ` · deneme ${weekdaysLabel(schedule.mockExamDays)}` : '';
+  if (schedule.mode === 'manual') return `Elle yerleşim · günde ${hours} · ${weekdaysLabel(study)}${mock}`;
+  return `Otomatik · günde ${hours}, ${schedule.maxSubjectsPerDay} branş · ${weekdaysLabel(study)}${mock}`;
 }

@@ -1,5 +1,6 @@
+import { useId } from 'react';
 import type { ComponentType, SVGProps } from 'react';
-import { CalendarCheck, CalendarRange, ChartColumn, Library, Plus, Settings } from 'lucide-react';
+import { CalendarCheck, CalendarRange, ChartColumn, Gauge, Library, Plus, Settings } from 'lucide-react';
 
 export type View = 'today' | 'week' | 'progress' | 'camps' | 'settings';
 
@@ -26,15 +27,64 @@ export function BrandMark({ size = 32 }: { size?: number }) {
   );
 }
 
+export interface CampOption {
+  id: string;
+  name: string;
+}
+
 interface NavProps {
   view: View;
   onNavigate: (view: View) => void;
   onAddCamp: () => void;
-  campCount: number;
+  camps: CampOption[];
+  activeCampId: string | null;
+  onSelectCamp: (campId: string) => void;
+  onEditTempo: () => void;
   isDemo: boolean;
 }
 
-export function Sidebar({ view, onNavigate, onAddCamp, campCount, isDemo }: NavProps) {
+/** The open camp: a picker with two or more camps, its name with one. */
+export function CampSwitcher({
+  camps,
+  activeCampId,
+  onSelectCamp,
+  compact = false,
+}: Pick<NavProps, 'camps' | 'activeCampId' | 'onSelectCamp'> & { compact?: boolean }) {
+  const uid = useId();
+  const active = camps.find(c => c.id === activeCampId) ?? camps[0];
+  if (!active) return null;
+  if (camps.length === 1) {
+    return compact ? (
+      <p className="font-display min-w-0 truncate text-[18px] text-ink">{active.name}</p>
+    ) : (
+      <p className="font-display truncate text-[17px] leading-snug text-ink" title={active.name}>
+        {active.name}
+      </p>
+    );
+  }
+  return (
+    <>
+      <label htmlFor={`${uid}-camp`} className="sr-only">
+        Açık kamp
+      </label>
+      <select
+        id={`${uid}-camp`}
+        className={`input camp-select ${compact ? 'camp-select-compact' : ''}`}
+        value={active.id}
+        onChange={e => onSelectCamp(e.target.value)}
+      >
+        {camps.map(c => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
+
+export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, onEditTempo, isDemo }: NavProps) {
+  const campCount = camps.length;
   const item = ({ view: target, label, icon: Icon }: NavItem) => {
     const active = view === target;
     return (
@@ -67,9 +117,20 @@ export function Sidebar({ view, onNavigate, onAddCamp, campCount, isDemo }: NavP
         </div>
       </div>
 
-      <button type="button" className="btn btn-primary mt-6 w-full" onClick={onAddCamp}>
+      {campCount > 0 && (
+        <section className="mt-6 rounded-[12px] border border-line bg-card p-3" aria-label="Açık kamp">
+          <p className="eyebrow mb-1.5">Açık kamp</p>
+          <CampSwitcher camps={camps} activeCampId={activeCampId} onSelectCamp={onSelectCamp} />
+          <button type="button" className="btn btn-ghost btn-sm mt-2 w-full justify-start" onClick={onEditTempo}>
+            <Gauge aria-hidden="true" />
+            Tempoyu düzenle
+          </button>
+        </section>
+      )}
+
+      <button type="button" className={`btn mt-4 w-full ${campCount > 0 ? 'btn-secondary' : 'btn-primary'}`} onClick={onAddCamp}>
         <Plus aria-hidden="true" />
-        {isDemo ? 'Kendi planını kur' : 'Kamp ekle'}
+        {isDemo ? 'Kendi planını kur' : 'Yeni kamp'}
       </button>
 
       <nav aria-label="Ana menü" className="mt-6 flex-1">
@@ -86,22 +147,28 @@ export function Sidebar({ view, onNavigate, onAddCamp, campCount, isDemo }: NavP
   );
 }
 
-export function MobileTopBar({ view, onNavigate, onAddCamp, isDemo }: Omit<NavProps, 'campCount'>) {
+export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, isDemo }: Omit<NavProps, 'onEditTempo'>) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/95 px-4 backdrop-blur-sm lg:hidden">
       <BrandMark size={28} />
-      <p className="font-display flex-1 text-[18px] text-ink">Yetiştiricem</p>
+      <div className="min-w-0 flex-1">
+        {camps.length > 0 ? (
+          <CampSwitcher camps={camps} activeCampId={activeCampId} onSelectCamp={onSelectCamp} compact />
+        ) : (
+          <p className="font-display text-[18px] text-ink">Yetiştiricem</p>
+        )}
+      </div>
       <button
         type="button"
-        className="icon-btn"
+        className="icon-btn shrink-0"
         onClick={onAddCamp}
-        aria-label={isDemo ? 'Kendi planını kur' : 'Kamp ekle'}
+        aria-label={isDemo ? 'Kendi planını kur' : 'Yeni kamp'}
       >
         <Plus aria-hidden="true" />
       </button>
       <button
         type="button"
-        className={`icon-btn ${view === 'settings' ? 'bg-sunk text-ink' : ''}`}
+        className={`icon-btn shrink-0 ${view === 'settings' ? 'bg-sunk text-ink' : ''}`}
         onClick={() => onNavigate('settings')}
         aria-label="Ayarlar"
         aria-current={view === 'settings' ? 'page' : undefined}

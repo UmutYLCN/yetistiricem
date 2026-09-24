@@ -1,6 +1,6 @@
 import { Forward, TriangleAlert } from 'lucide-react';
 import type { RoadmapStats, UserPreferences } from '../../types';
-import { addDays, dayOfWeek, diffDays } from '../../lib/engine';
+import { addDays, assessDeadline, dayOfWeek, diffDays } from '../../lib/engine';
 import {
   SHORT_WEEKDAYS,
   compactDayLabel,
@@ -14,9 +14,20 @@ import {
 import type { CampInfo, DaySummary, ScheduledItem } from '../../lib/planView';
 import { Meter, SubjectDot } from '../ui/Bits';
 
-export function ProgressCard({ stats, prefs, today }: { stats: RoadmapStats; prefs: UserPreferences; today: string }) {
+export function ProgressCard({
+  stats,
+  prefs,
+  today,
+  targetEndDate,
+}: {
+  stats: RoadmapStats;
+  prefs: UserPreferences;
+  today: string;
+  targetEndDate: string | null;
+}) {
   const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
   const daysLeft = diffDays(today, stats.estimatedFinishDate);
+  const deadline = finished ? null : assessDeadline({ finishDate: stats.estimatedFinishDate, targetEndDate });
   return (
     <section className="card p-5" aria-labelledby="rail-progress">
       <h2 id="rail-progress" className="eyebrow">
@@ -52,6 +63,17 @@ export function ProgressCard({ stats, prefs, today }: { stats: RoadmapStats; pre
             )}
           </dd>
         </div>
+        {deadline && (deadline.kind === 'late' || deadline.kind === 'on-track') && (
+          <div className="flex justify-between gap-3">
+            <dt className="text-ink-2">Hedef</dt>
+            <dd className="tnum text-right font-semibold text-ink">
+              {formatLongDate(deadline.targetEndDate)}
+              <span className={`block text-[12px] font-normal ${deadline.kind === 'late' ? 'text-accent-strong' : 'text-forest'}`}>
+                {deadline.kind === 'late' ? `${deadline.lateDays} gün geride` : deadline.spareDays > 0 ? `${deadline.spareDays} gün önce biter` : 'tam zamanında'}
+              </span>
+            </dd>
+          </div>
+        )}
         <div className="flex justify-between gap-3">
           <dt className="text-ink-2">Günlük hedef</dt>
           <dd className="tnum font-semibold text-ink">

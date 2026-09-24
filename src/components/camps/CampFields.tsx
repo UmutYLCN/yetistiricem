@@ -1,7 +1,9 @@
 import { useId } from 'react';
 import { Check } from 'lucide-react';
+import { MAX_BRANCH_NAME } from '../../lib/studyCamp';
 import { PALETTE, SUBJECTS, defaultColorKey } from '../../lib/subjects';
 import type { CampFieldValues } from './campForm';
+import { MAX_SOURCE_NAME } from './campForm';
 
 interface Props {
   values: CampFieldValues;
@@ -14,26 +16,57 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
   const uid = useId();
   const set = (patch: Partial<CampFieldValues>) => onChange({ ...values, ...patch });
   const activeColor = values.colorKey || defaultColorKey(values.subject);
-  const subjects = SUBJECTS.includes(values.subject) ? SUBJECTS : [values.subject, ...SUBJECTS];
+  const subjectError = showErrors ? errors.subject : undefined;
   const titleError = showErrors ? errors.title : undefined;
   const playlistError = showErrors ? errors.playlistUrl : undefined;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <div className="sm:col-span-2">
+      <div>
+        <label className="field-label" htmlFor={`${uid}-subject`}>
+          Branş adı
+        </label>
+        <input
+          id={`${uid}-subject`}
+          className="input"
+          maxLength={MAX_BRANCH_NAME}
+          list={`${uid}-subjects`}
+          placeholder="ör. Matematik"
+          value={values.subject}
+          onChange={e => set({ subject: e.target.value })}
+          aria-invalid={subjectError ? true : undefined}
+          aria-describedby={`${uid}-subject-${subjectError ? 'error' : 'hint'}`}
+          data-autofocus
+        />
+        <datalist id={`${uid}-subjects`}>
+          {SUBJECTS.map(s => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+        {subjectError ? (
+          <p id={`${uid}-subject-error`} className="field-error">
+            {subjectError}
+          </p>
+        ) : (
+          <p id={`${uid}-subject-hint`} className="field-hint">
+            Planda bu adla görünür.
+          </p>
+        )}
+      </div>
+
+      <div>
         <label className="field-label" htmlFor={`${uid}-title`}>
-          Kamp adı
+          Kaynak adı
         </label>
         <input
           id={`${uid}-title`}
           className="input"
-          maxLength={80}
+          maxLength={MAX_SOURCE_NAME}
           placeholder="ör. TYT Matematik kampı"
           value={values.title}
           onChange={e => set({ title: e.target.value })}
           aria-invalid={titleError ? true : undefined}
           aria-describedby={titleError ? `${uid}-title-error` : undefined}
-          data-autofocus
         />
         {titleError && (
           <p id={`${uid}-title-error`} className="field-error">
@@ -42,20 +75,7 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
         )}
       </div>
 
-      <div>
-        <label className="field-label" htmlFor={`${uid}-subject`}>
-          Ders
-        </label>
-        <select id={`${uid}-subject`} className="input" value={values.subject} onChange={e => set({ subject: e.target.value })}>
-          {subjects.map(s => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <fieldset>
+      <fieldset className="sm:col-span-2">
         <legend className="field-label">Renk</legend>
         <div className="flex flex-wrap gap-1">
           {PALETTE.map(color => {
@@ -68,7 +88,7 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
                 aria-pressed={selected}
                 aria-label={color.label}
                 title={color.label}
-                className="flex size-7 items-center justify-center rounded-full"
+                className="flex size-8 items-center justify-center rounded-full"
                 style={{ background: color.solid, boxShadow: selected ? `0 0 0 2px var(--color-card), 0 0 0 4px ${color.solid}` : undefined }}
               >
                 {selected && <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />}
