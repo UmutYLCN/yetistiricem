@@ -16,6 +16,12 @@ export interface SubjectPlaylist {
   videos: Video[];
   colorTag: string;
   totalDurationMinutes: number;
+  /**
+   * Where the camp came from. `manual`: videos the user entered. `demo-template`:
+   * a built-in sample topic list with no video links. Missing on camps saved by
+   * older versions (see `src/lib/camps.ts` for how those are classified).
+   */
+  source?: 'manual' | 'demo-template';
 }
 
 export interface UserPreferences {
