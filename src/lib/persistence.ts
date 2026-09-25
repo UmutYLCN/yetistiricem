@@ -11,6 +11,8 @@ import {
   normalizeShiftEvents,
   todayKey,
 } from './engine.ts';
+import type { CampScope } from './allCamps.ts';
+import { isCampScope } from './allCamps.ts';
 import type { LegacyData } from './studyCamp.ts';
 import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } from './studyCamp.ts';
 
@@ -21,6 +23,9 @@ import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } fr
 //   screens show.
 // - `yt_completed`, `yt_day_notes` and `yt_selected_date` are shared by all
 //   camps (video ids are unique, notes belong to a calendar day).
+// - `yt_camp_scope` remembers whether the plan screens combine every camp
+//   (`all`, "Tüm Kamplar") or show the active camp (`camp`). Missing = no
+//   choice yet. It never holds a camp id; `yt_active_camp` always does.
 // - The older flat keys (`yt_playlists`, `yt_prefs`, `yt_shift_events`,
 //   `yt_shifted_date`) are only read, once, to build the first camp when
 //   `yt_camps` does not exist yet. They are never written or removed here, so
@@ -32,6 +37,7 @@ import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } fr
 export const UI_KEYS = {
   selectedDate: 'yt_selected_date',
   dayNotes: 'yt_day_notes',
+  campScope: 'yt_camp_scope',
 } as const;
 
 export const CAMP_KEYS = {
@@ -63,6 +69,8 @@ export interface Notice {
 export interface LoadResult {
   data: PlannerData;
   selectedDate: string;
+  /** The stored "Tüm Kamplar" / one camp choice; null when none was made. */
+  campScope: CampScope | null;
   notices: Notice[];
   storageAvailable: boolean;
   /**
@@ -326,7 +334,10 @@ function loadFromStorage(): LoadResult {
   const selected = readRaw(UI_KEYS.selectedDate);
   const selectedDate = selected.status === 'ok' && isDateKey(selected.value) ? selected.value : today;
 
-  return { data, selectedDate, notices, storageAvailable: true, seedPreferences };
+  const scope = readRaw(UI_KEYS.campScope);
+  const campScope = scope.status === 'ok' && isCampScope(scope.value) ? scope.value : null;
+
+  return { data, selectedDate, campScope, notices, storageAvailable: true, seedPreferences };
 }
 
 let cached: LoadResult | null = null;
@@ -347,6 +358,7 @@ export function loadPlanner(): LoadResult {
     return {
       data: emptyData(),
       selectedDate: todayKey(),
+      campScope: null,
       storageAvailable: false,
       seedPreferences: null,
       notices: [

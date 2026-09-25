@@ -4,7 +4,13 @@ Code: `src/utils/roadmapEngine.ts`, `src/utils/date.ts`, `src/utils/storage.ts`.
 
 ## Camps
 
-A **study camp** (`StudyCamp`, `src/types/index.ts`) is one named program: its `branches` (each a `SubjectPlaylist`: one ordered video list, usually one YouTube playlist; `subject` is the branch name), its `schedule` (`CampSchedule` = the planner preferences plus `mode`, `targetEndDate`, `weekPlan`) and its own `shiftEvents`. Screens always show one camp: `buildCampSchedule(camp, { completedMap, today })`. Each camp's tempo is independent; editing one never touches another (`tests/campOps.test.ts`).
+A **study camp** (`StudyCamp`, `src/types/index.ts`) is one named program: its `branches` (each a `SubjectPlaylist`: one ordered video list, usually one YouTube playlist; `subject` is the branch name), its `schedule` (`CampSchedule` = the planner preferences plus `mode`, `targetEndDate`, `weekPlan`) and its own `shiftEvents`. A camp is always scheduled alone: `buildCampSchedule(camp, { completedMap, today })`. Each camp's tempo is independent; editing one never touches another (`tests/campOps.test.ts`).
+
+### Tüm Kamplar (`src/lib/allCamps.ts`, `tests/allCamps.test.ts`)
+
+The plan screens show one camp, or every camp with at least one video merged into one date-ordered flow. `buildAllCampsPlan` builds each camp with its own schedule, then `mergeDailyPlans` joins the finished days by date: nothing is rescheduled, so capacities, rhythms, start/target dates and shift histories stay per camp. Merged items carry their `campId`; a merged day lists only the camps whose plan covers it (`camps`, each with its own day). It is a study day when any camp studies (a free or shifted study day counts), otherwise a mock exam day if any camp has one, else a rest day; only then (`everyCampOff`) do the screens show a full empty-day state, and otherwise they name each camp's own day type. Shifting in this view (`shiftEventsByCamp`) makes one event per camp from that camp's own plan, stored on that camp only.
+
+The scope is a view choice (`yt_camp_scope`: `all` | `camp`), never a camp id: `resolveCampScope` shows all camps from two camps on unless the user picked one, and falls back to the one camp below two. The open camp (`yt_active_camp`) stays a real camp for Kamplar, tempo, add-branch and edit dialogs; dialogs opened from a task use the task's own camp.
 
 `buildSchedule(playlists, preferences, options)` is the underlying scheduler (and `generateRoadmap` its `DailyPlan[]` shorthand); `buildCampSchedule` passes the camp's branches, schedule, shift events and, in manual mode, `options.weekPlan`.
 
@@ -62,4 +68,4 @@ A study day whose tasks were all carried stays in the list with `items: []`; ren
 
 ## Storage
 
-`src/lib/persistence.ts` owns loading, migration and backups (`yt_camps`, `yt_active_camp`, shared `yt_completed` / `yt_day_notes` / `yt_selected_date`). The older flat keys are read once to build the first camp and never written; see [`camp-creation-wizard-notes.md`](camp-creation-wizard-notes.md).
+`src/lib/persistence.ts` owns loading, migration and backups (`yt_camps`, `yt_active_camp`, shared `yt_completed` / `yt_day_notes` / `yt_selected_date`, and the view choice `yt_camp_scope`, which backups leave out). The older flat keys are read once to build the first camp and never written; see [`camp-creation-wizard-notes.md`](camp-creation-wizard-notes.md).

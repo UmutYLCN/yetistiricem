@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CampSchedule, StudyCamp, SubjectPlaylist } from '../types';
-import type { ShiftEvent } from '../lib/engine';
+import type { CampScope, CampShift } from '../lib/allCamps';
 import { STORAGE_KEYS } from '../lib/engine';
 import { buildDemoData } from '../lib/demo';
 import * as ops from '../lib/plannerOps';
@@ -13,6 +13,9 @@ interface StoreState {
   demo: PlannerData | null;
   realSelected: string;
   demoSelected: string;
+  /** "Tüm Kamplar" or one camp; null until the user picks (see `resolveCampScope`). */
+  realScope: CampScope | null;
+  demoScope: CampScope | null;
 }
 
 /** Saves `value` under `key` whenever it changes after the first load. */
@@ -30,7 +33,14 @@ const serializeCamps = (camps: unknown) => campStore(camps as StudyCamp[]);
 export function usePlanner(today: string) {
   const [state, setState] = useState<StoreState>(() => {
     const initial = loadPlannerOnce();
-    return { real: initial.data, demo: null, realSelected: initial.selectedDate, demoSelected: today };
+    return {
+      real: initial.data,
+      demo: null,
+      realSelected: initial.selectedDate,
+      demoSelected: today,
+      realScope: initial.campScope,
+      demoScope: null,
+    };
   });
   const [notices, setNotices] = useState<Notice[]>(() => loadPlannerOnce().notices);
   const storageAvailable = loadPlannerOnce().storageAvailable;
@@ -57,6 +67,7 @@ export function usePlanner(today: string) {
   usePersist(STORAGE_KEYS.completed, state.real.completedMap, reportSaveFailure);
   usePersist(UI_KEYS.dayNotes, state.real.dayNotes, reportSaveFailure);
   usePersist(UI_KEYS.selectedDate, state.realSelected, reportSaveFailure);
+  usePersist(UI_KEYS.campScope, state.realScope, reportSaveFailure);
 
   const update = useCallback((fn: (data: PlannerData) => PlannerData) => {
     setState(s => (s.demo ? { ...s, demo: fn(s.demo) } : { ...s, real: fn(s.real) }));
@@ -66,6 +77,9 @@ export function usePlanner(today: string) {
     () => ({
       setSelectedDate: (date: string) =>
         setState(s => (s.demo ? { ...s, demoSelected: date } : { ...s, realSelected: date })),
+
+      /** A view choice only; the active (managed) camp does not change. */
+      setCampScope: (scope: CampScope) => setState(s => (s.demo ? { ...s, demoScope: scope } : { ...s, realScope: scope })),
 
       setCompleted: (videoId: string, done: boolean) => update(d => ops.setCompleted(d, videoId, done)),
       createCamp: (camp: StudyCamp) => update(d => ops.createCamp(d, camp)),
@@ -77,8 +91,8 @@ export function usePlanner(today: string) {
         update(d => ops.addBranches(d, campId, branches, options)),
       updateBranch: (campId: string, branch: SubjectPlaylist) => update(d => ops.updateBranch(d, campId, branch)),
       removeBranch: (campId: string, branchId: string) => update(d => ops.removeBranch(d, campId, branchId)),
-      addShiftEvent: (campId: string, event: ShiftEvent) => update(d => ops.addShiftEvent(d, campId, event)),
-      removeShiftEvent: (campId: string, event: ShiftEvent) => update(d => ops.removeShiftEvent(d, campId, event)),
+      addShiftEvents: (shifts: CampShift[]) => update(d => ops.addShiftEvents(d, shifts)),
+      removeShiftEvents: (shifts: CampShift[]) => update(d => ops.removeShiftEvents(d, shifts)),
 
       /** Replaces the saved data with a validated backup. */
       restore: (data: PlannerData, selectedDate: string | null) =>
@@ -87,11 +101,11 @@ export function usePlanner(today: string) {
       /** Deletes every saved key and starts empty. */
       reset: (todayKeyNow: string) => {
         clearAllStorage();
-        setState(s => ({ ...s, demo: null, real: emptyData(), realSelected: todayKeyNow }));
+        setState(s => ({ ...s, demo: null, real: emptyData(), realSelected: todayKeyNow, realScope: null }));
       },
 
       startDemo: (todayKeyNow: string) =>
-        setState(s => ({ ...s, demo: buildDemoData(todayKeyNow), demoSelected: todayKeyNow })),
+        setState(s => ({ ...s, demo: buildDemoData(todayKeyNow), demoSelected: todayKeyNow, demoScope: null })),
 
       exitDemo: () => setState(s => ({ ...s, demo: null })),
 
@@ -106,6 +120,7 @@ export function usePlanner(today: string) {
     realData: state.real,
     isDemo,
     selectedDate: isDemo ? state.demoSelected : state.realSelected,
+    campScope: isDemo ? state.demoScope : state.realScope,
     notices,
     storageAvailable,
     seedPreferences,

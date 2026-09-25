@@ -4,7 +4,17 @@ import { CalendarCheck, Eye, Info, LogOut, TriangleAlert, X } from 'lucide-react
 import type { CampSchedule, DailyPlanItem, StudyCamp, SubjectPlaylist } from './types';
 import { usePlanner } from './hooks/usePlanner';
 import { useToday } from './hooks/useToday';
-import { addDays, buildCampSchedule, calculateStats, countCompletedVideos, createShiftEvent } from './lib/engine';
+import type { CampShift, ScopedCamp } from './lib/allCamps';
+import {
+  buildAllCampsPlan,
+  campIdOf,
+  campLabelsOf,
+  campOverview,
+  resolveCampScope,
+  shiftEventsByCamp,
+  summarizeAllCampsDay,
+} from './lib/allCamps';
+import { addDays, buildCampSchedule, calculateStats, countCompletedVideos } from './lib/engine';
 import { classifyCamp, isLegacyKind } from './lib/camps';
 import { formatDayTitle, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
@@ -29,11 +39,13 @@ import { NoCampsYet, Welcome } from './components/views/Welcome';
 import { AddBranchWizard } from './components/wizard/AddBranchWizard';
 import { CampWizard } from './components/wizard/CampWizard';
 
+// Every dialog names the camp it edits: in "Tüm Kamplar" a task may belong to
+// another camp than the one Kamplar manages.
 type OpenDialog =
-  | { kind: 'editBranch'; branchId: string }
-  | { kind: 'addVideos'; branchId: string }
-  | { kind: 'editVideo'; branchId: string; videoId: string }
-  | { kind: 'tempo' }
+  | { kind: 'editBranch'; campId: string; branchId: string }
+  | { kind: 'addVideos'; campId: string; branchId: string }
+  | { kind: 'editVideo'; campId: string; branchId: string; videoId: string }
+  | { kind: 'tempo'; campId: string }
   /** Adds branches to this existing camp (fixed when the wizard opens). */
   | { kind: 'addBranches'; campId: string }
   | { kind: 'rename'; campId: string }
@@ -52,7 +64,7 @@ function celebrate() {
 
 function Planner() {
   const today = useToday();
-  const { data, isDemo, selectedDate, notices, seedPreferences, actions } = usePlanner(today);
+  const { data, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today);
   const notify = useToast();
   const confirm = useConfirm();
   const [view, setView] = useState<View>('today');
@@ -60,8 +72,11 @@ function Planner() {
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [legacyDismissed, setLegacyDismissed] = useState(false);
 
-  // Every screen shows the open camp: its branches, tempo and shift events.
+  // The open camp: the one Kamplar manages, always a real camp. The plan
+  // screens show it, or with "Tüm Kamplar" every camp with a plan, each laid
+  // out with its own tempo and shift events and merged by date.
   const camp = activeCampOf(data);
+  const scope = resolveCampScope(data.camps.length, campScope);
   const branches = useMemo(() => camp?.branches ?? [], [camp]);
   const emptyCamp = useMemo(() => ({ branches: [], schedule: defaultSchedule(today), shiftEvents: [] }), [today]);
   const schedule = useMemo(
@@ -69,22 +84,43 @@ function Planner() {
     [camp, emptyCamp, data.completedMap, today]
   );
   const prefs = schedule.preferences;
-  const index = useMemo(() => indexPlans(schedule.plans, today), [schedule.plans, today]);
-  const camps = useMemo(() => indexCamps(branches), [branches]);
-  const stats = useMemo(() => {
+  const campIndex = useMemo(() => indexPlans(schedule.plans, today), [schedule.plans, today]);
+  const campBranches = useMemo(() => indexCamps(branches), [branches]);
+  const campStats = useMemo(() => {
     const total = branches.reduce((acc, p) => acc + p.videos.length, 0);
     return calculateStats(schedule.plans, total, countCompletedVideos(branches, data.completedMap));
   }, [schedule.plans, branches, data.completedMap]);
+
+  // What the plan screens show (one camp, or every camp together).
+  const allPlan = useMemo(
+    () => (scope === 'all' ? buildAllCampsPlan(data.camps, { completedMap: data.completedMap, today }) : null),
+    [scope, data.camps, data.completedMap, today]
+  );
+  const shownCamps: ScopedCamp[] = useMemo(
+    () => allPlan?.camps ?? (camp ? [{ camp, result: schedule }] : []),
+    [allPlan, camp, schedule]
+  );
+  const campLabels = useMemo(() => (allPlan ? campLabelsOf(allPlan.camps) : undefined), [allPlan]);
+  const index = allPlan?.index ?? campIndex;
+  const stats = allPlan?.stats ?? campStats;
+  const allBranchInfo = useMemo(() => (allPlan ? indexCamps(allPlan.camps.flatMap(s => s.camp.branches)) : null), [allPlan]);
+  const camps = allBranchInfo ?? campBranches;
   const oversizedIds = useMemo(
-    () => new Set(schedule.issues.flatMap(issue => (issue.kind === 'oversized-item' ? [issue.itemId] : []))),
-    [schedule.issues]
+    () =>
+      new Set(
+        shownCamps.flatMap(({ result }) => result.issues.flatMap(issue => (issue.kind === 'oversized-item' ? [issue.itemId] : [])))
+      ),
+    [shownCamps]
   );
-  const weekDays = useMemo(
-    () => weekKeys(selectedDate).map(date => summarizeDay(date, index, prefs)),
-    [selectedDate, index, prefs]
-  );
+  const weekDays = useMemo(() => {
+    if (!allPlan) return weekKeys(selectedDate).map(date => summarizeDay(date, campIndex, prefs));
+    const campPrefs = allPlan.camps.map(s => s.result.preferences);
+    return weekKeys(selectedDate).map(date => summarizeAllCampsDay(date, allPlan.index, campPrefs));
+  }, [allPlan, selectedDate, campIndex, prefs]);
   const hasCamp = camp !== null;
   const hasBranches = branches.length > 0;
+  // "Tüm Kamplar" with no camp holding a video yet.
+  const noCampPlans = allPlan !== null && allPlan.camps.length === 0;
   const hasLegacy = allBranches(data.camps).some(b => isLegacyKind(classifyCamp(b)));
   const campOptions = useMemo(() => data.camps.map(c => ({ id: c.id, name: c.name })), [data.camps]);
 
@@ -102,20 +138,32 @@ function Planner() {
     setView('today');
   };
 
-  const openTempo = () => {
-    if (camp) setDialog({ kind: 'tempo' });
+  const openTempo = (campId: string | undefined = camp?.id) => {
+    if (campId) setDialog({ kind: 'tempo', campId });
   };
 
   const openAddBranches = () => {
     if (camp) setDialog({ kind: 'addBranches', campId: camp.id });
   };
 
+  // Shows one camp on the plan screens (and makes it the open camp).
   const selectCamp = (campId: string) => {
-    if (campId === camp?.id) return;
+    if (campId === camp?.id && scope === 'camp') return;
+    actions.setCampScope('camp');
     actions.setActiveCamp(campId);
     const next = data.camps.find(c => c.id === campId);
     if (next) notify({ message: `Açık kamp: “${next.name}”.`, tone: 'info' });
   };
+
+  // A view choice only: the open camp stays the one Kamplar manages.
+  const selectAllCamps = () => {
+    if (scope === 'all') return;
+    actions.setCampScope('all');
+    notify({ message: 'Tüm kampların birlikte gösteriliyor.', tone: 'info' });
+  };
+
+  // Kamplar under "Tüm Kamplar": pick the camp to manage without leaving the combined view.
+  const manageCamp = (campId: string) => actions.setActiveCamp(campId);
 
   const handleToggle = (item: DailyPlanItem, done: boolean) => {
     actions.setCompleted(item.videoId, done);
@@ -131,23 +179,34 @@ function Planner() {
     });
   };
 
+  // Each camp shown gets its own event, made from its own plan, so a camp
+  // only ever carries (and replans) its own tasks.
   const handleShift = (date: string) => {
-    if (!camp) return;
-    const event = createShiftEvent(date, schedule.plans, today);
-    if (!event) {
+    if (shownCamps.length === 0) return;
+    const shifts: CampShift[] = shiftEventsByCamp(
+      shownCamps.map(({ camp: c, result }) => ({ campId: c.id, plans: result.plans })),
+      date,
+      today
+    );
+    if (shifts.length === 0) {
       notify({ message: 'Taşınacak tamamlanmamış görev yok.', tone: 'info' });
       return;
     }
-    const campId = camp.id;
-    actions.addShiftEvent(campId, event);
+    actions.addShiftEvents(shifts);
+    const count = shifts.reduce((acc, s) => acc + s.event.itemIds.length, 0);
     notify({
-      message: `${event.itemIds.length} görev ${formatLongDate(event.resumeDate)} gününden itibaren yeniden planlandı.`,
+      message:
+        `${count} görev ${formatLongDate(shifts[0].event.resumeDate)} gününden itibaren yeniden planlandı.` +
+        (shifts.length > 1 ? ` Her kamp kendi temposuyla (${shifts.length} kamp).` : ''),
       actionLabel: 'Geri al',
-      onAction: () => actions.removeShiftEvent(campId, event),
+      onAction: () => actions.removeShiftEvents(shifts),
     });
   };
 
-  const handleEditLink = (item: DailyPlanItem) => setDialog({ kind: 'editVideo', branchId: item.playlistId, videoId: item.videoId });
+  const handleEditLink = (item: DailyPlanItem) => {
+    const campId = campIdOf(item) ?? camp?.id;
+    if (campId) setDialog({ kind: 'editVideo', campId, branchId: item.playlistId, videoId: item.videoId });
+  };
 
   const openNewCamp = async () => {
     if (isDemo) {
@@ -239,10 +298,9 @@ function Planner() {
     notify({ message: `“${target.name}” silindi.`, tone: 'info' });
   };
 
-  const handleSaveTempo = (next: CampSchedule) => {
-    if (!camp) return;
-    actions.setCampSchedule(camp.id, next);
-    notify({ message: `“${camp.name}” temposu kaydedildi; plan yeniden dağıtıldı.`, tone: 'info' });
+  const handleSaveTempo = (target: StudyCamp, next: CampSchedule) => {
+    actions.setCampSchedule(target.id, next);
+    notify({ message: `“${target.name}” temposu kaydedildi; plan yeniden dağıtıldı.`, tone: 'info' });
   };
 
   const handleBackup = () => {
@@ -340,8 +398,33 @@ function Planner() {
 
   // --- views -------------------------------------------------------------
 
-  const summary = summarizeDay(selectedDate, index, prefs);
+  const summary = allPlan
+    ? summarizeAllCampsDay(selectedDate, allPlan.index, allPlan.camps.map(s => s.result.preferences))
+    : summarizeDay(selectedDate, index, prefs);
   const isToday = selectedDate === today;
+  const firstStart = allPlan ? (shownCamps.map(s => s.result.preferences.startDate).sort()[0] ?? prefs.startDate) : prefs.startDate;
+  // "Tüm Kamplar" before any camp has a video: nothing to combine yet.
+  const noPlansInCamps = (title: string) => (
+    <div className="mx-auto max-w-[920px]">
+      <PageHeader title={title} subtitle="Tüm kamplar" />
+      <div className="card flex flex-col items-center px-6 py-12 text-center">
+        <p className="font-display text-[21px] text-ink">Kamplarında henüz video yok</p>
+        <p className="mt-1 max-w-md text-[14px] text-ink-2">
+          Tüm Kamplar, video içeren kampları tarihe göre birlikte gösterir. Bir kampa branş ekle; o kamp kendi temposuyla buraya katılır.
+        </p>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          {camp && (
+            <button type="button" className="btn btn-primary" onClick={openAddBranches}>
+              “{camp.name}” kampına branş ekle
+            </button>
+          )}
+          <button type="button" className="btn btn-secondary" onClick={() => setView('camps')}>
+            Kamplara git
+          </button>
+        </div>
+      </div>
+    </div>
+  );
   const noPlanYet = (title: string) => (
     <div className="mx-auto max-w-[920px]">
       <PageHeader title={title} />
@@ -363,12 +446,15 @@ function Planner() {
   if (view === 'today') {
     content = !hasCamp ? (
       <Welcome onAddCamp={openNewCamp} onStartDemo={startDemo} />
+    ) : noCampPlans ? (
+      noPlansInCamps('Bugün')
     ) : (
       <div className="grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0">
           <PageHeader
             eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(selectedDate, today)}</span>}
             title={formatDayTitle(selectedDate)}
+            subtitle={campLabels && `Tüm kamplar · ${campLabels.size} kamp birlikte`}
             actions={
               !isToday && (
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectDate(today)}>
@@ -378,9 +464,15 @@ function Planner() {
               )
             }
           />
-          <OverdueCard count={index.overdue.length} today={today} onShift={() => handleShift(addDays(today, -1))} />
         </div>
-        <div className="min-w-0 space-y-4 xl:col-start-1">
+        {/* After the title below xl; from xl beside it, above the summary column. */}
+        <OverdueCard
+          className="min-w-0 xl:col-start-2 xl:row-start-1 xl:self-start"
+          count={index.overdue.length}
+          today={today}
+          onShift={() => handleShift(addDays(today, -1))}
+        />
+        <div className="min-w-0 space-y-4 xl:col-start-1 xl:row-start-2">
           <WeekStrip days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
           <DayPanel
             summary={summary}
@@ -389,22 +481,31 @@ function Planner() {
             oversizedIds={oversizedIds}
             firstDate={index.firstDate}
             lastDate={index.lastDate}
-            startDate={prefs.startDate}
+            startDate={firstStart}
             onToggle={handleToggle}
             onShift={handleShift}
             onEditLink={handleEditLink}
             onAddBranches={openAddBranches}
+            campLabels={campLabels}
           />
         </div>
         {/* Side by side under the day below xl; from xl a column that starts level with the week strip. */}
         <aside aria-label="Özet" className="mt-2 grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:col-start-2 xl:row-start-2 xl:mt-0 xl:grid-cols-1">
-          <ProgressCard stats={stats} prefs={prefs} today={today} targetEndDate={camp.schedule.targetEndDate} />
+          <ProgressCard
+            stats={stats}
+            prefs={prefs}
+            today={today}
+            targetEndDate={campLabels ? null : camp.schedule.targetEndDate}
+            campGoals={campLabels && [...campLabels.values()]}
+          />
           <WeekCard days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
         </aside>
       </div>
     );
   } else if (view === 'week') {
-    content = hasBranches ? (
+    content = noCampPlans ? (
+      noPlansInCamps('Haftalık plan')
+    ) : allPlan || hasBranches ? (
       <div className="mx-auto max-w-[920px]">
         <WeekView
           days={weekDays}
@@ -416,55 +517,60 @@ function Planner() {
           onOpenDay={openDay}
           onToggle={handleToggle}
           onEditLink={handleEditLink}
+          campLabels={campLabels}
         />
       </div>
     ) : (
       noPlanYet('Haftalık plan')
     );
   } else if (view === 'progress') {
-    content =
-      hasBranches && camp ? (
-        <div className="mx-auto max-w-[920px]">
-          <ProgressView
-            stats={stats}
-            prefs={prefs}
-            camp={camp}
-            today={today}
-            index={index}
-            camps={camps}
-            weeks={weeksOverview(index)}
-            issues={schedule.issues}
-            onShiftOverdue={() => handleShift(addDays(today, -1))}
-            onOpenWeek={monday => {
-              selectDate(monday <= today && today <= addDays(monday, 6) ? today : monday);
-              setView('week');
-            }}
-            onEditTempo={openTempo}
-          />
-        </div>
-      ) : (
-        noPlanYet('İlerleme')
-      );
+    content = noCampPlans ? (
+      noPlansInCamps('İlerleme')
+    ) : (allPlan || hasBranches) && camp ? (
+      <div className="mx-auto max-w-[920px]">
+        <ProgressView
+          stats={stats}
+          today={today}
+          index={index}
+          camps={camps}
+          weeks={weeksOverview(index)}
+          scope={
+            allPlan
+              ? { kind: 'all', camps: allPlan.camps.map(s => campOverview(s, data.completedMap)) }
+              : { kind: 'camp', camp, prefs, issues: schedule.issues }
+          }
+          onShiftOverdue={() => handleShift(addDays(today, -1))}
+          onOpenWeek={monday => {
+            selectDate(monday <= today && today <= addDays(monday, 6) ? today : monday);
+            setView('week');
+          }}
+          onEditTempo={openTempo}
+        />
+      </div>
+    ) : (
+      noPlanYet('İlerleme')
+    );
   } else if (view === 'camps') {
     content = (
       <CampsView
         allCamps={data.camps}
         activeCamp={camp}
-        camps={[...camps.values()]}
-        index={index}
+        camps={[...campBranches.values()]}
+        index={campIndex}
         completedMap={data.completedMap}
         today={today}
         isDemo={isDemo}
+        showsAllCamps={scope === 'all'}
         onAddCamp={openNewCamp}
         onStartDemo={startDemo}
-        onSelectCamp={selectCamp}
-        onEditTempo={openTempo}
+        onSelectCamp={scope === 'all' ? manageCamp : selectCamp}
+        onEditTempo={() => openTempo()}
         onRenameCamp={campId => setDialog({ kind: 'rename', campId })}
         onDeleteCamp={handleDeleteCamp}
         onAddBranches={openAddBranches}
-        onEditBranch={branchId => setDialog({ kind: 'editBranch', branchId })}
-        onAddVideos={branchId => setDialog({ kind: 'addVideos', branchId })}
-        onEditVideo={(branchId, videoId) => setDialog({ kind: 'editVideo', branchId, videoId })}
+        onEditBranch={branchId => camp && setDialog({ kind: 'editBranch', campId: camp.id, branchId })}
+        onAddVideos={branchId => camp && setDialog({ kind: 'addVideos', campId: camp.id, branchId })}
+        onEditVideo={(branchId, videoId) => camp && setDialog({ kind: 'editVideo', campId: camp.id, branchId, videoId })}
         onRemoveBranch={handleRemoveBranch}
       />
     );
@@ -487,12 +593,14 @@ function Planner() {
   const noticeWidth =
     view === 'settings' || (view === 'today' && !hasCamp && !isDemo) ? 'max-w-[760px]' : view === 'today' ? '' : 'max-w-[920px]';
 
-  const dialogBranch = dialog && 'branchId' in dialog ? branches.find(p => p.id === dialog.branchId) : undefined;
+  const dialogCamp = dialog ? data.camps.find(c => c.id === dialog.campId) : undefined;
+  const dialogBranch = dialog && 'branchId' in dialog ? dialogCamp?.branches.find(p => p.id === dialog.branchId) : undefined;
   const dialogVideo = dialog?.kind === 'editVideo' ? dialogBranch?.videos.find(v => v.id === dialog.videoId) : undefined;
-  const renameTarget = dialog?.kind === 'rename' ? data.camps.find(c => c.id === dialog.campId) : undefined;
-  const addTarget = dialog?.kind === 'addBranches' ? data.camps.find(c => c.id === dialog.campId) : undefined;
+  const renameTarget = dialog?.kind === 'rename' ? dialogCamp : undefined;
+  const addTarget = dialog?.kind === 'addBranches' ? dialogCamp : undefined;
+  const tempoTarget = dialog?.kind === 'tempo' ? dialogCamp : undefined;
   const closeDialog = () => setDialog(null);
-  const saveBranch = (branch: SubjectPlaylist) => camp && actions.updateBranch(camp.id, branch);
+  const saveBranch = (branch: SubjectPlaylist) => dialogCamp && actions.updateBranch(dialogCamp.id, branch);
 
   return (
     <div className="min-h-dvh lg:flex">
@@ -505,7 +613,9 @@ function Planner() {
         onAddCamp={openNewCamp}
         camps={campOptions}
         activeCampId={camp?.id ?? null}
+        scope={scope}
         onSelectCamp={selectCamp}
+        onSelectAll={selectAllCamps}
         isDemo={isDemo}
       />
       <div className="min-w-0 flex-1">
@@ -515,7 +625,9 @@ function Planner() {
           onAddCamp={openNewCamp}
           camps={campOptions}
           activeCampId={camp?.id ?? null}
+          scope={scope}
           onSelectCamp={selectCamp}
+          onSelectAll={selectAllCamps}
           isDemo={isDemo}
         />
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1240px] px-4 pt-5 pb-28 outline-none sm:px-6 lg:px-10 lg:pt-9 lg:pb-14">
@@ -588,8 +700,14 @@ function Planner() {
         habits={camp?.schedule ?? null}
         onCreate={handleCreateCamp}
       />
-      {dialog?.kind === 'tempo' && camp && (
-        <CampTempoDialog key={camp.id} camp={camp} today={today} onSave={handleSaveTempo} onClose={closeDialog} />
+      {tempoTarget && (
+        <CampTempoDialog
+          key={tempoTarget.id}
+          camp={tempoTarget}
+          today={today}
+          onSave={next => handleSaveTempo(tempoTarget, next)}
+          onClose={closeDialog}
+        />
       )}
       {addTarget && (
         <AddBranchWizard

@@ -1,6 +1,8 @@
 import { useId } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { CalendarCheck, CalendarRange, ChartColumn, Library, Plus, Settings } from 'lucide-react';
+import type { CampScope } from '../../lib/allCamps';
+import { offersAllCamps } from '../../lib/allCamps';
 
 export type View = 'today' | 'week' | 'progress' | 'camps' | 'settings';
 
@@ -38,20 +40,35 @@ interface NavProps {
   onAddCamp: () => void;
   camps: CampOption[];
   activeCampId: string | null;
+  /** `all`: the plan screens combine every camp ("Tüm Kamplar"). */
+  scope: CampScope;
   onSelectCamp: (campId: string) => void;
+  onSelectAll: () => void;
   isDemo: boolean;
 }
 
-/** The open camp: a picker with two or more camps, its name with one. */
+export const ALL_CAMPS_LABEL = 'Tüm Kamplar';
+
+// Option values; a camp id is prefixed so no id can pass for "all".
+const ALL_VALUE = 'all';
+const campValue = (id: string) => `camp:${id}`;
+
+/**
+ * What the plan screens show: with two or more camps a picker of "Tüm
+ * Kamplar" and each camp, with one camp its name.
+ */
 export function CampSwitcher({
   camps,
   activeCampId,
+  scope,
   onSelectCamp,
+  onSelectAll,
   compact = false,
-}: Pick<NavProps, 'camps' | 'activeCampId' | 'onSelectCamp'> & { compact?: boolean }) {
+}: Pick<NavProps, 'camps' | 'activeCampId' | 'scope' | 'onSelectCamp' | 'onSelectAll'> & { compact?: boolean }) {
   const uid = useId();
   const active = camps.find(c => c.id === activeCampId) ?? camps[0];
   if (!active) return null;
+  const showAll = scope === 'all' && offersAllCamps(camps.length);
   if (camps.length === 1) {
     return compact ? (
       <p className="font-display min-w-0 truncate text-[18px] text-ink">{active.name}</p>
@@ -64,16 +81,24 @@ export function CampSwitcher({
   return (
     <>
       <label htmlFor={`${uid}-camp`} className="sr-only">
-        Açık kamp
+        Gösterilen kamp
       </label>
       <select
         id={`${uid}-camp`}
         className={`input camp-select ${compact ? 'camp-select-compact' : ''}`}
-        value={active.id}
-        onChange={e => onSelectCamp(e.target.value)}
+        value={showAll ? ALL_VALUE : campValue(active.id)}
+        onChange={e => {
+          const value = e.target.value;
+          if (value === ALL_VALUE) onSelectAll();
+          else {
+            const camp = camps.find(c => campValue(c.id) === value);
+            if (camp) onSelectCamp(camp.id);
+          }
+        }}
       >
+        <option value={ALL_VALUE}>{ALL_CAMPS_LABEL}</option>
         {camps.map(c => (
-          <option key={c.id} value={c.id}>
+          <option key={c.id} value={campValue(c.id)}>
             {c.name}
           </option>
         ))}
@@ -82,7 +107,7 @@ export function CampSwitcher({
   );
 }
 
-export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, isDemo }: NavProps) {
+export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo }: NavProps) {
   const campCount = camps.length;
   const item = ({ view: target, label, icon: Icon }: NavItem) => {
     const active = view === target;
@@ -119,7 +144,14 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSe
       {/* With several camps, switch the open one here (the plan screens show it). */}
       {campCount > 1 && (
         <div className="mt-5">
-          <CampSwitcher camps={camps} activeCampId={activeCampId} onSelectCamp={onSelectCamp} compact />
+          <CampSwitcher
+            camps={camps}
+            activeCampId={activeCampId}
+            scope={scope}
+            onSelectCamp={onSelectCamp}
+            onSelectAll={onSelectAll}
+            compact
+          />
         </div>
       )}
 
@@ -139,13 +171,20 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSe
   );
 }
 
-export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, onSelectCamp, isDemo }: NavProps) {
+export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/95 px-4 backdrop-blur-sm lg:hidden">
       <BrandMark size={28} />
       <div className="min-w-0 flex-1">
         {camps.length > 0 ? (
-          <CampSwitcher camps={camps} activeCampId={activeCampId} onSelectCamp={onSelectCamp} compact />
+          <CampSwitcher
+            camps={camps}
+            activeCampId={activeCampId}
+            scope={scope}
+            onSelectCamp={onSelectCamp}
+            onSelectAll={onSelectAll}
+            compact
+          />
         ) : (
           <p className="font-display text-[18px] text-ink">Yetiştiricem</p>
         )}

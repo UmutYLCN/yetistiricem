@@ -2,9 +2,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowRight, CalendarX, ChevronLeft, ChevronRight, CircleCheck, Flag, Forward, Moon } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
+import type { CampLabel, CampPlanItem } from '../../lib/allCamps';
+import { everyCampOff } from '../../lib/allCamps';
 import { addDays, dayOfWeek, formatDateKey } from '../../lib/engine';
 import { LONG_WEEKDAYS, SHORT_WEEKDAYS, formatMinutes, formatWeekRange } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
+import { CampDayTypeChips, CampDayTypeRows } from '../day/CampDayTypes';
 import { TaskItem } from '../day/TaskItem';
 import { WeekRoute } from '../day/WeekRoute';
 import { PageHeader } from '../layout/PageHeader';
@@ -20,6 +23,8 @@ interface Props {
   onOpenDay: (date: string) => void;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  /** "Tüm Kamplar": the camps on screen; each task then names its camp. */
+  campLabels?: Map<string, CampLabel>;
 }
 
 function scrollBehavior(): ScrollBehavior {
@@ -62,13 +67,22 @@ interface DayCardProps {
   onOpenDay: (date: string) => void;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  campLabels?: Map<string, CampLabel>;
 }
 
-function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggle, onEditLink }: DayCardProps) {
+function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggle, onEditLink, campLabels }: DayCardProps) {
   const isToday = day.date === today;
-  const items = day.plan?.items ?? [];
+  // Combined view: every camp's tasks, camp by camp, each knowing its camp.
+  const items: (DailyPlanItem | CampPlanItem)[] = day.camps ? day.camps.flatMap(part => part.items) : (day.plan?.items ?? []);
+  // Combined view: camps without tasks show their own day type. With no task
+  // at all, the card only says "rest" or "mock exam" when every camp is off;
+  // otherwise it lists each camp's day.
+  const parts = campLabels ? (day.camps ?? []) : [];
+  const listCamps = items.length === 0 && parts.length > 0 && !everyCampOff(parts);
+  const mixedOff = items.length === 0 && !listCamps && new Set(parts.map(p => p.kind)).size > 1;
+  const offCamps = items.length > 0 || mixedOff ? parts.filter(part => part.total === 0) : [];
   const weekday = LONG_WEEKDAYS[dayOfWeek(day.date)];
-  const empty = items.length === 0 ? emptyCopy(day) : null;
+  const empty = items.length === 0 && !listCamps ? emptyCopy(day) : null;
   const EmptyIcon = empty?.icon;
 
   return (
@@ -104,6 +118,7 @@ function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggl
                 Deneme
               </span>
             )}
+            {campLabels && offCamps.length > 0 && <CampDayTypeChips parts={offCamps} labels={campLabels} />}
           </h2>
           {day.total > 0 && (
             <div className="mt-1 flex items-center gap-3">
@@ -130,16 +145,21 @@ function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggl
         <ul className="border-t border-line" aria-label={`${weekday} görevleri`}>
           {items.map(item => (
             <TaskItem
-              key={item.id}
+              key={'campId' in item ? `${item.campId}/${item.id}` : item.id}
               item={item}
               camp={camps.get(item.playlistId)}
               oversized={oversizedIds.has(item.id)}
               onToggle={onToggle}
               onEditLink={onEditLink}
               compact
+              campName={'campId' in item ? campLabels?.get(item.campId)?.name : undefined}
             />
           ))}
         </ul>
+      ) : listCamps && campLabels ? (
+        <div className="border-t border-line">
+          <CampDayTypeRows parts={parts} labels={campLabels} />
+        </div>
       ) : (
         empty &&
         EmptyIcon && (
@@ -156,7 +176,18 @@ function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggl
   );
 }
 
-export function WeekView({ days, today, selectedDate, camps, oversizedIds, onSelectDate, onOpenDay, onToggle, onEditLink }: Props) {
+export function WeekView({
+  days,
+  today,
+  selectedDate,
+  camps,
+  oversizedIds,
+  onSelectDate,
+  onOpenDay,
+  onToggle,
+  onEditLink,
+  campLabels,
+}: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const shownWeek = useRef<string | null>(null);
   const [edges, setEdges] = useState({ atStart: true, atEnd: false });
@@ -218,7 +249,7 @@ export function WeekView({ days, today, selectedDate, camps, oversizedIds, onSel
       <PageHeader
         eyebrow={containsToday ? 'Bu hafta' : 'Hafta'}
         title="Haftalık plan"
-        subtitle={formatWeekRange(monday)}
+        subtitle={campLabels ? `${formatWeekRange(monday)} · ${campLabels.size} kamp birlikte` : formatWeekRange(monday)}
         actions={
           <>
             {!containsToday && (
@@ -307,6 +338,7 @@ export function WeekView({ days, today, selectedDate, camps, oversizedIds, onSel
             onOpenDay={onOpenDay}
             onToggle={onToggle}
             onEditLink={onEditLink}
+            campLabels={campLabels}
           />
         ))}
       </div>

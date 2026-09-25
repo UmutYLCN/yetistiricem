@@ -2,7 +2,7 @@
 
 YouTube ders videolarını günlük çalışma süresine göre günlere bölen, tarayıcıda çalışan bir çalışma planlayıcı.
 
-Bir **kamp** (ör. “TYT 2027”) çalışma programının tamamıdır: birden çok **branş** (Matematik, Fizik…) içerir ve her branş sırayla izlenecek videolardır (genellikle bir YouTube oynatma listesi). Her kampın kendi temposu (tarihler, günlük süre, haftalık düzen) ve kendi ileri taşımaları vardır; birden çok kamp tutulabilir, ekranlar açık kampı gösterir.
+Bir **kamp** (ör. “TYT 2027”) çalışma programının tamamıdır: birden çok **branş** (Matematik, Fizik…) içerir ve her branş sırayla izlenecek videolardır (genellikle bir YouTube oynatma listesi). Her kampın kendi temposu (tarihler, günlük süre, haftalık düzen) ve kendi ileri taşımaları vardır; birden çok kamp tutulabilir. Ekranlar açık kampı ya da, iki ve daha fazla kampta, **Tüm Kamplar** görünümünü gösterir: Bugün, Haftalık ve İlerleme her kampın kendi temposuyla kurulan planını tarihe göre birleştirir; her görev kampını ve branşını gösterir, ileri taşıma yalnızca görevin kendi kampına yazılır.
 
 - **Yeni kamp:** dört adımlı sihirbaz. Kaynaklar (her oynatma listesi bir branş olur; tek video, liste yapıştırma ve demo şablon da var) → kamp adı, başlangıç ve isteğe bağlı hedef bitiş tarihi → ritim (önce “Otomatik dağıt” ya da “Branşları günlere ben yerleştireceğim”) → kaydetmeden önce günlük plan önizlemesi ve hedefe yetişme durumu.
 - **Bugün:** haftalık gün şeridi, seçili günün görevleri, geciken görevler, ilerleme özeti ve haftanın ilerlemesi.
@@ -99,7 +99,8 @@ Her şey tarayıcının `localStorage` alanında durur:
 | Anahtar | İçerik |
 | --- | --- |
 | `yt_camps` | kamplar: branşları, videoları, temposu ve ileri taşımaları (`{ version, camps }`) |
-| `yt_active_camp` | açık kampın kimliği |
+| `yt_active_camp` | açık kampın kimliği (her zaman gerçek bir kamp) |
+| `yt_camp_scope` | ekranların görünümü: `all` (Tüm Kamplar) ya da `camp` (açık kamp); yoksa iki ve daha fazla kampta Tüm Kamplar |
 | `yt_completed` | tamamlanan videolar (`videoId → true`, tüm kamplar için) |
 | `yt_day_notes` | gün notları |
 | `yt_selected_date` | seçili gün |

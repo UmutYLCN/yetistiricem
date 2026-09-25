@@ -1,5 +1,6 @@
 import { CircleCheck, Forward, Gauge, TriangleAlert } from 'lucide-react';
 import type { RoadmapStats, StudyCamp, UserPreferences } from '../../types';
+import type { CampOverview } from '../../lib/allCamps';
 import type { ScheduleIssue } from '../../lib/engine';
 import { addDays, assessDeadline, diffDays, formatDateKey } from '../../lib/engine';
 import {
@@ -15,31 +16,176 @@ import { campProgress } from '../../lib/planView';
 import { PageHeader } from '../layout/PageHeader';
 import { KindBadge, Meter, SubjectDot } from '../ui/Bits';
 
+/** One camp (its own schedule issues), or "Tüm Kamplar" (each camp's own overview). */
+export type ProgressScope =
+  | { kind: 'camp'; camp: StudyCamp; prefs: UserPreferences; issues: ScheduleIssue[] }
+  | { kind: 'all'; camps: CampOverview[] };
+
 interface Props {
   stats: RoadmapStats;
-  prefs: UserPreferences;
-  camp: StudyCamp;
   today: string;
   index: PlanIndex;
   camps: Map<string, CampInfo>;
   weeks: WeekOverview[];
-  issues: ScheduleIssue[];
+  scope: ProgressScope;
   onShiftOverdue: () => void;
   onOpenWeek: (monday: string) => void;
-  onEditTempo: () => void;
+  onEditTempo: (campId: string) => void;
 }
 
-export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, issues, onShiftOverdue, onOpenWeek, onEditTempo }: Props) {
-  const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
-  const daysLeft = diffDays(today, stats.estimatedFinishDate);
-  const thisMonday = startOfWeek(today);
+function unscheduledCount(issues: ScheduleIssue[]): number {
+  return issues.reduce(
+    (acc, i) => acc + (i.kind === 'unassigned-branch' || i.kind === 'no-study-days' ? i.unscheduledCount : 0),
+    0
+  );
+}
+
+function hasPlanIssues(issues: ScheduleIssue[]): boolean {
+  return issues.some(i => i.kind === 'oversized-item' || i.kind === 'no-study-days' || i.kind === 'unassigned-branch');
+}
+
+/** A camp's schedule issues. `campName` titles them in the combined view. */
+function PlanIssues({
+  issues,
+  prefs,
+  camps,
+  campName,
+  headingId,
+  onEditTempo,
+}: {
+  issues: ScheduleIssue[];
+  prefs: UserPreferences;
+  camps: Map<string, CampInfo>;
+  campName?: string;
+  headingId: string;
+  onEditTempo: () => void;
+}) {
   const oversized = issues.filter(i => i.kind === 'oversized-item');
   const noStudyDays = issues.find(i => i.kind === 'no-study-days');
   const unassigned = issues.flatMap(i => (i.kind === 'unassigned-branch' ? [i] : []));
-  const unscheduled = unassigned.reduce((acc, i) => acc + i.unscheduledCount, 0) + (noStudyDays?.kind === 'no-study-days' ? noStudyDays.unscheduledCount : 0);
-  const deadline = finished
-    ? null
-    : assessDeadline({ finishDate: stats.estimatedFinishDate, targetEndDate: camp.schedule.targetEndDate, unscheduledCount: unscheduled });
+  if (!hasPlanIssues(issues)) return null;
+  return (
+    <section className="callout callout-warn" aria-labelledby={headingId}>
+      <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
+      <div className="min-w-0 flex-1 text-[14px] text-ink-2">
+        <h2 id={headingId} className="font-semibold break-words text-ink">
+          {campName ? `${campName}: planla ilgili dikkat edilecekler` : 'Planla ilgili dikkat edilecekler'}
+        </h2>
+        <ul className="mt-1 list-disc space-y-1 pl-4">
+          {noStudyDays && noStudyDays.kind === 'no-study-days' && (
+            <li>
+              Haftada hiç çalışma günü yok; {noStudyDays.unscheduledCount} video planlanamadı.{' '}
+              <button type="button" className="font-semibold text-forest underline" onClick={onEditTempo}>
+                Çalışma günü seç
+              </button>
+            </li>
+          )}
+          {unassigned.map(issue => (
+            <li key={issue.playlistId}>
+              {camps.get(issue.playlistId)?.camp.subject ?? 'Bir branş'} hiçbir güne yerleşmemiş; {issue.unscheduledCount} videosu
+              planda yok.{' '}
+              <button type="button" className="font-semibold text-forest underline" onClick={onEditTempo}>
+                Günlere yerleştir
+              </button>
+            </li>
+          ))}
+          {oversized.length > 0 && (
+            <li>
+              {oversized.length} video günlük çalışma sürenden ({formatMinutes(prefs.dailyStudyHours * 60)}) uzun; her biri
+              tek başına bir güne yerleştirildi.
+            </li>
+          )}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/** "Tüm Kamplar": each camp's own progress, finish, target and daily goal. */
+function CampRows({ overviews, today, onEditTempo }: { overviews: CampOverview[]; today: string; onEditTempo: (campId: string) => void }) {
+  return (
+    <section className="card" aria-labelledby="progress-by-camp">
+      <h2 id="progress-by-camp" className="border-b border-line px-5 py-3.5 text-[15px] font-semibold text-ink">
+        Kamplara göre
+      </h2>
+      <ul>
+        {overviews.map(({ camp, result, stats, deadline }) => {
+          const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
+          const prefs = result.preferences;
+          return (
+            <li key={camp.id} className="border-t border-line px-5 py-4 first:border-t-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="min-w-0 flex-1 font-semibold break-words text-ink">{camp.name}</p>
+                <p className="tnum text-[13px] font-semibold text-ink-2">
+                  {stats.completedVideos}/{stats.totalVideos}
+                </p>
+              </div>
+              <div className="mt-2.5">
+                <Meter value={stats.completedVideos} max={stats.totalVideos} label={`${camp.name} ilerlemesi`} />
+              </div>
+              <p className="tnum mt-2 text-[12.5px] text-ink-3">
+                {finished
+                  ? 'Tüm videolar tamamlandı'
+                  : `${formatHours(stats.totalMinutes)} kaldı · bitiş ${formatShortDate(stats.estimatedFinishDate)}`}
+                {' · '}
+                günlük hedef {formatMinutes(prefs.dailyStudyHours * 60)} ·{' '}
+                {prefs.startDate > today ? `${formatShortDate(prefs.startDate)} tarihinde başlıyor` : `${formatShortDate(prefs.startDate)} başladı`}
+              </p>
+              {deadline && deadline.kind !== 'none' && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <p
+                    className={`tnum text-[13px] font-semibold ${
+                      deadline.kind === 'on-track' ? 'text-forest' : deadline.kind === 'late' ? 'text-accent-strong' : 'text-warn'
+                    }`}
+                  >
+                    {deadline.kind === 'late'
+                      ? `Hedefin ${deadline.lateDays} gün gerisinde (hedef ${formatShortDate(deadline.targetEndDate)})`
+                      : deadline.kind === 'on-track'
+                        ? `Hedefe yetişiyor (hedef ${formatShortDate(deadline.targetEndDate)})`
+                        : `${deadline.unscheduledCount} video planda yok; hedef ${formatShortDate(deadline.targetEndDate)}`}
+                  </p>
+                  {deadline.kind !== 'on-track' && (
+                    <button type="button" className="btn btn-sm btn-secondary" onClick={() => onEditTempo(camp.id)}>
+                      <Gauge aria-hidden="true" />
+                      Tempoyu düzenle
+                    </button>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+export function ProgressView({ stats, today, index, camps, weeks, scope, onShiftOverdue, onOpenWeek, onEditTempo }: Props) {
+  const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
+  const daysLeft = diffDays(today, stats.estimatedFinishDate);
+  const thisMonday = startOfWeek(today);
+  const single = scope.kind === 'camp' ? scope : null;
+  const deadline =
+    finished || !single
+      ? null
+      : assessDeadline({
+          finishDate: stats.estimatedFinishDate,
+          targetEndDate: single.camp.schedule.targetEndDate,
+          unscheduledCount: unscheduledCount(single.issues),
+        });
+  // Combined view: which camp each branch belongs to.
+  const campOfBranch = new Map(
+    scope.kind === 'all' ? scope.camps.flatMap(({ camp }) => camp.branches.map(b => [b.id, camp.name] as const)) : []
+  );
+
+  let subtitle: string;
+  if (single) {
+    subtitle = `Plan ${formatLongDate(single.prefs.startDate)} tarihinde ${single.prefs.startDate > today ? 'başlıyor' : 'başladı'}`;
+  } else {
+    const all = scope.kind === 'all' ? scope.camps : [];
+    const first = all.map(o => o.result.preferences.startDate).sort()[0];
+    subtitle = `${all.length} kamp birlikte${first ? ` · ilk kamp ${formatLongDate(first)} tarihinde ${first > today ? 'başlıyor' : 'başladı'}` : ''}`;
+  }
 
   const tiles = [
     {
@@ -67,10 +213,7 @@ export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, i
 
   return (
     <div className="mx-auto max-w-[920px] space-y-5">
-      <PageHeader
-        title="İlerleme"
-        subtitle={`Plan ${formatLongDate(prefs.startDate)} tarihinde ${prefs.startDate > today ? 'başlıyor' : 'başladı'}`}
-      />
+      <PageHeader title="İlerleme" subtitle={subtitle} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {tiles.map(tile => (
@@ -98,7 +241,7 @@ export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, i
         </div>
       )}
 
-      {deadline && deadline.kind !== 'none' && deadline.kind !== 'incomplete' && (
+      {single && deadline && deadline.kind !== 'none' && deadline.kind !== 'incomplete' && (
         <div className={`callout ${deadline.kind === 'late' ? 'callout-accent' : 'callout-info'} flex-wrap items-center`}>
           {deadline.kind === 'late' ? (
             <TriangleAlert className="size-4 shrink-0 text-accent-strong" aria-hidden="true" />
@@ -119,7 +262,7 @@ export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, i
             )}
           </p>
           {deadline.kind === 'late' && (
-            <button type="button" className="btn btn-sm btn-secondary" onClick={onEditTempo}>
+            <button type="button" className="btn btn-sm btn-secondary" onClick={() => onEditTempo(single.camp.id)}>
               <Gauge aria-hidden="true" />
               Tempoyu düzenle
             </button>
@@ -127,41 +270,30 @@ export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, i
         </div>
       )}
 
-      {(oversized.length > 0 || noStudyDays || unassigned.length > 0) && (
-        <section className="callout callout-warn" aria-labelledby="plan-issues">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
-          <div className="min-w-0 flex-1 text-[14px] text-ink-2">
-            <h2 id="plan-issues" className="font-semibold text-ink">
-              Planla ilgili dikkat edilecekler
-            </h2>
-            <ul className="mt-1 list-disc space-y-1 pl-4">
-              {noStudyDays && noStudyDays.kind === 'no-study-days' && (
-                <li>
-                  Haftada hiç çalışma günü yok; {noStudyDays.unscheduledCount} video planlanamadı.{' '}
-                  <button type="button" className="font-semibold text-forest underline" onClick={onEditTempo}>
-                    Çalışma günü seç
-                  </button>
-                </li>
-              )}
-              {unassigned.map(issue => (
-                <li key={issue.playlistId}>
-                  {camps.get(issue.playlistId)?.camp.subject ?? 'Bir branş'} hiçbir güne yerleşmemiş; {issue.unscheduledCount} videosu
-                  planda yok.{' '}
-                  <button type="button" className="font-semibold text-forest underline" onClick={onEditTempo}>
-                    Günlere yerleştir
-                  </button>
-                </li>
-              ))}
-              {oversized.length > 0 && (
-                <li>
-                  {oversized.length} video günlük çalışma sürenden ({formatMinutes(prefs.dailyStudyHours * 60)}) uzun; her biri
-                  tek başına bir güne yerleştirildi.
-                </li>
-              )}
-            </ul>
-          </div>
-        </section>
+      {single ? (
+        <PlanIssues
+          issues={single.issues}
+          prefs={single.prefs}
+          camps={camps}
+          headingId="plan-issues"
+          onEditTempo={() => onEditTempo(single.camp.id)}
+        />
+      ) : (
+        scope.kind === 'all' &&
+        scope.camps.map(({ camp, result }) => (
+          <PlanIssues
+            key={camp.id}
+            issues={result.issues}
+            prefs={result.preferences}
+            camps={camps}
+            campName={camp.name}
+            headingId={`plan-issues-${camp.id}`}
+            onEditTempo={() => onEditTempo(camp.id)}
+          />
+        ))
       )}
+
+      {scope.kind === 'all' && <CampRows overviews={scope.camps} today={today} onEditTempo={onEditTempo} />}
 
       <section className="card" aria-labelledby="progress-camps">
         <h2 id="progress-camps" className="border-b border-line px-5 py-3.5 text-[15px] font-semibold text-ink">
@@ -170,6 +302,7 @@ export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, i
         <ul>
           {[...camps.values()].map(info => {
             const progress = campProgress(info.camp.id, index);
+            const campName = campOfBranch.get(info.camp.id);
             return (
               <li key={info.camp.id} className="border-t border-line px-5 py-4 first:border-t-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -184,6 +317,7 @@ export function ProgressView({ stats, prefs, camp, today, index, camps, weeks, i
                   <Meter value={progress.done} max={progress.total} label={`${info.camp.subject} ilerlemesi`} color={info.color.solid} />
                 </div>
                 <p className="tnum mt-2 text-[12.5px] text-ink-3">
+                  {campName && <span className="font-semibold text-ink-2">{campName} · </span>}
                   {info.camp.title}
                   {progress.remainingMinutes > 0
                     ? ` · ${formatMinutes(progress.remainingMinutes)} kaldı · bitiş ${progress.finishDate ? formatShortDate(progress.finishDate) : '—'}`

@@ -1,5 +1,6 @@
 import { Forward, TriangleAlert } from 'lucide-react';
 import type { RoadmapStats, UserPreferences } from '../../types';
+import type { CampLabel } from '../../lib/allCamps';
 import { addDays, assessDeadline, dayOfWeek, diffDays } from '../../lib/engine';
 import {
   SHORT_WEEKDAYS,
@@ -18,11 +19,14 @@ export function ProgressCard({
   prefs,
   today,
   targetEndDate,
+  campGoals,
 }: {
   stats: RoadmapStats;
   prefs: UserPreferences;
   today: string;
   targetEndDate: string | null;
+  /** "Tüm Kamplar": totals over these camps, and each camp's own daily goal. */
+  campGoals?: CampLabel[];
 }) {
   const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
   const daysLeft = diffDays(today, stats.estimatedFinishDate);
@@ -30,7 +34,7 @@ export function ProgressCard({
   return (
     <section className="card p-5" aria-labelledby="rail-progress">
       <h2 id="rail-progress" className="eyebrow">
-        Genel ilerleme
+        {campGoals ? 'Tüm kampların ilerlemesi' : 'Genel ilerleme'}
       </h2>
       <div className="mt-2 flex items-end justify-between gap-3">
         <p className="font-display tnum text-[40px] leading-none text-ink">{formatPercent(stats.progressPercent)}</p>
@@ -73,12 +77,32 @@ export function ProgressCard({
             </dd>
           </div>
         )}
-        <div className="flex justify-between gap-3">
-          <dt className="text-ink-2">Günlük hedef</dt>
-          <dd className="tnum font-semibold text-ink">
-            {formatMinutes(prefs.dailyStudyHours * 60)} · {formatSpeed(prefs.playbackSpeed)}
-          </dd>
-        </div>
+        {campGoals ? (
+          <div className="border-t border-line pt-3">
+            <dt className="text-ink-2">Günlük hedefler</dt>
+            <dd>
+              <ul className="mt-1.5 space-y-1.5">
+                {campGoals.map(goal => (
+                  <li key={goal.id} className="flex justify-between gap-3">
+                    <span className="min-w-0 truncate text-ink" title={goal.name}>
+                      {goal.name}
+                    </span>
+                    <span className="tnum shrink-0 font-semibold text-ink">
+                      {formatMinutes(goal.dailyMinutes)} · {formatSpeed(goal.playbackSpeed)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ) : (
+          <div className="flex justify-between gap-3">
+            <dt className="text-ink-2">Günlük hedef</dt>
+            <dd className="tnum font-semibold text-ink">
+              {formatMinutes(prefs.dailyStudyHours * 60)} · {formatSpeed(prefs.playbackSpeed)}
+            </dd>
+          </div>
+        )}
       </dl>
     </section>
   );
@@ -148,10 +172,10 @@ export function WeekCard({
   );
 }
 
-export function OverdueCard({ count, today, onShift }: { count: number; today: string; onShift: () => void }) {
+export function OverdueCard({ count, today, onShift, className = '' }: { count: number; today: string; onShift: () => void; className?: string }) {
   if (count === 0) return null;
   return (
-    <section className="callout callout-accent" aria-labelledby="rail-overdue">
+    <section className={`callout callout-accent ${className}`} aria-labelledby="rail-overdue">
       <TriangleAlert className="mt-0.5 size-4 shrink-0 text-accent-strong" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <h2 id="rail-overdue" className="font-semibold text-ink">

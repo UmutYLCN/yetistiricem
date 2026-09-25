@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRightLeft, ChevronDown, ExternalLink, Gauge, ListVideo, Pencil, Play, Plus, Trash2, TriangleAlert } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ExternalLink, Gauge, ListVideo, Pencil, Play, Plus, SlidersHorizontal, Trash2, TriangleAlert } from 'lucide-react';
 import type { StudyCamp } from '../../types';
 import type { CampInfo, PlanIndex } from '../../lib/planView';
 import { campProgress, tempoSummary } from '../../lib/planView';
@@ -19,6 +19,11 @@ interface Props {
   completedMap: Record<string, boolean>;
   today: string;
   isDemo: boolean;
+  /**
+   * The plan screens show "Tüm Kamplar". Choosing a camp here then only picks
+   * the camp to manage below; the combined view stays.
+   */
+  showsAllCamps: boolean;
   onAddCamp: () => void;
   onStartDemo: () => void;
   onSelectCamp: (campId: string) => void;
@@ -51,6 +56,7 @@ export function CampsView({
   completedMap,
   today,
   isDemo,
+  showsAllCamps,
   onAddCamp,
   onStartDemo,
   onSelectCamp,
@@ -76,7 +82,13 @@ export function CampsView({
     <div className="mx-auto max-w-[920px]">
       <PageHeader
         title="Kamplar"
-        subtitle={allCamps.length > 0 ? `${allCamps.length} kamp · her birinin kendi branşları ve temposu var` : undefined}
+        subtitle={
+          allCamps.length > 0
+            ? showsAllCamps
+              ? `${allCamps.length} kamp · her birinin kendi branşları ve temposu var · Bugün ve Haftalık hepsini birlikte gösteriyor`
+              : `${allCamps.length} kamp · her birinin kendi branşları ve temposu var`
+            : undefined
+        }
         actions={
           allCamps.length > 0 && (
             <button type="button" className={`btn ${isDemo ? 'btn-primary' : 'btn-secondary'}`} onClick={onAddCamp}>
@@ -96,17 +108,21 @@ export function CampsView({
               const active = camp.id === activeCamp.id;
               const total = camp.branches.reduce((acc, b) => acc + b.videos.length, 0);
               const done = countCompletedVideos(camp.branches, completedMap);
+              const hasVideos = total > 0;
               return (
                 <li key={camp.id} className={`card flex flex-col p-4 sm:p-5 ${active ? 'ring-2 ring-forest/60' : ''}`}>
                   <div className="flex items-start gap-2">
                     <h2 className="font-display min-w-0 flex-1 text-[20px] leading-tight break-words text-ink">{camp.name}</h2>
-                    {active && <span className="chip chip-forest shrink-0">Açık kamp</span>}
+                    {active && <span className="chip chip-forest shrink-0">{showsAllCamps ? 'Seçili' : 'Açık kamp'}</span>}
                   </div>
                   <p className="tnum mt-1 text-[12.5px] text-ink-3">
                     {camp.branches.length} branş · {total} video · başlangıç {formatShortDate(camp.schedule.startDate)}
                     {camp.schedule.targetEndDate && ` · hedef ${formatShortDate(camp.schedule.targetEndDate)}`}
                   </p>
                   <p className="mt-1.5 text-[13px] text-ink-2">{tempoSummary(camp.schedule)}</p>
+                  {showsAllCamps && !hasVideos && (
+                    <p className="mt-1.5 text-[12.5px] text-ink-3">Henüz video yok; branş eklenince Tüm Kamplar görünümüne katılır.</p>
+                  )}
                   <div className="mt-3 flex items-center gap-3">
                     <div className="flex-1">
                       <Meter value={done} max={total} label={`${camp.name} ilerlemesi`} />
@@ -116,12 +132,23 @@ export function CampsView({
                     </span>
                   </div>
                   <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-                    {!active && (
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => onSelectCamp(camp.id)}>
-                        <ArrowRightLeft aria-hidden="true" />
-                        Bu kampa geç
-                      </button>
-                    )}
+                    {!active &&
+                      (showsAllCamps ? (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => onSelectCamp(camp.id)}
+                          aria-label={`${camp.name} kampını yönet`}
+                        >
+                          <SlidersHorizontal aria-hidden="true" />
+                          Yönet
+                        </button>
+                      ) : (
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => onSelectCamp(camp.id)}>
+                          <ArrowRightLeft aria-hidden="true" />
+                          Bu kampa geç
+                        </button>
+                      ))}
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => onRenameCamp(camp.id)}>
                       <Pencil aria-hidden="true" />
                       Adını değiştir
@@ -141,7 +168,7 @@ export function CampsView({
           </ul>
 
           <PageHeader
-            eyebrow="Açık kamp"
+            eyebrow={showsAllCamps ? 'Seçili kamp' : 'Açık kamp'}
             title={`${activeCamp.name} branşları`}
             subtitle={`${camps.length} branş · ${index.items.length} görev · plan ${formatLongDate(activeCamp.schedule.startDate)} tarihinde ${activeCamp.schedule.startDate > today ? 'başlıyor' : 'başladı'}`}
             actions={

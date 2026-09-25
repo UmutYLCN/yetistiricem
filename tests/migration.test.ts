@@ -217,6 +217,37 @@ test('several camps load with their own branches, schedules and shift events', (
   });
 });
 
+test('the "Tüm Kamplar" choice is its own key and never stands in for the active camp', () => {
+  const second: StudyCamp = {
+    id: 'camp-ayt',
+    name: 'AYT',
+    createdAt: '2026-09-20',
+    branches: [playlist('geo', repeat(4, 30), 'Geometri')],
+    schedule: { ...prefs(), mode: 'auto', targetEndDate: null, weekPlan: [[], [], [], [], [], [], []] },
+    shiftEvents: [],
+  };
+  const first = migrateLegacyData({ preferences: legacyPrefs, playlists: legacyPlaylists, shiftEvents: [] }, '2026-09-20');
+  const camps = JSON.stringify(campStore([first, second]));
+  withStorage({ [CAMP_KEYS.camps]: camps, [CAMP_KEYS.activeCamp]: JSON.stringify('camp-ayt'), [UI_KEYS.campScope]: JSON.stringify('all') }, () => {
+    const loaded = loadPlanner();
+    assert.equal(loaded.campScope, 'all');
+    assert.equal(loaded.data.activeCampId, 'camp-ayt', 'the managed camp stays a real camp');
+  });
+  withStorage({ [CAMP_KEYS.camps]: camps, [CAMP_KEYS.activeCamp]: JSON.stringify('all') }, () => {
+    const loaded = loadPlanner();
+    assert.equal(loaded.data.activeCampId, first.id, '"all" is not a camp id');
+    assert.equal(loaded.campScope, null, 'no choice made yet');
+  });
+  withStorage({ [CAMP_KEYS.camps]: camps, [UI_KEYS.campScope]: JSON.stringify('camp-ayt') }, () => {
+    assert.equal(loadPlanner().campScope, null, 'only "all" or "camp" is a scope');
+  });
+  withStorage({ [CAMP_KEYS.camps]: camps, [UI_KEYS.campScope]: JSON.stringify('camp') }, store => {
+    assert.equal(loadPlanner().campScope, 'camp');
+    clearAllStorage();
+    assert.equal(store.has(UI_KEYS.campScope), false, 'reset clears the choice');
+  });
+});
+
 test('branch ids stay unique across camps and broken entries are reported', () => {
   const dup = { id: 'c2', name: 'İkinci', branches: [playlist('mat', [10]), { id: '' }, playlist('ok', [5])], schedule: {} };
   const result = normalizeCamps([{ id: 'c1', name: 'Bir', branches: [playlist('mat', [10])], schedule: {} }, dup, { name: 'kimliksiz' }]);

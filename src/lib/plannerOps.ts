@@ -117,3 +117,12 @@ export function addShiftEvent(data: PlannerData, campId: string, event: ShiftEve
 export function removeShiftEvent(data: PlannerData, campId: string, event: ShiftEvent): PlannerData {
   return mapCamp(data, campId, c => ({ ...c, shiftEvents: c.shiftEvents.filter(e => e !== event) }));
 }
+
+/** Several camps' shifts as one change (the "Tüm Kamplar" view): each event goes to its own camp only. */
+export function addShiftEvents(data: PlannerData, shifts: readonly { campId: string; event: ShiftEvent }[]): PlannerData {
+  return shifts.reduce((next, { campId, event }) => addShiftEvent(next, campId, event), data);
+}
+
+export function removeShiftEvents(data: PlannerData, shifts: readonly { campId: string; event: ShiftEvent }[]): PlannerData {
+  return shifts.reduce((next, { campId, event }) => removeShiftEvent(next, campId, event), data);
+}

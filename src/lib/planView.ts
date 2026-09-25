@@ -1,4 +1,5 @@
 import type { CampSchedule, DailyPlan, DailyPlanItem, SubjectPlaylist, UserPreferences } from '../types';
+import type { CampDaySummary } from './allCamps.ts';
 import type { CampKind } from './camps.ts';
 import { classifyCamp, displayChannel } from './camps.ts';
 import { dayOfWeek, formatDateKey } from './engine.ts';
@@ -24,23 +25,23 @@ export function indexCamps(playlists: SubjectPlaylist[]): Map<string, CampInfo> 
   );
 }
 
-export interface ScheduledItem {
-  item: DailyPlanItem;
+export interface ScheduledItem<I extends DailyPlanItem = DailyPlanItem> {
+  item: I;
   date: string;
 }
 
-export interface PlanIndex {
-  byDate: Map<string, DailyPlan>;
+export interface PlanIndex<P extends DailyPlan = DailyPlan> {
+  byDate: Map<string, P>;
   /** First and last planned day (study or not), or null with no plan. */
   firstDate: string | null;
   lastDate: string | null;
   /** Every scheduled item in date order. */
-  items: ScheduledItem[];
+  items: ScheduledItem<P['items'][number]>[];
   /** Incomplete items on days before today. */
-  overdue: ScheduledItem[];
+  overdue: ScheduledItem<P['items'][number]>[];
 }
 
-export function indexPlans(plans: DailyPlan[], today: string): PlanIndex {
+export function indexPlans<P extends DailyPlan>(plans: readonly P[], today: string): PlanIndex<P> {
   const sorted = [...plans].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const byDate = new Map(sorted.map(p => [p.date, p]));
   const items = sorted.flatMap(plan => plan.items.map(item => ({ item, date: plan.date })));
@@ -63,6 +64,10 @@ export function dayKindFor(date: string, prefs: UserPreferences): DayKind {
   return 'study';
 }
 
+export function planKind(plan: DailyPlan): DayKind {
+  return plan.isMockExamDay ? 'mock' : plan.isRestDay ? 'rest' : 'study';
+}
+
 export interface DaySummary {
   date: string;
   plan: DailyPlan | undefined;
@@ -71,11 +76,17 @@ export interface DaySummary {
   done: number;
   minutes: number;
   doneMinutes: number;
+  /** "Tüm Kamplar" only: each camp's own share of the day (see `summarizeAllCampsDay`). */
+  camps?: CampDaySummary[];
 }
 
 export function summarizeDay(date: string, index: PlanIndex, prefs: UserPreferences): DaySummary {
   const plan = index.byDate.get(date);
-  const kind: DayKind = plan ? (plan.isMockExamDay ? 'mock' : plan.isRestDay ? 'rest' : 'study') : dayKindFor(date, prefs);
+  return daySummaryOf(date, plan, plan ? planKind(plan) : dayKindFor(date, prefs));
+}
+
+/** Task counts and study time of one day's plan. */
+export function daySummaryOf(date: string, plan: DailyPlan | undefined, kind: DayKind): DaySummary {
   const items = plan?.items ?? [];
   const doneItems = items.filter(i => i.completed);
   return {

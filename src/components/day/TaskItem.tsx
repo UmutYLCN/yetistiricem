@@ -15,9 +15,11 @@ interface Props {
   compact?: boolean;
   /** Extra context shown before the title, e.g. the day in "next up" lists. */
   showCamp?: boolean;
+  /** "Tüm Kamplar": the task's study camp, shown after the branch instead of the source list. */
+  campName?: string;
 }
 
-export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact = false, showCamp = true }: Props) {
+export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact = false, showCamp = true, campName }: Props) {
   const checkId = useId();
   const metaId = useId();
   const color = camp?.color.solid ?? '#5c6970';
@@ -44,7 +46,11 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact 
           <p className="mb-0.5 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold" style={{ color }}>
             <SubjectDot color={color} />
             <span className="shrink-0">{item.subject}</span>
-            {camp && <span className="truncate font-medium text-ink-3">· {camp.camp.title}</span>}
+            {campName ? (
+              <span className="truncate font-medium text-ink-2">· {campName}</span>
+            ) : (
+              camp && <span className="truncate font-medium text-ink-3">· {camp.camp.title}</span>
+            )}
           </p>
         )}
         <label
