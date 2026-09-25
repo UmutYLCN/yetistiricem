@@ -193,6 +193,20 @@ export function campLabelsOf(camps: readonly ScopedCamp[]): Map<string, CampLabe
   );
 }
 
+/**
+ * The daily goals behind a combined day: the camps with a study day then
+ * (a rest, mock exam or free day has no goal), and their sum. This is the
+ * time the camps' tempos allow, not the planned tasks' study time.
+ */
+export function dayGoals(day: Pick<DaySummary, 'camps'>, labels: ReadonlyMap<string, CampLabel>): { goals: CampLabel[]; totalMinutes: number } {
+  const goals = (day.camps ?? []).filter(part => part.kind === 'study' && !part.free).flatMap(part => labels.get(part.campId) ?? []);
+  return { goals, totalMinutes: sumGoals(goals) };
+}
+
+export function sumGoals(goals: readonly CampLabel[]): number {
+  return goals.reduce((acc, goal) => acc + goal.dailyMinutes, 0);
+}
+
 export interface AllCampsPlan {
   camps: ScopedCamp[];
   plans: MergedDailyPlan[];

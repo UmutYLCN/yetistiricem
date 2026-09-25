@@ -8,10 +8,12 @@ import {
   campLabelsOf,
   campOverview,
   campsWithPlans,
+  dayGoals,
   everyCampOff,
   mergeDailyPlans,
   resolveCampScope,
   shiftEventsByCamp,
+  sumGoals,
   summarizeAllCampsDay,
 } from '../src/lib/allCamps.ts';
 import * as ops from '../src/lib/plannerOps.ts';
@@ -264,6 +266,18 @@ test('totals, stats and daily goals add up over the camps', () => {
     ['TYT', 180, 1],
     ['AYT', 120, 1.5],
   ]);
+
+  // The day's goal is the sum of the studying camps' own daily time, not the planned minutes.
+  const goalsOn = (date: string) => {
+    const { goals, totalMinutes } = dayGoals(summarizeAllCampsDay(date, plan.index, plan.camps.map(s => s.result.preferences)), labels);
+    return [goals.map(g => g.name), totalMinutes];
+  };
+  assert.deepEqual(goalsOn('2026-09-28'), [['TYT', 'AYT'], 300], 'Monday: both camps study, 3 sa + 2 sa');
+  assert.deepEqual(goalsOn('2026-09-29'), [['TYT'], 180], 'Tuesday: AYT rests');
+  assert.deepEqual(goalsOn('2026-10-02'), [['AYT'], 120], 'Friday: TYT rests');
+  assert.deepEqual(goalsOn('2026-10-03'), [[], 0], 'Saturday: nobody studies');
+  assert.notEqual(day.minutes, 300, 'planned study time is a separate number');
+  assert.equal(sumGoals([...labels.values()]), 300);
 
   const overview = campOverview(plan.camps[1], data.completedMap);
   assert.equal(overview.stats.totalVideos, 14);

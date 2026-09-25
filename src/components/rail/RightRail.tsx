@@ -1,6 +1,7 @@
 import { Forward, TriangleAlert } from 'lucide-react';
 import type { RoadmapStats, UserPreferences } from '../../types';
 import type { CampLabel } from '../../lib/allCamps';
+import { sumGoals } from '../../lib/allCamps';
 import { addDays, assessDeadline, dayOfWeek, diffDays } from '../../lib/engine';
 import {
   SHORT_WEEKDAYS,
@@ -93,6 +94,14 @@ export function ProgressCard({
                   </li>
                 ))}
               </ul>
+              {campGoals.length > 1 && (
+                <p className="tnum mt-2 flex justify-between gap-3 border-t border-dashed border-line pt-2">
+                  <span className="min-w-0 text-ink-2">
+                    {campGoals.map(goal => formatMinutes(goal.dailyMinutes)).join(' + ')} =
+                  </span>
+                  <span className="shrink-0 font-semibold text-ink">toplam {formatMinutes(sumGoals(campGoals))}</span>
+                </p>
+              )}
             </dd>
           </div>
         ) : (

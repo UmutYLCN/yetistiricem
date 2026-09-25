@@ -15,7 +15,7 @@ interface Props {
   compact?: boolean;
   /** Extra context shown before the title, e.g. the day in "next up" lists. */
   showCamp?: boolean;
-  /** "Tüm Kamplar": the task's study camp, shown after the branch instead of the source list. */
+  /** "Tüm Kamplar": the task's study camp; the label then reads "Camp · Branch" (no source list). */
   campName?: string;
 }
 
@@ -42,17 +42,23 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact 
         aria-describedby={metaId}
       />
       <div className="min-w-0 flex-1">
-        {showCamp && (
-          <p className="mb-0.5 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold" style={{ color }}>
-            <SubjectDot color={color} />
-            <span className="shrink-0">{item.subject}</span>
-            {campName ? (
-              <span className="truncate font-medium text-ink-2">· {campName}</span>
-            ) : (
-              camp && <span className="truncate font-medium text-ink-3">· {camp.camp.title}</span>
-            )}
-          </p>
-        )}
+        {showCamp &&
+          (campName ? (
+            // Combined view: "Camp · Branch", wrapping under the dot on narrow screens.
+            <p className="mb-0.5 flex min-w-0 items-start gap-1.5 text-[12px] font-semibold">
+              <SubjectDot color={color} className="mt-[5px]" />
+              <span className="min-w-0 break-words">
+                <span className="text-ink-2">{campName}</span> <span className="font-medium text-ink-3">·</span>{' '}
+                <span style={{ color }}>{item.subject}</span>
+              </span>
+            </p>
+          ) : (
+            <p className="mb-0.5 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold" style={{ color }}>
+              <SubjectDot color={color} />
+              <span className="shrink-0">{item.subject}</span>
+              {camp && <span className="truncate font-medium text-ink-3">· {camp.camp.title}</span>}
+            </p>
+          ))}
         <label
           htmlFor={checkId}
           className={`block cursor-pointer leading-snug break-words ${compact ? 'text-[14px]' : 'text-[15px]'} font-medium ${

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ArrowRight, CircleCheck, Coffee, Flag, Forward, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import type { CampDaySummary, CampLabel } from '../../lib/allCamps';
-import { everyCampOff } from '../../lib/allCamps';
+import { dayGoals, everyCampOff } from '../../lib/allCamps';
 import { addDays } from '../../lib/engine';
 import { formatDayTitle, formatLongDate, formatMinutes } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
@@ -84,6 +84,7 @@ function CampSection({
             oversized={oversizedIds.has(item.id)}
             onToggle={onToggle}
             onEditLink={onEditLink}
+            campName={name}
           />
         ))}
       </ul>
@@ -119,6 +120,7 @@ export function DayPanel({
   const mixedOff = allCamps && kind === 'mock' && parts.some(p => p.kind === 'rest');
   // Some camp is on a (free or shifted) study day: no full empty state, each camp's day type instead.
   const campsNotOff = allCamps && items.length === 0 && parts.length > 0 && !everyCampOff(parts);
+  const goals = allCamps ? dayGoals(summary, campLabels) : null;
 
   let body: ReactNode;
   if (allCamps && items.length > 0) {
@@ -279,6 +281,17 @@ export function DayPanel({
           <div className="mt-2.5">
             <Meter value={doneMinutes} max={minutes} label="Günün ilerlemesi (süreye göre)" />
           </div>
+          {goals && goals.goals.length > 0 && (
+            <p className="tnum mt-2 text-[12.5px] text-ink-3">
+              Günlük hedef: {goals.goals.map(g => `${g.name} ${formatMinutes(g.dailyMinutes)}`).join(' + ')}
+              {goals.goals.length > 1 && (
+                <>
+                  {' = '}
+                  <span className="font-semibold whitespace-nowrap text-ink-2">toplam {formatMinutes(goals.totalMinutes)}</span>
+                </>
+              )}
+            </p>
+          )}
         </div>
       )}
 
