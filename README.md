@@ -16,7 +16,6 @@ Yetiştiricem, video listeleriyle çalıştığın öğrenme hedeflerini esnek �
 
 <p align="center">
   <img src="docs/screenshots/ilerleme-masaustu.png" width="75%" alt="Kamplara ve branşlara göre ilerleme ekranı">
-  <img src="docs/screenshots/ilerleme-mobil.png" width="23%" alt="Mobil ekranda kamp ve branş ilerlemesi">
 </p>
 
 <p align="center"><sub>Ekran görüntülerinde bağlantısız örnek plan verileri kullanılmıştır.</sub></p>
