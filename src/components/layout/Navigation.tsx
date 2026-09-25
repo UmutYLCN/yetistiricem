@@ -135,9 +135,6 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, onSe
       <ul className="space-y-1 border-t border-line pt-4">
         {item({ view: 'settings', label: 'Ayarlar', icon: Settings })}
       </ul>
-      <p className="mt-4 px-3 text-[12px] leading-relaxed text-ink-3">
-        Verilerin yalnızca bu tarayıcıda saklanır. Ayarlar’dan yedek alabilirsin.
-      </p>
     </aside>
   );
 }

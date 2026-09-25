@@ -364,7 +364,7 @@ function Planner() {
     content = !hasCamp ? (
       <Welcome onAddCamp={openNewCamp} onStartDemo={startDemo} />
     ) : (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
           <PageHeader
             eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(selectedDate, today)}</span>}
@@ -378,9 +378,9 @@ function Planner() {
               )
             }
           />
-          <div className="xl:hidden">
-            <OverdueCard count={index.overdue.length} today={today} onShift={() => handleShift(addDays(today, -1))} />
-          </div>
+          <OverdueCard count={index.overdue.length} today={today} onShift={() => handleShift(addDays(today, -1))} />
+        </div>
+        <div className="min-w-0 space-y-4 xl:col-start-1">
           <WeekStrip days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
           <DayPanel
             summary={summary}
@@ -396,11 +396,8 @@ function Planner() {
             onAddBranches={openAddBranches}
           />
         </div>
-        {/* Side by side under the day below xl; a column beside it from xl. */}
-        <aside aria-label="Özet" className="grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:grid-cols-1">
-          <div className="hidden xl:block">
-            <OverdueCard count={index.overdue.length} today={today} onShift={() => handleShift(addDays(today, -1))} />
-          </div>
+        {/* Side by side under the day below xl; from xl a column that starts level with the week strip. */}
+        <aside aria-label="Özet" className="mt-2 grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:col-start-2 xl:row-start-2 xl:mt-0 xl:grid-cols-1">
           <ProgressCard stats={stats} prefs={prefs} today={today} targetEndDate={camp.schedule.targetEndDate} />
           <WeekCard days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
         </aside>
