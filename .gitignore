@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+.dev.vars*
+.wrangler/
 
 # Secrets (YOUTUBE_API_KEY lives in .env.local or the host's environment)
 .env
