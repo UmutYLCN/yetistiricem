@@ -1,8 +1,10 @@
 # Yetiştiricem
 
+**[Canlı uygulamayı aç →](https://yetistiricem.pages.dev)**
+
 **Ders videolarını çalışma ritmine göre günlere yerleştir; bugün ne çalışacağını ve hedefe ne kadar yaklaştığını tek yerden gör.**
 
-Yetiştiricem; TYT, AYT, dil öğrenimi ya da kişisel bir hedef için oluşturduğun çalışma kamplarını branşlara ayırır. Günlük ayırabildiğin süreye göre video görevlerini planlar; ilerlemeni Bugün, Haftalık ve İlerleme ekranlarında takip etmene yardım eder.
+Yetiştiricem, video listeleriyle çalıştığın öğrenme hedeflerini esnek çalışma kamplarına dönüştürür. TYT ve AYT hazırlığı bunun yalnızca iki örneği; dil öğrenimi, sertifika hazırlığı, mesleki gelişim veya kendi belirlediğin başka bir konu için de kamp oluşturabilirsin. Kampını branşlara ayırabilir, çalışma ritmini seçebilir ve ilerlemeni Bugün, Haftalık ve İlerleme ekranlarında takip edebilirsin.
 
 <p align="center">
   <img src="docs/screenshots/bugun-masaustu.png" width="100%" alt="Bugün ekranında tüm kampların görevleri ve günlük çalışma hedefi">
@@ -24,7 +26,7 @@ Yetiştiricem; TYT, AYT, dil öğrenimi ya da kişisel bir hedef için oluşturd
 - **Bir kamp oluştur:** Kampına ad ver, başlangıç ve istersen hedef bitiş tarihini seç.
 - **Branşlarını ekle:** YouTube oynatma listesi ekleyebilir, videoları tek tek girebilir ya da bir liste yapıştırabilirsin. Her oynatma listesi kendi branşı olur.
 - **Kendi ritmini belirle:** Videoları çalışma günlerine otomatik dağıt veya hangi gün hangi branşı çalışacağını kendin seç. Dinlenme ve deneme günlerini de plana kat.
-- **Birden fazla hedefi birlikte takip et:** Örneğin TYT ve AYT kamplarını ayrı tempolarda sürdür; Bugün ve Haftalık ekranlarında görevlerini birleşik gör ya da tek kampa odaklan.
+- **Birden fazla hedefi birlikte takip et:** Farklı konulardaki kampları ayrı tempolarda sürdür; Bugün ve Haftalık ekranlarında görevlerini birleşik gör ya da tek kampa odaklan.
 - **Günlük ilerlemene bak:** Tamamladığın videoları işaretle; kalan süreyi, haftalık yükü ve tahmini bitiş tarihini izle.
 - **Planı gerektiğinde ileri taşı:** Bir görevi tamamlamak planını değiştirmez. Geride kaldığında kalan görevleri yalnızca sen istediğinde yeniden planla.
 - **Planını yedekle:** Çalışma verilerin kullandığın tarayıcıda tutulur. Ayarlar’dan yedek indirip daha sonra geri yükleyebilirsin.
