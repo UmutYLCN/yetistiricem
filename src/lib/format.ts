@@ -1,4 +1,4 @@
-import { addDays, dayOfWeek, diffDays, formatDateKey, weekdayName } from './engine';
+import { addDays, dayOfWeek, diffDays, formatDateKey, weekdayName } from './engine.ts';
 
 /** 0 = Sunday, like `Date#getDay`. */
 export const SHORT_WEEKDAYS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];

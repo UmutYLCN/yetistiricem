@@ -1,10 +1,10 @@
 import type { CampSchedule, DailyPlan, DailyPlanItem, SubjectPlaylist, UserPreferences } from '../types';
-import type { CampKind } from './camps';
-import { classifyCamp, displayChannel } from './camps';
-import { dayOfWeek, formatDateKey } from './engine';
-import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatMinutes, startOfWeek } from './format';
-import type { SubjectColor } from './subjects';
-import { resolveColor } from './subjects';
+import type { CampKind } from './camps.ts';
+import { classifyCamp, displayChannel } from './camps.ts';
+import { dayOfWeek, formatDateKey } from './engine.ts';
+import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatMinutes, startOfWeek } from './format.ts';
+import type { SubjectColor } from './subjects.ts';
+import { resolveColor } from './subjects.ts';
 
 // Read-only views over the engine's plan, shaped for the screens.
 
@@ -87,6 +87,21 @@ export function summarizeDay(date: string, index: PlanIndex, prefs: UserPreferen
     minutes: items.reduce((acc, i) => acc + i.effectiveMinutes, 0),
     doneMinutes: doneItems.reduce((acc, i) => acc + i.effectiveMinutes, 0),
   };
+}
+
+/**
+ * A day's tasks with each branch's tasks together, for the day list. Branches
+ * keep the order of their first task and tasks keep their plan order within a
+ * branch. Display only: the plan itself stays round-robin.
+ */
+export function groupByBranch<T extends Pick<DailyPlanItem, 'playlistId'>>(items: readonly T[]): T[] {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const group = groups.get(item.playlistId);
+    if (group) group.push(item);
+    else groups.set(item.playlistId, [item]);
+  }
+  return [...groups.values()].flat();
 }
 
 /** Screen-reader summary of a day: date, today, kind and task progress. */

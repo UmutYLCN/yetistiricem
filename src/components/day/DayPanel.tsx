@@ -4,6 +4,7 @@ import type { DailyPlanItem } from '../../types';
 import { addDays } from '../../lib/engine';
 import { formatDayTitle, formatLongDate, formatMinutes } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
+import { groupByBranch } from '../../lib/planView';
 import { linkStateOf } from '../../lib/camps';
 import { Meter } from '../ui/Bits';
 import { TaskItem } from './TaskItem';
@@ -33,7 +34,7 @@ function EmptyDay({ icon, title, body, action }: { icon: ReactNode; title: strin
   );
 }
 
-/** Tasks of the selected day. Completed tasks stay where they are. */
+/** Tasks of the selected day, grouped by branch. Completed tasks stay where they are. */
 export function DayPanel({
   summary,
   today,
@@ -48,7 +49,7 @@ export function DayPanel({
   onAddBranches,
 }: Props) {
   const { date, plan, kind, total, done, minutes, doneMinutes } = summary;
-  const items = plan?.items ?? [];
+  const items = groupByBranch(plan?.items ?? []);
   const open = total - done;
   const isPast = date < today;
   const isToday = date === today;
