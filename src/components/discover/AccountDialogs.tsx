@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { ApiResult } from '../../lib/catalogApi';
+import type { ApiResult, PasswordSignUpResult } from '../../lib/catalogApi';
 import { MAX_DISPLAY_NAME, displayNameProblem } from '../../lib/catalog';
 import { SignInForm } from '../auth/SignInForm';
 import { Dialog } from '../ui/Dialog';
@@ -8,12 +8,13 @@ import { Dialog } from '../ui/Dialog';
 interface SignInProps {
   open: boolean;
   onClose: () => void;
-  onEmail: (email: string) => Promise<ApiResult<null>>;
+  onSignIn: (email: string, password: string) => Promise<ApiResult<null>>;
+  onSignUp: (email: string, password: string) => Promise<ApiResult<PasswordSignUpResult>>;
   onGoogle: () => Promise<ApiResult<null>>;
 }
 
 /** Sign-in from inside the app (the demo's Keşfet): publishing needs an account. */
-export function SignInDialog({ open, onClose, onEmail, onGoogle }: SignInProps) {
+export function SignInDialog({ open, onClose, onSignIn, onSignUp, onGoogle }: SignInProps) {
   return (
     <Dialog
       open={open}
@@ -22,7 +23,7 @@ export function SignInDialog({ open, onClose, onEmail, onGoogle }: SignInProps) 
       title="Giriş yap"
       description="Kamp yayınlamak ve kendi planını kurmak için giriş yapman gerekir."
     >
-      {open && <SignInForm onEmail={onEmail} onGoogle={onGoogle} />}
+      {open && <SignInForm onSignIn={onSignIn} onSignUp={onSignUp} onGoogle={onGoogle} />}
     </Dialog>
   );
 }

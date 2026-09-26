@@ -39,6 +39,8 @@ export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 const OFFLINE = 'Keşfet’e ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.';
 const NOT_CONFIGURED = 'Keşfet bu sunucuda kurulmamış.';
+const AUTH_OFFLINE = 'Giriş hizmetine ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.';
+const AUTH_NOT_CONFIGURED = 'Giriş bu sunucuda kurulmamış.';
 
 function failure(error: { message?: string; code?: string } | null | undefined): { ok: false; error: string } {
   const message = error?.message ?? '';
@@ -57,6 +59,16 @@ async function run<T>(fn: (client: SupabaseClient) => Promise<ApiResult<T>>): Pr
     return await fn(client);
   } catch {
     return { ok: false, error: OFFLINE };
+  }
+}
+
+async function runAuth<T>(fn: (client: SupabaseClient) => Promise<ApiResult<T>>): Promise<ApiResult<T>> {
+  const client = await getSupabase();
+  if (!client) return { ok: false, error: catalogConfigured ? AUTH_OFFLINE : AUTH_NOT_CONFIGURED };
+  try {
+    return await fn(client);
+  } catch {
+    return { ok: false, error: AUTH_OFFLINE };
   }
 }
 
@@ -151,13 +163,40 @@ export async function signInProviders(): Promise<Providers> {
   }
 }
 
-export function sendMagicLink(email: string, redirectTo: string): Promise<ApiResult<null>> {
-  return run(async client => {
-    const { error } = await client.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirectTo } });
+export function signInWithPassword(email: string, password: string): Promise<ApiResult<null>> {
+  return runAuth(async client => {
+    const { error } = await client.auth.signInWithPassword({ email: email.trim(), password });
     if (!error) return { ok: true, data: null };
-    if (error.status === 429) return { ok: false, error: 'Çok sık giriş bağlantısı istendi. Birkaç dakika sonra tekrar dene.' };
-    if (error.status === 400) return { ok: false, error: 'Bu e-posta adresi geçersiz görünüyor.' };
-    return failure(error);
+    if (error.code === 'email_not_confirmed') return { ok: false, error: 'E-posta adresi henüz doğrulanmamış. Supabase’te e-posta onayı açıksa önce gelen bağlantıyı onayla.' };
+    if (error.code === 'invalid_credentials' || error.status === 400) return { ok: false, error: 'E-posta veya şifre hatalı. Bilgilerini kontrol edip tekrar dene.' };
+    if (error.status === 429) return { ok: false, error: 'Çok sık deneme yapıldı. Birkaç dakika sonra tekrar dene.' };
+    return { ok: false, error: 'Giriş yapılamadı. Biraz sonra tekrar dene.' };
+  });
+}
+
+export interface PasswordSignUpResult {
+  emailConfirmationRequired: boolean;
+}
+
+export function signUpWithPassword(email: string, password: string, redirectTo: string): Promise<ApiResult<PasswordSignUpResult>> {
+  return runAuth(async client => {
+    const { data, error } = await client.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: redirectTo },
+    });
+    if (error) {
+      if (error.code === 'user_already_exists' || error.message.toLowerCase().includes('already registered')) {
+        return { ok: false, error: 'Bu e-posta ile zaten hesap var. Giriş yapmayı dene.' };
+      }
+      if (error.code === 'weak_password') return { ok: false, error: 'Şifre Supabase’in güvenlik koşullarını karşılamıyor.' };
+      if (error.code === 'signup_disabled') return { ok: false, error: 'Yeni hesap oluşturma Supabase ayarlarında kapalı.' };
+      if (error.code === 'email_address_invalid') return { ok: false, error: 'Bu e-posta adresi geçersiz görünüyor.' };
+      if (error.status === 429) return { ok: false, error: 'Çok sık hesap oluşturma denemesi yapıldı. Biraz sonra tekrar dene.' };
+      if (error.status === 400) return { ok: false, error: 'E-posta veya şifre kabul edilmedi. Bilgilerini kontrol et.' };
+      return { ok: false, error: 'Hesap oluşturulamadı. Biraz sonra tekrar dene.' };
+    }
+    return { ok: true, data: { emailConfirmationRequired: data.session === null } };
   });
 }
 

@@ -8,14 +8,15 @@ const Landing = lazy(() => import('./components/landing/Landing.tsx'));
 interface RootProps {
   inApp: boolean;
   startInDemo: boolean;
+  accountEntry: boolean;
   importPayload: string | null;
   openDiscover: boolean;
 }
 
-export function Root({ inApp, startInDemo, importPayload, openDiscover }: RootProps) {
+export function Root({ inApp, startInDemo, accountEntry, importPayload, openDiscover }: RootProps) {
   return (
     <Suspense fallback={null}>
-      {inApp ? <App startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} /> : <Landing />}
+      {inApp ? <App startInDemo={startInDemo} accountEntry={accountEntry} importPayload={importPayload} openDiscover={openDiscover} /> : <Landing />}
     </Suspense>
   );
 }

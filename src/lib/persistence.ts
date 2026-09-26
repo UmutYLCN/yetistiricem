@@ -2,8 +2,7 @@ import type { StudyCamp, UserPreferences } from '../types';
 import type { FocusSession } from './focus.ts';
 import { normalizeFocusSessions } from './focus.ts';
 import type { PlaylistSync } from './playlistSync.ts';
-import { emptyPlaylistSync, normalizePlaylistSync } from './playlistSync.ts';
-import { AUTH_KEY } from './authKey.ts';
+import { emptyPlaylistSync, normalizePlaylistSync, playlistSyncStore } from './playlistSync.ts';
 import {
   STORAGE_KEYS,
   buildSchedule,
@@ -70,13 +69,16 @@ export const COMPLETION_DATES_VERSION = 1;
 export const FOCUS_SESSIONS_VERSION = 1;
 
 
-export const ALL_KEYS = [
+/** Keys holding the planner's data (not view choices or the sign-in session). */
+export const DATA_KEYS = [
   ...Object.values(STORAGE_KEYS),
-  ...Object.values(UI_KEYS),
+  UI_KEYS.dayNotes,
   ...Object.values(CAMP_KEYS),
   ...Object.values(PROGRESS_KEYS),
-  AUTH_KEY,
 ];
+
+/** Everything "Tüm verileri sil" removes: the data and the view choices. The account stays signed in. */
+export const ALL_KEYS = [...DATA_KEYS, UI_KEYS.selectedDate, UI_KEYS.campScope];
 
 export const MAX_NOTE_LENGTH = 2000;
 
@@ -463,12 +465,58 @@ function loadFromStorage(): LoadResult {
 }
 
 let cached: LoadResult | null = null;
+let startupNotices: Notice[] = [];
+
+/** Notices from before the planner opened (e.g. the account's plan was merged), shown with the load notices. */
+export function addStartupNotices(notices: readonly Notice[]) {
+  startupNotices = [...startupNotices, ...notices];
+}
 
 /** Reads storage once per page load (safe under StrictMode double renders). */
 export function loadPlannerOnce(): LoadResult {
   if (cached) return cached;
-  cached = loadPlanner();
+  const loaded = loadPlanner();
+  cached = { ...loaded, notices: [...startupNotices, ...loaded.notices] };
   return cached;
+}
+
+/**
+ * Replaces the planner's data in storage (the signed-in account's plan, as the
+ * cloud holds it). The older flat keys go too, so they are never migrated again.
+ * Returns false when storage refused a write.
+ */
+export function writePlannerData(data: PlannerData): boolean {
+  clearPlannerData();
+  return [
+    writeKey(CAMP_KEYS.camps, campStore(data.camps)),
+    data.activeCampId === null || writeKey(CAMP_KEYS.activeCamp, data.activeCampId),
+    writeKey(STORAGE_KEYS.completed, data.completedMap),
+    writeKey(PROGRESS_KEYS.completionDates, completionDatesStore(data.completionDates)),
+    writeKey(PROGRESS_KEYS.focusSessions, focusSessionsStore(data.focusSessions)),
+    writeKey(PROGRESS_KEYS.playlistSync, playlistSyncStore(data.playlistSync)),
+    writeKey(UI_KEYS.dayNotes, data.dayNotes),
+  ].every(Boolean);
+}
+
+/** Removes the planner's data from this browser (after it is safe in the account, or before another account's plan). */
+export function clearPlannerData() {
+  for (const key of DATA_KEYS) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Storage blocked: nothing was stored either.
+    }
+  }
+}
+
+/** Whether a load found any planner data at all. */
+export function hasPlannerData(data: PlannerData): boolean {
+  return (
+    data.camps.length > 0 ||
+    Object.keys(data.completedMap).length > 0 ||
+    Object.keys(data.dayNotes).length > 0 ||
+    data.focusSessions.length > 0
+  );
 }
 
 /** Reads storage now. Prefer `loadPlannerOnce` in the app. */

@@ -4,7 +4,8 @@ import type { ApiResult } from '../lib/catalogApi';
 import {
   catalogConfigured,
   getDisplayName,
-  sendMagicLink,
+  signInWithPassword as authenticateWithPassword,
+  signUpWithPassword as createPasswordAccount,
   setDisplayName,
   signInWithGoogle,
   signOut,
@@ -66,8 +67,12 @@ export function useAccount(wanted: boolean) {
     };
   }, [started]);
 
-  /** `returnTo`: where the link brings the student back (the planner by default). */
-  const signInWithEmail = useCallback((email: string, returnTo: string = appReturnUrl()) => sendMagicLink(email, returnTo), []);
+  const signInWithPassword = useCallback((email: string, password: string) => authenticateWithPassword(email, password), []);
+  /** `returnTo`: where a confirmed new account returns (the planner by default). */
+  const signUpWithPassword = useCallback(
+    (email: string, password: string, returnTo: string = appReturnUrl()) => createPasswordAccount(email, password, returnTo),
+    []
+  );
   const continueWithGoogle = useCallback((returnTo: string = appReturnUrl()) => signInWithGoogle(returnTo), []);
   const leave = useCallback(async () => {
     await signOut();
@@ -83,7 +88,7 @@ export function useAccount(wanted: boolean) {
     [state]
   );
 
-  return { state, callbackError, signInWithEmail, continueWithGoogle, signOut: leave, rename };
+  return { state, callbackError, signInWithPassword, signUpWithPassword, continueWithGoogle, signOut: leave, rename };
 }
 
 export type Account = ReturnType<typeof useAccount>;

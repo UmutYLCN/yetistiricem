@@ -43,6 +43,8 @@ import { AuthGate } from './components/auth/AuthGate';
 import type { Account } from './hooks/useAccount';
 import type { CatalogEntry } from './lib/catalog';
 import { encodeCampShare } from './lib/campShare';
+import { leaveAccountLocally } from './lib/cloudSync';
+import { useCloudSync } from './hooks/useCloudSync';
 import { unpublishCamp } from './lib/catalogApi';
 import { APP_PATH, campImportUrl, discoverReturnUrl } from './lib/routes';
 import type { FocusTarget } from './components/focus/FocusModal';
@@ -103,11 +105,15 @@ interface PlannerProps {
   openDiscover: boolean;
   /** The student's account (`AuthGate` shows the planner only with one, or in the demo). */
   account: Account;
+  /** The signed-in account whose plan this page holds; null in a demo page or without sign-in set up. */
+  userId: string | null;
 }
 
-function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerProps) {
+function Planner({ startInDemo, importPayload, openDiscover, account, userId }: PlannerProps) {
   const today = useToday();
-  const { data, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
+  const { data, realData, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
+  // The account's plan is saved to the cloud as it changes (a demo page holds no account plan).
+  const sync = useCloudSync(realData, startInDemo ? null : userId);
   const notify = useToast();
   const confirm = useConfirm();
   const [view, setView] = useState<View>(openDiscover ? 'discover' : 'today');
@@ -389,11 +395,12 @@ function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerP
     if (campId) setDialog({ kind: 'editVideo', campId, branchId: item.playlistId, videoId: item.videoId });
   };
 
-  // Leaving the demo opens the student's own plan, which needs an account:
-  // without one, a fresh page starts on the sign-in screen.
+  // A page opened on the demo holds no account plan: leaving it starts a fresh
+  // page (sign-in, then the account's plan). A demo opened from the student's
+  // own plan just closes.
   const signedIn = account.state.status === 'signed-in' || account.state.status === 'off';
   const leaveDemo = () => {
-    if (signedIn) {
+    if (!startInDemo) {
       actions.exitDemo();
       return true;
     }
@@ -408,7 +415,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerP
         body: (
           <p>
             Kendi planını kurmak için demodan çıkman gerekiyor{signedIn ? '' : ' ve giriş yapman gerekiyor'}. Demo verileri kaydedilmez ve
-            silinir.
+            silinir{startInDemo ? '; kampını kendi planında “Yeni kamp” ile kurabilirsin' : ''}.
           </p>
         ),
         confirmLabel: signedIn ? 'Demodan çık ve kamp oluştur' : 'Demodan çık ve giriş yap',
@@ -497,8 +504,8 @@ function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerP
 
   const handleImportCamp = async (shared: SharedCamp) => {
     setImportOffer(null);
-    if (isDemo && !signedIn) {
-      // The camp travels in an import link, offered again once the student has signed in.
+    if (startInDemo) {
+      // The camp travels in an import link, offered again on the student's own plan (after sign-in).
       window.location.assign(campImportUrl(await encodeCampShare(shared)));
       return;
     }
@@ -535,10 +542,28 @@ function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerP
     notify({ message: `“${entry.name}” yayından kaldırıldı.`, tone: 'info' });
   };
 
-  // Outside the demo the gate then starts a fresh page on the sign-in screen.
+  // The account's plan leaves this browser (after reaching the cloud), so the
+  // next account never sees it; the gate then starts a fresh page on sign-in.
   const handleSignOut = async () => {
+    if (!startInDemo && userId) {
+      const saved = await sync.flush();
+      if (!saved) {
+        const ok = await confirm({
+          title: 'Kaydedilmemiş değişiklikler var',
+          body: (
+            <p>
+              Hesabına şu an ulaşılamıyor. Çıkarsan son değişikliklerin bu cihazda saklanır ve buradan tekrar giriş yaptığında hesabına
+              kaydedilir.
+            </p>
+          ),
+          confirmLabel: 'Yine de çıkış yap',
+        });
+        if (!ok) return;
+      }
+      leaveAccountLocally(realData);
+    }
     await account.signOut();
-    if (isDemo) notify({ message: 'Çıkış yaptın.', tone: 'info' });
+    if (startInDemo) notify({ message: 'Çıkış yaptın.', tone: 'info' });
   };
 
   const handleSaveTempo = (target: StudyCamp, next: CampSchedule) => {
@@ -1053,7 +1078,8 @@ function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerP
       <SignInDialog
         open={signInOpen && account.state.status !== 'signed-in'}
         onClose={() => setSignInOpen(false)}
-        onEmail={email => account.signInWithEmail(email, discoverReturnUrl())}
+        onSignIn={(email, password) => account.signInWithPassword(email, password)}
+        onSignUp={(email, password) => account.signUpWithPassword(email, password, discoverReturnUrl())}
         onGoogle={() => account.continueWithGoogle(discoverReturnUrl())}
       />
       <RenameDialog
@@ -1083,11 +1109,24 @@ function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerP
 }
 
 /** The planner ("Dashboard"). `startInDemo`: open the demo preview (the landing page's "Demo ile göz at"). */
-const App = ({ startInDemo = false, importPayload = null, openDiscover = false }: Partial<Omit<PlannerProps, 'account'>>) => (
+const App = ({ startInDemo = false, accountEntry = false, importPayload = null, openDiscover = false }: {
+  startInDemo?: boolean;
+  accountEntry?: boolean;
+  importPayload?: string | null;
+  openDiscover?: boolean;
+}) => (
   <ToastProvider>
     <ConfirmProvider>
-      <AuthGate startInDemo={startInDemo}>
-        {account => <Planner startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} account={account} />}
+      <AuthGate startInDemo={startInDemo} accountEntry={accountEntry}>
+        {(account, userId) => (
+          <Planner
+            startInDemo={startInDemo}
+            importPayload={importPayload}
+            openDiscover={openDiscover}
+            account={account}
+            userId={userId}
+          />
+        )}
       </AuthGate>
     </ConfirmProvider>
   </ToastProvider>

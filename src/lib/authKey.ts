@@ -15,8 +15,8 @@ export function hasSavedSignIn(): boolean {
 }
 
 /**
- * Why a sign-in answer failed (an expired or used magic link, a refused
- * Google sign-in), in Turkish; null when the hash holds no error.
+ * Why an email confirmation or Google sign-in failed, in Turkish; null when
+ * the hash holds no error.
  */
 export function readAuthError(hash: string = window.location.hash): string | null {
   const params = new URLSearchParams(hash.replace(/^#/, ''));
@@ -25,10 +25,10 @@ export function readAuthError(hash: string = window.location.hash): string | nul
     return 'Giriş bağlantısının süresi dolmuş ya da daha önce kullanılmış. Aşağıdan yeni bir bağlantı iste.';
   }
   if (params.get('error') === 'access_denied') return 'Giriş tamamlanmadı. Tekrar denemek için aşağıdan giriş yap.';
-  return 'Giriş bağlantısı geçersiz. Aşağıdan yeni bir bağlantı iste.';
+  return 'Giriş veya e-posta onayı tamamlanamadı. Yeniden deneyebilirsin.';
 }
 
-/** The address bar holds a sign-in answer (a magic link or Google sent the student back). */
+/** The address bar holds an auth callback (email confirmation or Google sign-in). */
 export function hasAuthCallback(hash: string = window.location.hash): boolean {
   return /(?:^|[#&])(access_token|error_description)=/.test(hash);
 }

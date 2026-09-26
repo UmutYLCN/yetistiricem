@@ -17,7 +17,7 @@ import { useToday } from '../../hooks/useToday';
 import type { LandingPreview } from '../../lib/landingPreview';
 import { buildLandingPreview } from '../../lib/landingPreview';
 import { hasSavedSignIn } from '../../lib/authKey';
-import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
+import { ACCOUNT_ENTRY_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark } from '../ui/BrandMark';
 import { Features } from './Features';
 import { ProductPreview } from './ProductPreview';
@@ -59,7 +59,7 @@ const STEPS = [
 const FAQ = [
   {
     q: 'Hesap açmam gerekiyor mu?',
-    a: 'Planına girmek için e-postanla ücretsiz giriş yaparsın; şifre yok, e-postana gelen bağlantıyla girersin. Kampların ve ilerlemen yine kullandığın tarayıcıda saklanır. Demoya giriş yapmadan göz atabilirsin.',
+    a: 'Planına e-posta adresin ve şifrenle giriş yaparsın. İlk kez geliyorsan ücretsiz hesap oluşturabilirsin. Demoya giriş yapmadan göz atabilirsin.',
   },
   {
     q: 'Verilerim başka cihazla eşitlenir mi?',
@@ -87,13 +87,9 @@ const FAQ = [
   },
 ];
 
-/**
- * The planner needs an account: `/app` shows its sign-in page to signed-out
- * visitors. The buttons say where they lead, by whether this browser has a
- * saved session (the planner confirms it).
- */
-function dashboardLabel(signedIn: boolean, long: boolean): string {
-  if (signedIn) return long ? 'Dashboard’a git' : 'Dashboard';
+/** Landing account buttons open the sign-in / account screen before the planner. */
+function accountLabel(signedIn: boolean, long: boolean): string {
+  if (signedIn) return long ? 'Hesap seçenekleri' : 'Hesap';
   return long ? 'Giriş yap ve başla' : 'Giriş yap';
 }
 
@@ -123,8 +119,8 @@ function SiteHeader({ signedIn }: { signedIn: boolean }) {
           <a href={DEMO_APP_PATH} className="btn btn-ghost btn-sm max-sm:hidden">
             Demo
           </a>
-          <a href={APP_PATH} className="btn btn-primary btn-sm group">
-            {dashboardLabel(signedIn, false)}
+          <a href={ACCOUNT_ENTRY_PATH} className="btn btn-primary btn-sm group">
+            {accountLabel(signedIn, false)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
         </div>
@@ -154,8 +150,8 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
           çalışacağını ve hedefe ne kadar kaldığını tek ekranda görürsün.
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-          <a href={APP_PATH} className="btn btn-primary btn-lg group">
-            {dashboardLabel(signedIn, true)}
+          <a href={ACCOUNT_ENTRY_PATH} className="btn btn-primary btn-lg group">
+            {accountLabel(signedIn, true)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
           <a href={DEMO_APP_PATH} className="btn btn-secondary btn-lg">
@@ -164,7 +160,7 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
           </a>
         </div>
         <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] text-ink-3">
-          {['Ücretsiz', 'Şifresiz giriş', 'Veriler tarayıcında kalır'].map(point => (
+          {['Ücretsiz', 'E-posta ve şifre', 'Demo ile göz at'].map(point => (
             <li key={point} className="flex items-center gap-1.5">
               <Check className="size-3.5 text-forest" strokeWidth={2.5} aria-hidden="true" />
               {point}
@@ -289,8 +285,8 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
           Kampını birkaç dakikada kur; ilk günün görevleri hemen önünde olsun.
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-          <a href={APP_PATH} className="btn btn-primary btn-lg group">
-            {dashboardLabel(signedIn, true)}
+          <a href={ACCOUNT_ENTRY_PATH} className="btn btn-primary btn-lg group">
+            {accountLabel(signedIn, true)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
           <a href={DEMO_APP_PATH} className="btn btn-secondary btn-lg">
@@ -329,8 +325,8 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
               </a>
             </li>
             <li>
-              <a href={APP_PATH} className="transition-colors hover:text-ink">
-                {dashboardLabel(signedIn, false)}
+              <a href={ACCOUNT_ENTRY_PATH} className="transition-colors hover:text-ink">
+                {accountLabel(signedIn, false)}
               </a>
             </li>
           </ul>
