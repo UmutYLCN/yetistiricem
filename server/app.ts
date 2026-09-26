@@ -1,10 +1,10 @@
-// Production server: the built app from `dist/` plus the playlist endpoint.
+// Production server: the built app from `dist/` plus the YouTube endpoints.
 import { createServer } from 'node:http';
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
-import type { WebHandler } from './playlistEndpoint.ts';
-import { isPlaylistApiRequest, runWebHandler } from './node.ts';
+import type { YouTubeHandlers } from './node.ts';
+import { runWebHandler, youtubeHandlerFor } from './node.ts';
 
 const CONTENT_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -21,10 +21,9 @@ const CONTENT_TYPES: Record<string, string> = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
-export interface AppServerOptions {
+export interface AppServerOptions extends YouTubeHandlers {
   /** The `vite build` output. */
   distDir: string;
-  playlistHandler: WebHandler;
 }
 
 function send(res: ServerResponse, status: number, headers: Record<string, string> = {}, body?: Buffer | string) {
@@ -76,10 +75,11 @@ async function serveStatic(root: string, req: IncomingMessage, res: ServerRespon
   );
 }
 
-export function createAppServer({ distDir, playlistHandler }: AppServerOptions): Server {
+export function createAppServer({ distDir, ...handlers }: AppServerOptions): Server {
   const root = resolve(distDir);
   return createServer((req, res) => {
-    const work = isPlaylistApiRequest(req.url) ? runWebHandler(playlistHandler, req, res) : serveStatic(root, req, res);
+    const api = youtubeHandlerFor(req.url, handlers);
+    const work = api ? runWebHandler(api, req, res) : serveStatic(root, req, res);
     work.catch(error => {
       console.error('[server] request failed:', error instanceof Error ? error.message : error);
       if (!res.headersSent) send(res, 500, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Internal error');

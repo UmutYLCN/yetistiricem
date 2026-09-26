@@ -34,6 +34,11 @@ function toUrl(input: string): URL | null {
 }
 
 /** The 11-character video id of a YouTube video link, or null. */
+/** True for an 11-character YouTube video id (what the videos endpoint accepts). */
+export function isYoutubeVideoId(value: string): boolean {
+  return VIDEO_ID_RE.test(value);
+}
+
 export function parseYoutubeVideoId(input: string): string | null {
   const url = toUrl(input);
   if (!url) return null;
@@ -212,89 +217,38 @@ export interface DraftVideo {
   thumbnailUrl?: string;
 }
 
-export type BulkLine =
-  | { line: number; raw: string; ok: true; video: DraftVideo }
-  | { line: number; raw: string; ok: false; error: string };
+const URL_TOKEN_RE = /(?:https?:\/\/)?(?:[a-z0-9-]+\.)*(?:youtube\.com|youtube-nocookie\.com|youtu\.be)\/\S+/gi;
 
-const SEPARATOR_RE = /\s*[|\t;]\s*/;
-const URL_TOKEN_RE = /(?:https?:\/\/)?(?:[a-z0-9-]+\.)*(?:youtube\.com|youtube-nocookie\.com|youtu\.be)\/\S+/i;
-
-function parseBulkLine(raw: string): { ok: true; video: DraftVideo } | { ok: false; error: string } {
-  let urlText: string | null = null;
-  let durationText: string | null = null;
-  let titleParts: string[] = [];
-
-  if (SEPARATOR_RE.test(raw)) {
-    const fields = raw.split(SEPARATOR_RE).map(f => f.trim()).filter(Boolean);
-    const urlIndex = fields.findIndex(f => URL_TOKEN_RE.test(f) && !/\s/.test(f));
-    if (urlIndex >= 0) urlText = fields[urlIndex];
-    const rest = fields.filter((_, i) => i !== urlIndex);
-    let durationIndex = -1;
-    for (let i = rest.length - 1; i >= 0; i--) {
-      if (parseMinutesValue(rest[i]) !== null) {
-        durationIndex = i;
-        break;
-      }
-    }
-    if (durationIndex >= 0) durationText = rest[durationIndex];
-    titleParts = rest.filter((_, i) => i !== durationIndex);
-  } else {
-    const match = URL_TOKEN_RE.exec(raw);
-    if (match) urlText = match[0];
-    const rest = (match ? raw.replace(match[0], ' ') : raw).trim().split(/\s+/).filter(Boolean);
-    // The longest trailing run of words that reads as a duration ("1 sa 20 dk").
-    let cut = rest.length;
-    for (let n = Math.min(4, rest.length); n >= 1; n--) {
-      if (parseMinutesValue(rest.slice(rest.length - n).join(' ')) !== null) {
-        cut = rest.length - n;
-        durationText = rest.slice(cut).join(' ');
-        break;
-      }
-    }
-    titleParts = rest.slice(0, cut);
-  }
-
-  if (!urlText) return { ok: false, error: 'YouTube video bağlantısı bulunamadı.' };
-  const url = validateVideoUrl(urlText);
-  if (!url.ok) return url;
-  if (!durationText) return { ok: false, error: 'Süre eksik. Satırın sonuna dakika yaz (ör. 45 veya 12:34).' };
-  const duration = parseDurationInput(durationText);
-  if (!duration.ok) return duration;
-
-  return {
-    ok: true,
-    video: {
-      youtubeId: url.value.id,
-      url: url.value.url,
-      title: titleParts.join(' ').trim().slice(0, 200),
-      durationMinutes: duration.value,
-    },
-  };
+export interface PastedVideoLinks {
+  /** Video ids in paste order, each once. */
+  ids: string[];
+  /** Playlist links pasted among the videos (better imported as a list). */
+  playlists: string[];
+  /** Lines or links that name no video. */
+  unreadable: string[];
 }
 
 /**
- * One video per line: `bağlantı | başlık | süre`. The title may be left out;
- * `|`, `;` or a tab separate fields, and plain spaces work when the duration
- * ends the line. Empty lines and lines starting with `#` are skipped.
- * `knownIds` marks videos that are already in the list.
+ * Reads pasted YouTube video links: one or more per line, any other text
+ * around them ignored. Empty lines are skipped.
  */
-export function parseBulkVideos(text: string, knownIds: Iterable<string> = []): BulkLine[] {
-  const seen = new Set(knownIds);
-  const result: BulkLine[] = [];
-  text.split(/\r?\n/).forEach((rawLine, index) => {
-    const raw = rawLine.trim();
-    if (!raw || raw.startsWith('#')) return;
-    const parsed = parseBulkLine(raw);
-    if (!parsed.ok) {
-      result.push({ line: index + 1, raw, ok: false, error: parsed.error });
-      return;
+export function parseVideoLinks(text: string): PastedVideoLinks {
+  const result: PastedVideoLinks = { ids: [], playlists: [], unreadable: [] };
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    const links = line.match(URL_TOKEN_RE) ?? [];
+    if (links.length === 0) {
+      result.unreadable.push(line);
+      continue;
     }
-    if (seen.has(parsed.video.youtubeId)) {
-      result.push({ line: index + 1, raw, ok: false, error: 'Bu video listede zaten var.' });
-      return;
+    for (const link of links) {
+      const id = parseYoutubeVideoId(link);
+      if (id) {
+        if (!result.ids.includes(id)) result.ids.push(id);
+      } else if (inspectPlaylistLink(link).ok) result.playlists.push(link);
+      else result.unreadable.push(link);
     }
-    seen.add(parsed.video.youtubeId);
-    result.push({ line: index + 1, raw, ok: true, video: parsed.video });
-  });
+  }
   return result;
 }

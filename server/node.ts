@@ -1,11 +1,20 @@
 // Runs a fetch-style handler on a Node `http` request (Vite dev/preview
 // middleware and the production server share this).
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { PLAYLIST_API_PATH } from '../src/utils/youtubePlaylist.ts';
+import { PLAYLIST_API_PATH, VIDEOS_API_PATH } from '../src/utils/youtubePlaylist.ts';
 import type { WebHandler } from './playlistEndpoint.ts';
 
-export function isPlaylistApiRequest(url: string | undefined): boolean {
-  return (url ?? '').split('?')[0] === PLAYLIST_API_PATH;
+export interface YouTubeHandlers {
+  playlistHandler: WebHandler;
+  videosHandler: WebHandler;
+}
+
+/** The YouTube endpoint a request path is for, if any. */
+export function youtubeHandlerFor(url: string | undefined, handlers: YouTubeHandlers): WebHandler | null {
+  const path = (url ?? '').split('?')[0];
+  if (path === PLAYLIST_API_PATH) return handlers.playlistHandler;
+  if (path === VIDEOS_API_PATH) return handlers.videosHandler;
+  return null;
 }
 
 export async function runWebHandler(handler: WebHandler, req: IncomingMessage, res: ServerResponse): Promise<void> {

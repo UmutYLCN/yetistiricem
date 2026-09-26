@@ -23,7 +23,7 @@ Yetiştiricem, video listeleriyle çalıştığın öğrenme hedeflerini esnek �
 ## Neler yapabilirsin?
 
 - **Bir kamp oluştur:** Kampına ad ver, başlangıç ve istersen hedef bitiş tarihini seç.
-- **Branşlarını ekle:** YouTube oynatma listesi ekleyebilir, videoları tek tek girebilir ya da bir liste yapıştırabilirsin. Her oynatma listesi kendi branşı olur.
+- **Branşlarını ekle:** YouTube oynatma listesi ya da video bağlantıları ekleyebilirsin; başlık ve süreler YouTube’dan gelir. YouTube dışındaki dersleri konu ve süreyle elle yazabilirsin. Her oynatma listesi kendi branşı olur.
 - **Kendi ritmini belirle:** Videoları çalışma günlerine otomatik dağıt veya hangi gün hangi branşı çalışacağını kendin seç. Dinlenme ve deneme günlerini de plana kat.
 - **Birden fazla hedefi birlikte takip et:** Farklı konulardaki kampları ayrı tempolarda sürdür; Bugün ve Haftalık ekranlarında görevlerini birleşik gör ya da tek kampa odaklan.
 - **Günlük ilerlemene bak:** Tamamladığın videoları işaretle; kalan süreyi, haftalık yükü ve tahmini bitiş tarihini izle.
@@ -32,7 +32,7 @@ Yetiştiricem, video listeleriyle çalıştığın öğrenme hedeflerini esnek �
 
 ## Nasıl kullanılır?
 
-1. Kaynak olarak oynatma listelerini, tek tek videoları veya yapıştırılmış bir video listesini ekle.
+1. Kaynak olarak oynatma listelerini, video bağlantılarını ya da elle yazdığın konuları ekle.
 2. Kampının adını ve başlangıç tarihini belirle; hedef bitiş tarihi isteğe bağlıdır.
 3. Otomatik dağıtımı veya branşları günlere kendin yerleştirmeyi seç.
 4. Önizlemede programını gözden geçir ve her gün ilerlemeni işaretle.

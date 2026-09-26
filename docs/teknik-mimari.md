@@ -2,7 +2,7 @@
 
 ## Genel görünüm
 
-Arayüz ile YouTube oynatma listesi hizmeti aynı uygulamada çalışır. Kamp planı ve ilerleme tarayıcıda saklanır; sunucu yalnızca oynatma listesi içe aktarım isteğini ve YouTube API çağrılarını işler.
+Arayüz ile YouTube hizmeti aynı uygulamada çalışır. Kamp planı ve ilerleme tarayıcıda saklanır; sunucu yalnızca oynatma listesi ve video bağlantısı içe aktarım isteklerini ve YouTube API çağrılarını işler.
 
 ~~~mermaid
 flowchart LR
@@ -13,7 +13,7 @@ flowchart LR
   E --> A["Kamp başına plan"]
   A --> M["mergeDailyPlans"]
   M --> V["Bugün / Haftalık / İlerleme"]
-  H -->|liste kimliği| R["GET /api/youtube/playlist"]
+  H -->|liste ya da video kimlikleri| R["GET /api/youtube/playlist · /videos"]
   R --> Y["YouTube Data API v3"]
   Y --> R
   R -->|video bilgileri| U
@@ -27,7 +27,7 @@ flowchart LR
 - **Kamp işlemleri:** Kamp/branş güncellemeleri `src/lib/plannerOps.ts` üzerinden yapılır; kamp sihirbazı taslağı `src/lib/campDraft.ts` içindedir.
 - **Birleşik görünüm:** `src/lib/allCamps.ts`, her kampı kendi ayarlarıyla ayrı ayrı planlar ve `mergeDailyPlans` ile sonuçları tarihe göre birleştirir. Birleştirme planları yeniden dağıtmaz. Kaydırma olayları görevin ait olduğu kampta tutulur.
 - **Saklama ve geçiş:** `src/lib/persistence.ts` localStorage kayıtlarını yükler, eski düz kayıtları kampa dönüştürür ve yedek içe/dışa aktarma akışlarını yönetir.
-- **YouTube hizmeti:** `server/` altındaki ortak handler, Vite geliştirme/önizleme ortamında ve `npm start` ile çalışan Node sunucusunda kullanılır.
+- **YouTube hizmeti:** `server/` altındaki ortak handler’lar (`playlistEndpoint.ts`, `videosEndpoint.ts`), Vite geliştirme/önizleme ortamında, `npm start` ile çalışan Node sunucusunda ve Cloudflare Pages Function’larında kullanılır.
 
 Daha ayrıntılı takvim garantileri için [planlama motoru sözleşmesine](planner-engine.md), kamp sihirbazı için [kamp oluşturma notlarına](camp-creation-wizard-notes.md) bak.
 
@@ -50,6 +50,10 @@ Temel kayıtlar localStorage içindedir:
 
 Eski `yt_playlists`, `yt_prefs`, `yt_shift_events` ve `yt_shifted_date` anahtarları geçiş girdisidir; yeni sürüm bunları yazıp silmez. Okunamayan kayıt önce ayrı bir anahtara kopyalanıp kullanıcıya bildirilir. Yedekler bütün kampları ve ilerlemeyi içerir; görünüm tercihi yedeğe eklenmez.
 
+## Video bağlantıları
+
+“Videolar” seçeneğinde yapıştırılan metinden video kimlikleri çıkarılır (`parseVideoLinks`; bağlantı dışındaki metin yok sayılır). İstemci <code>GET /api/youtube/videos?ids=&lt;kimlik&gt;,…</code> isteğini en fazla 50 kimlikle yapar, daha uzun listeleri sırayla böler. `server/videosEndpoint.ts` yalnızca doğrulanmış 11 karakterlik kimlikleri kabul eder ve aynı `videos.list` çağrısını, önbelleği ve hata kodlarını oynatma listesi uç noktasıyla paylaşır. YouTube’un döndürmediği (silinmiş ya da gizli) videolar kullanılamaz satır olarak gelir.
+
 ## Oynatma listesi akışı
 
 1. Arayüzdeki `usePlaylistFetch` bağlantıdan liste kimliğini çıkarıp doğrular.
@@ -64,4 +68,4 @@ Liste sayfası başına 50 öğe alınır; üst sınır 100 sayfadır. Varsayıl
 
 `YOUTUBE_API_KEY` sadece sunucu ortamında bulunmalıdır. Yerelde `.env.local` kullanılır; dosya Git’ten hariç tutulur. Değişkeni `VITE_` ile başlatma: bu önek tarayıcı paketine aktarılır. Google API hatalarının ham metni ve anahtar günlüklerde ya da endpoint cevaplarında tutulmaz.
 
-YouTube veri endpoint’i teknik olarak genel amaçlı bir proxy değildir: yalnızca tek bir doğrulanmış liste kimliğini kabul eder ve sabit API kaynaklarını çağırır.
+YouTube veri endpoint’leri teknik olarak genel amaçlı bir proxy değildir: yalnızca doğrulanmış kimlikleri (tek bir liste kimliği ya da en fazla 50 video kimliği) kabul eder, bağlantı almaz ve sabit API kaynaklarını çağırır.

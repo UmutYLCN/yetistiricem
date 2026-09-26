@@ -18,7 +18,7 @@ Bir kampın başlangıç tarihi, hedef tarihi, günlük çalışma süresi, haft
 
 Kamp sihirbazı sırayla kaynakları, kamp bilgilerini, çalışma ritmini ve plan önizlemesini gösterir.
 
-1. **Kaynakları ekle:** YouTube oynatma listesi, tek video, satır satır yapıştırılmış liste veya bağlantısız demo şablonu kullan. Her oynatma listesi ayrı bir branş olur.
+1. **Kaynakları ekle:** Üç yol var. **Oynatma listesi:** listenin bağlantısını yapıştır, videolar adları ve gerçek süreleriyle gelir. **Videolar:** bir ya da birden çok video bağlantısını yapıştır; başlık ve süre yine YouTube’dan okunur. **Elle ekle:** YouTube dışındaki dersler için konu adını ve süresini yaz. Her oynatma listesi ve her elle eklenen liste ayrı bir branş olur; branşların, ilk kaynağı ekledikten sonra listelenir.
 2. **Kampı tanımla:** Kamp adı ve başlangıç tarihi gerekir. Hedef bitiş tarihi ekleyebilir veya boş bırakabilirsin.
 3. **Ritmi seç:** Otomatik dağıtımda çalışma günlerini ve günlük süreyi belirle. Elle yerleşimde haftanın günlerine branş, deneme veya dinlenme günü ata.
 4. **Önizlemeyi incele:** Video görevlerinin takvime dağılımını, tahmini bitişi ve hedef tarih durumunu gör. Kaydetmeden önce önceki adımlara dönüp değişiklik yapabilirsin.
@@ -51,4 +51,4 @@ Hedef bitiş tarihi programı sıkıştırmaz. Program bu tarihe yetişmiyorsa u
 
 Hesap oluşturmak gerekmez. Kamplar ve ilerleme kullandığın tarayıcıda saklanır; farklı tarayıcılar veya cihazlar arasında kendiliğinden eşitlenmez. Ayarlar’dan yedek alıp başka bir tarayıcıya aktarabilirsin.
 
-Oynatma listesi içe aktarma herkese açık ve liste dışı listeleri destekler. Özel listeler için YouTube hesabıyla OAuth girişi bu sürümde bulunmaz. Demo şablonları link içermez; kendi videolarının bağlantılarını ekleyebilirsin.
+Oynatma listesi içe aktarma herkese açık ve liste dışı listeleri destekler. Özel listeler için YouTube hesabıyla OAuth girişi bu sürümde bulunmaz. Elle eklenen konular bağlantısız başlar; video bağlantısını sonra plandaki “Bağlantı ekle” ile ekleyebilirsin. Demo kampının konuları da bağlantısız örneklerdir.

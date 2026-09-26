@@ -44,7 +44,7 @@ const LEGACY_TEXT: Record<'legacy-sample' | 'legacy-generated', { title: string;
   },
   'legacy-generated': {
     title: 'Bu branş oynatma listesi okunmadan oluşturuldu.',
-    body: 'Önceki sürüm listeyi okuyamadığı halde 45 dakikalık 20 “Özel Video” ekliyordu; video sayısı, adları ve süreleri gerçek değil. Görevler oynatma listesini açar. Gerçek videoları tek tek düzenleyebilir ya da branşı kaldırıp videolarınla yeniden ekleyebilirsin.',
+    body: 'Önceki sürüm listeyi okuyamadığı halde 45 dakikalık 20 “Özel Video” ekliyordu; video sayısı, adları ve süreleri gerçek değil. Görevler oynatma listesini açar. Görevleri tek tek düzenleyebilir ya da branşı kaldırıp gerçek videolarınla yeniden ekleyebilirsin.',
   },
 };
 

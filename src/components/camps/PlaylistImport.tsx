@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import type { ClipboardEvent, FormEvent } from 'react';
+import type { ClipboardEvent, FormEvent, ReactNode } from 'react';
 import { CircleCheck, Download, ExternalLink, ListPlus, ListVideo, LoaderCircle, RotateCcw, TriangleAlert } from 'lucide-react';
 import type { PlaylistFetch } from '../../hooks/usePlaylistFetch';
 import { formatClock, formatMinutes } from '../../lib/format';
@@ -16,7 +16,7 @@ import {
 } from '../../lib/playlistImport';
 import type { DraftVideo } from '../../utils/youtubeParser';
 import { inspectPlaylistLink } from '../../utils/youtubeParser';
-import type { PlaylistInfo, PlaylistResponse } from '../../utils/youtubePlaylist';
+import type { PlaylistEntry, PlaylistInfo } from '../../utils/youtubePlaylist';
 
 interface Props {
   fetcher: PlaylistFetch;
@@ -105,19 +105,14 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
 
       <div role="status" aria-live="polite">
         {imported && !loading && (
-          <p className="mt-3 flex items-center gap-2 rounded-[10px] bg-forest-tint px-3.5 py-2.5 text-[13px] font-semibold text-forest-strong">
+          <p className="pop-in mt-3 flex items-center gap-2 rounded-[10px] bg-forest-tint px-3.5 py-2.5 text-[13px] font-semibold text-forest-strong">
             <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
             <span className="min-w-0 break-words">
               “{imported.title}” eklendi ({imported.count} video). Başka bir liste yapıştırabilirsin.
             </span>
           </p>
         )}
-        {loading && (
-          <div className="mt-3 flex items-center gap-3 rounded-[10px] border border-line bg-card px-3.5 py-3 text-[13px] text-ink-2">
-            <LoaderCircle className="size-4 shrink-0 animate-spin text-forest" aria-hidden="true" />
-            <span className="flex-1">Liste YouTube’dan okunuyor… Uzun listelerde birkaç saniye sürebilir.</span>
-          </div>
-        )}
+        {loading && <ReviewSkeleton message="Liste YouTube’dan okunuyor… Uzun listelerde birkaç saniye sürebilir." />}
       </div>
       {loading && (
         <button type="button" className="btn btn-ghost btn-sm mt-2" onClick={cancel}>
@@ -142,25 +137,78 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
       )}
 
       {state.status === 'loaded' && (
-        <PlaylistReview key={state.version} data={state.data} knownIds={knownIds} onImport={handleImport} importLabel={importLabel} />
+        <EntryReview
+          key={state.version}
+          heading={state.data.playlist.title || 'Adı olmayan liste'}
+          meta={
+            <>
+              {state.data.playlist.channelTitle && <>{state.data.playlist.channelTitle} · </>}
+              {state.data.entries.length} video
+            </>
+          }
+          link={{ href: state.data.playlist.url, label: 'Listeyi YouTube’da aç (yeni sekme)' }}
+          entries={state.data.entries}
+          truncated={state.data.truncated}
+          knownIds={knownIds}
+          onImport={drafts => handleImport(drafts, state.data.playlist)}
+          importLabel={importLabel}
+        />
       )}
     </div>
   );
 }
 
-function PlaylistReview({
-  data,
+/** What stands in for the review while YouTube is being read: the shape of the list on its way. */
+export function ReviewSkeleton({ message }: { message: string }) {
+  return (
+    <div className="mt-3 overflow-hidden rounded-[12px] border border-line bg-card">
+      <div className="flex items-center gap-3 border-b border-line px-3.5 py-3 text-[13px] text-ink-2">
+        <LoaderCircle className="size-4 shrink-0 animate-spin text-forest" aria-hidden="true" />
+        <span className="flex-1">{message}</span>
+      </div>
+      <div aria-hidden="true">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="flex items-center gap-3 border-t border-line px-3.5 py-2.5 first:border-t-0">
+            <span className="skeleton size-[22px] shrink-0 rounded-[7px]" />
+            <span className="skeleton h-9 w-16 shrink-0 rounded-[6px] max-[400px]:hidden" />
+            <span className="min-w-0 flex-1 space-y-2">
+              <span className="skeleton block h-2.5 rounded-full" style={{ width: `${[78, 62, 70, 54][i]}%` }} />
+              <span className="skeleton block h-2 w-2/5 rounded-full" />
+            </span>
+            <span className="skeleton h-2.5 w-9 shrink-0 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Videos read from YouTube, to review and select before adding: what can be
+ * added, what is skipped and why. Used for a playlist and for pasted links.
+ */
+export function EntryReview({
+  heading,
+  meta,
+  link,
+  entries,
+  truncated = false,
   knownIds,
   onImport,
   importLabel,
 }: {
-  data: PlaylistResponse;
+  heading: string;
+  meta: ReactNode;
+  /** Where the source opens on YouTube. */
+  link?: { href: string; label: string };
+  entries: PlaylistEntry[];
+  truncated?: boolean;
   knownIds: string[];
-  onImport: (drafts: DraftVideo[], playlist: PlaylistInfo) => void;
+  onImport: (drafts: DraftVideo[]) => void;
   importLabel: (count: number) => string;
 }) {
   const uid = useId();
-  const rows = reviewPlaylist(data.entries, knownIds);
+  const rows = reviewPlaylist(entries, knownIds);
   const [selected, setSelected] = useState<Set<number>>(() => initialSelection(rows));
   const [lastImport, setLastImport] = useState<number | null>(null);
 
@@ -168,7 +216,6 @@ function PlaylistReview({
   const chosen = selectedDrafts(rows, selected);
   const chosenMinutes = chosen.reduce((acc, d) => acc + d.durationMinutes, 0);
   const skipped = skippedSummary(rows);
-  const { playlist, entries } = data;
 
   const toggle = (index: number, on: boolean) =>
     setSelected(current => {
@@ -180,7 +227,7 @@ function PlaylistReview({
 
   const importSelected = () => {
     if (chosen.length === 0) return;
-    onImport(chosen, playlist);
+    onImport(chosen);
     setSelected(new Set());
     setLastImport(chosen.length);
   };
@@ -191,32 +238,25 @@ function PlaylistReview({
         <ListVideo className="mt-0.5 size-5 shrink-0 text-forest" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <h4 id={`${uid}-title`} className="text-[14.5px] leading-snug font-semibold break-words text-ink">
-            {playlist.title || 'Adı olmayan liste'}
+            {heading}
           </h4>
-          <p className="tnum text-[12.5px] text-ink-3">
-            {playlist.channelTitle && <>{playlist.channelTitle} · </>}
-            {entries.length} video
-          </p>
+          <p className="tnum text-[12.5px] text-ink-3">{meta}</p>
         </div>
-        <a
-          href={playlist.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="icon-btn -my-1 -mr-1.5 size-9"
-          aria-label="Listeyi YouTube’da aç (yeni sekme)"
-        >
-          <ExternalLink aria-hidden="true" />
-        </a>
+        {link && (
+          <a href={link.href} target="_blank" rel="noopener noreferrer" className="icon-btn -my-1 -mr-1.5 size-9" aria-label={link.label}>
+            <ExternalLink aria-hidden="true" />
+          </a>
+        )}
       </header>
 
-      {data.truncated && (
+      {truncated && (
         <p className="border-b border-line bg-warn-soft px-3.5 py-2 text-[12.5px] text-warn">
           Liste YouTube’un sınırından uzun; yalnızca ilk {entries.length} kayıt okunabildi.
         </p>
       )}
 
       {entries.length === 0 ? (
-        <p className="px-3.5 py-5 text-center text-[13px] text-ink-2">Bu listede video yok.</p>
+        <p className="px-3.5 py-5 text-center text-[13px] text-ink-2">Okunacak video yok.</p>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3.5 pt-2.5 pb-2">
@@ -246,7 +286,7 @@ function PlaylistReview({
             </div>
           </div>
           {skipped && <p className="px-3.5 pb-2 text-[12.5px] text-ink-3">{skipped}</p>}
-          <ol className="max-h-[340px] overflow-y-auto overscroll-contain border-t border-line" aria-label={`${playlist.title || 'Liste'} videoları`}>
+          <ol className="max-h-[340px] overflow-y-auto overscroll-contain border-t border-line" aria-label={`${heading}: videolar`}>
             {rows.map(row => (
               <ReviewItem key={row.index} row={row} checked={selected.has(row.index)} onToggle={toggle} />
             ))}
@@ -263,7 +303,7 @@ function PlaylistReview({
           {lastImport !== null && (
             <span className="inline-flex items-center gap-1.5 font-semibold">
               <CircleCheck className="size-4" aria-hidden="true" />
-              {lastImport} video, liste sırasıyla aşağıya eklendi.
+              {lastImport} video, sırasıyla aşağıya eklendi.
             </span>
           )}
         </p>
@@ -280,7 +320,8 @@ function ReviewItem({ row, checked, onToggle }: { row: ReviewRow; checked: boole
   const title = video ? video.title || `Video ${row.index + 1}` : 'Kullanılamayan video';
 
   return (
-    <li className="border-t border-line first:border-t-0">
+    // The first rows arrive one after another; the rest with the last of them.
+    <li className="review-row border-t border-line first:border-t-0" style={{ ['--row' as string]: Math.min(row.index, 16) }}>
       <label
         className={`flex items-center gap-3 px-3.5 py-2 ${selectable ? 'cursor-pointer hover:bg-paper/70' : 'cursor-not-allowed bg-paper/40'}`}
       >

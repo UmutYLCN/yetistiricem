@@ -171,20 +171,12 @@ export function EditVideoDialog({
   const [url, setUrl] = useState(hasRealLink ? video.videoUrl : '');
   const [submitted, setSubmitted] = useState(false);
 
-  const linkRequired = kind === 'manual';
   const otherIds = youtubeIdsOf({ ...camp, videos: camp.videos.filter(v => v.id !== video.id) });
   const titleError = !title.trim() ? 'Başlık boş olamaz.' : null;
   const durationCheck = parseDurationInput(duration);
   const urlCheck = url.trim() ? validateVideoUrl(url) : null;
-  const urlError = urlCheck
-    ? !urlCheck.ok
-      ? urlCheck.error
-      : otherIds.includes(urlCheck.value.id)
-        ? 'Bu video branşta zaten var.'
-        : null
-    : linkRequired
-      ? 'Bu branşta her videonun bağlantısı olmalı.'
-      : null;
+  // Optional: a topic typed by hand has no link until the user gives one.
+  const urlError = urlCheck ? (!urlCheck.ok ? urlCheck.error : otherIds.includes(urlCheck.value.id) ? 'Bu video branşta zaten var.' : null) : null;
   const invalid = Boolean(titleError || !durationCheck.ok || urlError);
 
   const save = () => {
@@ -280,7 +272,7 @@ export function EditVideoDialog({
         </div>
         <div>
           <label className="field-label" htmlFor="edit-video-url">
-            YouTube video bağlantısı {!linkRequired && <span className="font-normal text-ink-3">(isteğe bağlı)</span>}
+            YouTube video bağlantısı <span className="font-normal text-ink-3">(isteğe bağlı)</span>
           </label>
           <input
             id="edit-video-url"

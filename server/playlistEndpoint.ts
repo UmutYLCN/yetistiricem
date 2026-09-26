@@ -31,43 +31,54 @@ const BASE_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
 };
 
-function json(status: number, body: unknown, headers: Record<string, string> = {}): Response {
+export function json(status: number, body: unknown, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...BASE_HEADERS, ...headers } });
 }
 
-function errorResponse(code: PlaylistErrorCode, headers: Record<string, string> = {}): Response {
+export function errorResponse(code: PlaylistErrorCode, headers: Record<string, string> = {}): Response {
   const body: PlaylistErrorBody = { error: { code } };
   return json(PLAYLIST_ERROR_STATUS[code], body, { 'Cache-Control': 'no-store', ...headers });
 }
 
-export function createPlaylistHandler(options: PlaylistHandlerOptions): WebHandler {
-  const apiKey = options.apiKey?.trim() ?? '';
+/**
+ * `load`, with each result reused for a while (to spare quota) and one
+ * upstream read shared by requests that arrive while it is running (double
+ * clicks, repeated pastes).
+ */
+export function cachedLoader<T>(
+  load: (key: string) => Promise<T>,
+  options: Pick<PlaylistHandlerOptions, 'cacheTtlMs' | 'cacheSize' | 'now'>
+): (key: string) => Promise<T> {
   const ttl = options.cacheTtlMs ?? 5 * 60_000;
   const cacheSize = options.cacheSize ?? 50;
   const now = options.now ?? Date.now;
-  const log = options.log ?? (message => console.warn(message));
-  const cache = new Map<string, { expires: number; data: PlaylistResponse }>();
-  // Double clicks and repeated pastes share one upstream read.
-  const inFlight = new Map<string, Promise<PlaylistResponse>>();
+  const cache = new Map<string, { expires: number; data: T }>();
+  const inFlight = new Map<string, Promise<T>>();
 
-  const load = (id: string): Promise<PlaylistResponse> => {
-    const cached = cache.get(id);
+  return key => {
+    const cached = cache.get(key);
     if (cached && cached.expires > now()) return Promise.resolve(cached.data);
-    cache.delete(id);
-    const pending = inFlight.get(id);
+    cache.delete(key);
+    const pending = inFlight.get(key);
     if (pending) return pending;
-    const request = fetchPlaylist(id, { apiKey, fetch: options.fetch, maxPages: options.maxPages })
+    const request = load(key)
       .then(data => {
         if (ttl > 0) {
-          cache.set(id, { expires: now() + ttl, data });
+          cache.set(key, { expires: now() + ttl, data });
           while (cache.size > cacheSize) cache.delete(cache.keys().next().value as string);
         }
         return data;
       })
-      .finally(() => inFlight.delete(id));
-    inFlight.set(id, request);
+      .finally(() => inFlight.delete(key));
+    inFlight.set(key, request);
     return request;
   };
+}
+
+export function createPlaylistHandler(options: PlaylistHandlerOptions): WebHandler {
+  const apiKey = options.apiKey?.trim() ?? '';
+  const log = options.log ?? (message => console.warn(message));
+  const load = cachedLoader<PlaylistResponse>(id => fetchPlaylist(id, { apiKey, fetch: options.fetch, maxPages: options.maxPages }), options);
 
   return async request => {
     if (request.method !== 'GET') return errorResponse('method', { Allow: 'GET' });

@@ -11,7 +11,7 @@ import { allIds, playlist, prefs, repeat } from './helpers.ts';
 const branches = [playlist('mat', repeat(6, 40), 'Matematik'), playlist('fiz', repeat(4, 50), 'Fizik'), playlist('kim', repeat(3, 30), 'Kimya')];
 
 test('each step blocks until it is complete', () => {
-  assert.equal(sourceErrors([]).empty, 'En az bir oynatma listesi ya da video ekle.');
+  assert.equal(sourceErrors([]).empty, 'En az bir oynatma listesi, video ya da konu ekle.');
   const unnamed = { ...branches[0], subject: '  ' };
   const empty = { ...branches[1], videos: [] };
   const errors = sourceErrors([unnamed, empty, branches[2]]);

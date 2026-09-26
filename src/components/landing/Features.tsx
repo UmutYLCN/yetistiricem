@@ -258,7 +258,7 @@ export function Features({ preview }: { preview: LandingPreview }) {
           visual={<PlaylistVisual />}
         >
           Herkese açık bir YouTube oynatma listesinin bağlantısı yeter: videolar adları ve gerçek süreleriyle gelir, her liste kendi branşı
-          olur. İstersen videoları tek tek de ekleyebilirsin.
+          olur. Tek tek video bağlantıları yapıştırdığında da başlık ve süreler kendiliğinden gelir.
         </Bento>
         <Bento id="gunluk-hedef" className="lg:col-span-2" title="Günlük süreni aşmaz" visual={<DailyGoalVisual preview={preview} />}>
           Günde ne kadar çalışacağını söyle; izleme hızın ve tekrar payınla her gün o süreye sığar.

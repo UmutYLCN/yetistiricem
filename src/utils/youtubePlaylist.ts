@@ -1,10 +1,13 @@
-// Contract of the playlist endpoint (`GET /api/youtube/playlist?id=…`), shared
-// by the server (`server/`) and the browser. The server reads the playlist with
-// the YouTube Data API and answers with this shape; the browser validates it
-// again before showing anything.
+// Contract of the YouTube endpoints, shared by the server (`server/`) and the
+// browser: `GET /api/youtube/playlist?id=…` and `GET /api/youtube/videos?ids=…`.
+// The server reads YouTube with the Data API and answers with these shapes; the
+// browser validates them again before showing anything.
 import { PLAYLIST_ID_RE, youtubePlaylistUrl, youtubeThumbnailUrl, youtubeWatchUrl } from './youtubeParser.ts';
 
 export const PLAYLIST_API_PATH = '/api/youtube/playlist';
+export const VIDEOS_API_PATH = '/api/youtube/videos';
+/** Video ids per videos request (one `videos.list` page); the browser splits longer lists. */
+export const MAX_VIDEOS_PER_REQUEST = 50;
 
 export interface PlaylistInfo {
   id: string;
@@ -53,6 +56,11 @@ export interface PlaylistResponse {
   entries: PlaylistEntry[];
   /** More pages existed than the server reads (YouTube caps playlists at 5,000 videos). */
   truncated: boolean;
+}
+
+/** The videos asked for, in the order of the (de-duplicated) ids. */
+export interface VideosResponse {
+  entries: PlaylistEntry[];
 }
 
 /** Error codes the endpoint answers with, as `{ error: { code } }`. */
@@ -146,6 +154,23 @@ function parseEntry(raw: unknown): PlaylistEntry | null {
   };
 }
 
+function parseEntries(raw: unknown): PlaylistEntry[] | null {
+  if (!Array.isArray(raw)) return null;
+  const entries: PlaylistEntry[] = [];
+  for (const item of raw) {
+    const entry = parseEntry(item);
+    if (!entry) return null;
+    entries.push(entry);
+  }
+  return entries;
+}
+
+/** Validates a videos endpoint answer. Null when any part of it is malformed. */
+export function parseVideosResponse(raw: unknown): VideosResponse | null {
+  const entries = isRecord(raw) ? parseEntries(raw.entries) : null;
+  return entries ? { entries } : null;
+}
+
 /** Validates an endpoint answer. Null when any part of it is malformed. */
 export function parsePlaylistResponse(raw: unknown): PlaylistResponse | null {
   if (!isRecord(raw) || !isRecord(raw.playlist) || !Array.isArray(raw.entries) || typeof raw.truncated !== 'boolean') {
@@ -155,11 +180,7 @@ export function parsePlaylistResponse(raw: unknown): PlaylistResponse | null {
   if (typeof id !== 'string' || !PLAYLIST_ID_RE.test(id) || typeof title !== 'string' || typeof channelTitle !== 'string') {
     return null;
   }
-  const entries: PlaylistEntry[] = [];
-  for (const item of raw.entries) {
-    const entry = parseEntry(item);
-    if (!entry) return null;
-    entries.push(entry);
-  }
+  const entries = parseEntries(raw.entries);
+  if (!entries) return null;
   return { playlist: { id, title, channelTitle, url: youtubePlaylistUrl(id) }, entries, truncated: raw.truncated };
 }

@@ -1,9 +1,9 @@
-// Reads one public playlist with the YouTube Data API v3.
+// Reads public playlists and videos with the YouTube Data API v3.
 //
 // Only three fixed endpoints are called (playlists, playlistItems, videos) on a
-// fixed host, with a playlist id that has already been validated. The API key
-// travels in the `X-Goog-Api-Key` header, never in a URL, and no upstream error
-// text is passed on: failures become a `PlaylistErrorCode`.
+// fixed host, with playlist and video ids that have already been validated. The
+// API key travels in the `X-Goog-Api-Key` header, never in a URL, and no
+// upstream error text is passed on: failures become a `PlaylistErrorCode`.
 import type {
   PlaylistEntry,
   PlaylistErrorCode,
@@ -173,14 +173,14 @@ function videoIdOf(item: unknown): string | null {
   return VIDEO_ID_RE.test(id) ? id : null;
 }
 
-function toEntry(item: unknown, videos: Map<string, Json>): PlaylistEntry {
-  const videoId = videoIdOf(item);
-  const video = videoId ? videos.get(videoId) : undefined;
+/**
+ * One video as an entry: its details, or why it cannot be used. `listedPrivate`:
+ * the playlist slot says the video is private (`videos.list` then omits it).
+ */
+function entryOf(videoId: string | null, video: Json | undefined, listedPrivate: boolean): PlaylistEntry {
   const unavailable = (reason: UnavailableReason): PlaylistEntry => ({ kind: 'unavailable', videoId, reason });
 
-  if (!videoId || !video) {
-    return unavailable(text(record(record(item).status).privacyStatus) === 'private' ? 'private' : 'deleted');
-  }
+  if (!videoId || !video) return unavailable(listedPrivate ? 'private' : 'deleted');
   const videoSnippet = record(video.snippet);
   const details = record(video.contentDetails);
   const status = record(video.status);
@@ -202,6 +202,40 @@ function toEntry(item: unknown, videos: Map<string, Json>): PlaylistEntry {
     durationSeconds: seconds,
     blockedInTurkey: blockedInTurkey(details.regionRestriction),
   };
+}
+
+function toEntry(item: unknown, videos: Map<string, Json>): PlaylistEntry {
+  const videoId = videoIdOf(item);
+  const listedPrivate = text(record(record(item).status).privacyStatus) === 'private';
+  return entryOf(videoId, videoId ? videos.get(videoId) : undefined, listedPrivate);
+}
+
+/** `videos.list` details by id, in batches of one page each. */
+async function fetchVideoDetails(ids: readonly string[], options: YouTubeClientOptions): Promise<Map<string, Json>> {
+  const batches: string[][] = [];
+  for (let i = 0; i < ids.length; i += PAGE_SIZE) batches.push(ids.slice(i, i + PAGE_SIZE));
+  const results = await mapLimit(batches, VIDEO_BATCH_CONCURRENCY, batch =>
+    callApi('videos', { part: 'snippet,contentDetails,status', id: batch.join(',') }, options)
+  );
+  const videos = new Map<string, Json>();
+  for (const result of results) {
+    for (const video of list(result.items)) {
+      const id = text(record(video).id);
+      if (VIDEO_ID_RE.test(id)) videos.set(id, record(video));
+    }
+  }
+  return videos;
+}
+
+/**
+ * Public or unlisted videos by id, in the order given, each with its title,
+ * channel, thumbnail and exact duration, or why it cannot be used. A video
+ * YouTube does not return (deleted or private) is `deleted`. Every id must
+ * already pass `isYoutubeVideoId`.
+ */
+export async function fetchVideos(videoIds: readonly string[], options: YouTubeClientOptions): Promise<PlaylistEntry[]> {
+  const videos = await fetchVideoDetails(videoIds, options);
+  return videoIds.map(id => entryOf(id, videos.get(id), false));
 }
 
 /**
@@ -246,18 +280,7 @@ export async function fetchPlaylist(playlistId: string, options: YouTubeClientOp
   }
 
   const ids = [...new Set(items.map(videoIdOf).filter((id): id is string => id !== null))];
-  const batches: string[][] = [];
-  for (let i = 0; i < ids.length; i += PAGE_SIZE) batches.push(ids.slice(i, i + PAGE_SIZE));
-  const results = await mapLimit(batches, VIDEO_BATCH_CONCURRENCY, batch =>
-    callApi('videos', { part: 'snippet,contentDetails,status', id: batch.join(',') }, options)
-  );
-  const videos = new Map<string, Json>();
-  for (const result of results) {
-    for (const video of list(result.items)) {
-      const id = text(record(video).id);
-      if (VIDEO_ID_RE.test(id)) videos.set(id, record(video));
-    }
-  }
+  const videos = await fetchVideoDetails(ids, options);
 
   return {
     playlist: {

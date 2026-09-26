@@ -158,7 +158,7 @@ export interface SourceErrors {
 
 export function sourceErrors(branches: SubjectPlaylist[]): SourceErrors {
   const errors: SourceErrors = { branches: {} };
-  if (branches.length === 0) errors.empty = 'En az bir oynatma listesi ya da video ekle.';
+  if (branches.length === 0) errors.empty = 'En az bir oynatma listesi, video ya da konu ekle.';
   for (const branch of branches) {
     if (!branch.subject.trim()) errors.branches[branch.id] = 'Branşa bir ad ver.';
     else if (branch.subject.trim().length > MAX_BRANCH_NAME) errors.branches[branch.id] = `Branş adı en fazla ${MAX_BRANCH_NAME} karakter olabilir.`;

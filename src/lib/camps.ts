@@ -8,8 +8,9 @@ import { defaultColorKey } from './subjects.ts';
 
 /**
  * How trustworthy a branch's video data is.
- * - `manual`: every video was pasted by the user, or imported from a playlist
- *   through the YouTube Data API, with a real YouTube link.
+ * - `manual`: every video came from the user: pasted or imported through the
+ *   YouTube Data API with a real YouTube link, or typed by hand as a topic
+ *   with its duration (then without a link until the user adds one).
  * - `demo-template`: built-in sample topics without links (labelled as demo).
  * - `legacy-sample`: an old built-in preset. Its links pointed at a fake
  *   `watch?v=sample` address, its durations were random and the channel name
@@ -93,7 +94,7 @@ export function videoFromDraft(draft: DraftVideo, campId: string, position: numb
     title: draft.title.trim() || `Video ${position}`,
     durationMinutes: draft.durationMinutes,
     videoUrl: draft.url,
-    thumbnailUrl: draft.thumbnailUrl || youtubeThumbnailUrl(draft.youtubeId),
+    thumbnailUrl: draft.thumbnailUrl || (draft.youtubeId ? youtubeThumbnailUrl(draft.youtubeId) : ''),
     completed: false,
     ...(draft.channelName?.trim() ? { channelName: draft.channelName.trim() } : {}),
   };

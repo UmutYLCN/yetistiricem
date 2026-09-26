@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createAppServer } from '../server/app.ts';
 import { createPlaylistHandler } from '../server/playlistEndpoint.ts';
+import { createVideosHandler } from '../server/videosEndpoint.ts';
 import { PLAYLIST_ID, TEST_KEY, fakeVideo, fakeYouTube, vid } from './youtubeFake.ts';
 
 interface RawResponse {
@@ -29,7 +30,7 @@ function raw(port: number, path: string, method = 'GET'): Promise<RawResponse> {
   });
 }
 
-test('the production server serves the built app and the playlist endpoint on one port', async () => {
+test('the production server serves the built app and the YouTube endpoints on one port', async () => {
   const base = await mkdtemp(join(tmpdir(), 'yetistiricem-server-'));
   const dist = join(base, 'dist');
   await mkdir(join(dist, 'assets'), { recursive: true });
@@ -41,7 +42,11 @@ test('the production server serves the built app and the playlist endpoint on on
     playlists: [{ id: PLAYLIST_ID, title: 'Kamp', channelTitle: 'Kanal', items: [{ videoId: vid(1) }] }],
     videos: [fakeVideo(1)],
   });
-  const server = createAppServer({ distDir: dist, playlistHandler: createPlaylistHandler({ apiKey: TEST_KEY, fetch: yt.fetch }) });
+  const server = createAppServer({
+    distDir: dist,
+    playlistHandler: createPlaylistHandler({ apiKey: TEST_KEY, fetch: yt.fetch }),
+    videosHandler: createVideosHandler({ apiKey: TEST_KEY, fetch: yt.fetch }),
+  });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address() as AddressInfo;
 
@@ -70,6 +75,10 @@ test('the production server serves the built app and the playlist endpoint on on
     const playlist = await raw(port, `/api/youtube/playlist?id=${PLAYLIST_ID}`);
     assert.equal(playlist.status, 200);
     assert.equal(JSON.parse(playlist.body).entries[0].videoId, vid(1));
+
+    const videos = await raw(port, `/api/youtube/videos?ids=${vid(1)}`);
+    assert.equal(videos.status, 200);
+    assert.equal(JSON.parse(videos.body).entries[0].videoId, vid(1));
 
     const invalid = await raw(port, '/api/youtube/playlist?id=https%3A%2F%2Fevil.test');
     assert.equal(invalid.status, 400);

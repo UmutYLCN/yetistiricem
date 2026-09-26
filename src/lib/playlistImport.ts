@@ -1,15 +1,25 @@
-// Browser side of the playlist import: calls the server endpoint, turns its
-// answer into review rows (what can be imported, what is skipped and why) and
-// the selected rows into draft videos. Messages are Turkish, for the UI.
+// Browser side of the YouTube import: calls the server endpoints (a playlist, or
+// videos by id), turns their answers into review rows (what can be imported,
+// what is skipped and why) and the selected rows into draft videos. Messages
+// are Turkish, for the UI.
 import type { DraftVideo, PlaylistLinkProblem } from '../utils/youtubeParser.ts';
 import { MAX_VIDEO_MINUTES } from '../utils/youtubeParser.ts';
 import type { PlaylistEntry, PlaylistErrorCode, PlaylistResponse, UnavailableReason } from '../utils/youtubePlaylist.ts';
-import { PLAYLIST_API_PATH, isPlaylistErrorCode, parsePlaylistResponse } from '../utils/youtubePlaylist.ts';
+import {
+  MAX_VIDEOS_PER_REQUEST,
+  PLAYLIST_API_PATH,
+  VIDEOS_API_PATH,
+  isPlaylistErrorCode,
+  parsePlaylistResponse,
+  parseVideosResponse,
+} from '../utils/youtubePlaylist.ts';
 
 /** Endpoint error codes plus what can go wrong before an answer arrives. */
 export type PlaylistFailure = PlaylistErrorCode | 'network' | 'timeout' | 'no-service' | 'unexpected' | 'aborted';
 
-export type PlaylistFetchResult = { ok: true; data: PlaylistResponse } | { ok: false; failure: PlaylistFailure };
+type FetchResult<T> = { ok: true; data: T } | { ok: false; failure: PlaylistFailure };
+export type PlaylistFetchResult = FetchResult<PlaylistResponse>;
+export type VideosFetchResult = { ok: true; entries: PlaylistEntry[] } | { ok: false; failure: PlaylistFailure };
 
 export interface RequestPlaylistOptions {
   signal?: AbortSignal;
@@ -23,7 +33,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Asks the server for a playlist. Never throws. */
-export async function requestPlaylist(playlistId: string, options: RequestPlaylistOptions = {}): Promise<PlaylistFetchResult> {
+export function requestPlaylist(playlistId: string, options: RequestPlaylistOptions = {}): Promise<PlaylistFetchResult> {
+  return requestJson(`${options.endpoint ?? PLAYLIST_API_PATH}?id=${encodeURIComponent(playlistId)}`, parsePlaylistResponse, options);
+}
+
+/** Asks the server for videos by id, `MAX_VIDEOS_PER_REQUEST` at a time, keeping their order. Never throws. */
+export async function requestVideos(videoIds: readonly string[], options: RequestPlaylistOptions = {}): Promise<VideosFetchResult> {
+  const entries: PlaylistEntry[] = [];
+  for (let i = 0; i < videoIds.length; i += MAX_VIDEOS_PER_REQUEST) {
+    const ids = videoIds.slice(i, i + MAX_VIDEOS_PER_REQUEST).map(encodeURIComponent).join(',');
+    const result = await requestJson(`${options.endpoint ?? VIDEOS_API_PATH}?ids=${ids}`, parseVideosResponse, options);
+    if (!result.ok) return result;
+    entries.push(...result.data.entries);
+  }
+  return { ok: true, entries };
+}
+
+async function requestJson<T>(url: string, parse: (raw: unknown) => T | null, options: RequestPlaylistOptions): Promise<FetchResult<T>> {
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => {
@@ -36,7 +62,7 @@ export async function requestPlaylist(playlistId: string, options: RequestPlayli
   const doFetch = options.fetch ?? ((input: string, init: RequestInit) => fetch(input, init));
 
   try {
-    const response = await doFetch(`${options.endpoint ?? PLAYLIST_API_PATH}?id=${encodeURIComponent(playlistId)}`, {
+    const response = await doFetch(url, {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
     });
@@ -51,7 +77,7 @@ export async function requestPlaylist(playlistId: string, options: RequestPlayli
       return { ok: false, failure: 'unexpected' };
     }
     if (response.ok) {
-      const data = parsePlaylistResponse(body);
+      const data = parse(body);
       return data ? { ok: true, data } : { ok: false, failure: 'unexpected' };
     }
     const code = isRecord(body) && isRecord(body.error) ? body.error.code : undefined;
@@ -94,12 +120,12 @@ export const FAILURE_TEXT: Record<Exclude<PlaylistFailure, 'aborted'>, FailureTe
   },
   quota: {
     title: 'YouTube sorgu kotası doldu',
-    body: 'Bugünlük YouTube Data API kotası bitti. Kota her gün Türkiye saatiyle 10.00–11.00 civarında yenilenir; o zamana kadar videoları “Tek tek” ya da “Liste yapıştır” ile ekleyebilirsin.',
+    body: 'Bugünlük YouTube Data API kotası bitti. Kota her gün Türkiye saatiyle 10.00–11.00 civarında yenilenir. Bu arada konularını “Elle ekle” ile yazabilir, video bağlantılarını sonra plandan ekleyebilirsin.',
     retry: false,
   },
   'not-configured': {
-    title: 'Liste okuma bu sunucuda kurulmamış',
-    body: 'Sunucuda YOUTUBE_API_KEY tanımlı değil (kurulum README’de). Bu arada videoları “Tek tek” ya da “Liste yapıştır” ile ekleyebilirsin.',
+    title: 'YouTube okuma bu sunucuda kurulmamış',
+    body: 'Sunucuda YOUTUBE_API_KEY tanımlı değil (kurulum README’de). Bu arada konularını “Elle ekle” ile yazabilir, video bağlantılarını sonra plandan ekleyebilirsin.',
     retry: false,
   },
   'bad-key': {
@@ -124,18 +150,28 @@ export const FAILURE_TEXT: Record<Exclude<PlaylistFailure, 'aborted'>, FailureTe
   },
   timeout: {
     title: 'Yanıt çok uzun sürdü',
-    body: 'Liste zamanında okunamadı. Bağlantını kontrol edip tekrar dene.',
+    body: 'YouTube zamanında yanıt vermedi. Bağlantını kontrol edip tekrar dene.',
     retry: true,
   },
   'no-service': {
-    title: 'Oynatma listesi servisine ulaşılamadı',
-    body: 'Uygulama liste okuma servisi olmadan (yalnızca statik dosyalarla) yayınlanmış ya da sunucu çalışmıyor olabilir. Videoları “Tek tek” ya da “Liste yapıştır” ile ekleyebilirsin.',
+    title: 'YouTube servisine ulaşılamadı',
+    body: 'Uygulama YouTube okuma servisi olmadan (yalnızca statik dosyalarla) yayınlanmış ya da sunucu çalışmıyor olabilir. Bu arada konularını “Elle ekle” ile yazabilir, video bağlantılarını sonra plandan ekleyebilirsin.',
     retry: true,
   },
   unexpected: {
     title: 'Sunucudan anlaşılmayan bir yanıt geldi',
-    body: 'Tekrar dene; sürerse videoları “Tek tek” ya da “Liste yapıştır” ile ekleyebilirsin.',
+    body: 'Tekrar dene; sürerse konularını “Elle ekle” ile yazabilirsin.',
     retry: true,
+  },
+};
+
+/** The same failures, worded for reading videos by their links. */
+export const VIDEO_FAILURE_TEXT: Record<Exclude<PlaylistFailure, 'aborted'>, FailureText> = {
+  ...FAILURE_TEXT,
+  'invalid-id': {
+    title: 'Bu video bağlantıları okunamadı',
+    body: 'Bağlantıları YouTube’daki “Paylaş” düğmesinden yeniden kopyalayıp yapıştır.',
+    retry: false,
   },
 };
 
@@ -143,7 +179,7 @@ export const LINK_PROBLEM_TEXT: Record<PlaylistLinkProblem, string> = {
   empty: 'Oynatma listesinin bağlantısını yapıştır.',
   'not-youtube': 'Bu bir YouTube bağlantısı değil. Örnek: https://www.youtube.com/playlist?list=PL…',
   'video-only':
-    'Bu tek bir videonun bağlantısı; içinde liste yok. Videoyu “Tek tek” sekmesinden ekleyebilir ya da listenin kendi bağlantısını (…playlist?list=…) yapıştırabilirsin.',
+    'Bu tek bir videonun bağlantısı; içinde liste yok. Videoyu “Videolar” seçeneğiyle ekleyebilir ya da listenin kendi bağlantısını (…playlist?list=…) yapıştırabilirsin.',
   personal:
     '“Daha sonra izle” ve “Beğenilen videolar” yalnızca sana görünür; bu listeler okunamaz. Videoları yeni bir listeye kaydedip o listeyi “Liste dışı” ya da “Herkese açık” yap.',
   mix: 'Bu bir YouTube Mix’i (senin için otomatik oluşturulan karışık liste); Mix’ler okunamaz. Bir kanalın ya da senin oluşturduğun bir listenin bağlantısını kullan.',

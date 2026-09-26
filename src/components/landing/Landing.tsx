@@ -39,7 +39,7 @@ const GOALS = [
 const STEPS = [
   {
     title: 'Kaynaklarını ekle',
-    body: 'YouTube oynatma listesi, tek tek videolar ya da yapıştırılmış bir liste. Her liste kendi branşı olur.',
+    body: 'YouTube oynatma listesi, video bağlantıları ya da YouTube dışındaki dersler için elle yazdığın konular. Her liste kendi branşı olur.',
   },
   {
     title: 'Kampını tanımla',
@@ -66,7 +66,7 @@ const FAQ = [
   },
   {
     q: 'Hangi oynatma listelerini içe aktarabilirim?',
-    a: 'Herkese açık ve liste dışı YouTube oynatma listelerini. Özel listeler bu sürümde desteklenmiyor; videoları tek tek ya da liste hâlinde yapıştırarak da ekleyebilirsin.',
+    a: 'Herkese açık ve liste dışı YouTube oynatma listelerini. Özel listeler bu sürümde desteklenmiyor; video bağlantılarını tek tek yapıştırabilir, YouTube dışındaki dersleri konu ve süreyle elle ekleyebilirsin.',
   },
   {
     q: 'Bir gün geride kalırsam ne olur?',
