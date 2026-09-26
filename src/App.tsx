@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { CalendarCheck, Eye, Info, LogOut, TriangleAlert, X } from 'lucide-react';
 import type { CampSchedule, DailyPlanItem, PostponeReason, StudyCamp, SubjectPlaylist } from './types';
 import { usePlanner } from './hooks/usePlanner';
+import { usePlaylistSync } from './hooks/usePlaylistSync';
 import { useToday } from './hooks/useToday';
 import type { CampShift, ScopedCamp } from './lib/allCamps';
 import {
@@ -21,7 +22,9 @@ import { progressInsights } from './lib/insights';
 import { formatDayTitle, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
 import { indexCamps, indexPlans, summarizeDay, weeksOverview } from './lib/planView';
-import { withAddedBranches } from './lib/plannerOps';
+import { withAddedBranches, withAppendedVideos } from './lib/plannerOps';
+import type { SyncNotification } from './lib/playlistSync';
+import { draftFromPending, syncNotifications, syncTargets } from './lib/playlistSync';
 import { allBranches, defaultSchedule } from './lib/studyCamp';
 import { DayPanel } from './components/day/DayPanel';
 import { WeekStrip } from './components/day/WeekStrip';
@@ -34,6 +37,7 @@ import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
 import { PathView } from './components/path/PathView';
 import type { View } from './components/layout/Navigation';
 import { MobileTabBar, MobileTopBar, Sidebar } from './components/layout/Navigation';
+import { NotificationBell } from './components/layout/NotificationBell';
 import { PageHeader } from './components/layout/PageHeader';
 import { OverdueCard, ProgressCard, WeekCard } from './components/rail/RightRail';
 import { ConfirmProvider, useConfirm } from './components/ui/ConfirmDialog';
@@ -89,6 +93,11 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   const [pendingShift, setPendingShift] = useState<PendingShift | null>(null);
   /** The task playing in focus mode (its id and day in the plan shown). */
   const [focus, setFocus] = useState<{ itemId: string; date: string } | null>(null);
+
+  // The daily check of the branches' YouTube playlists (never in the demo).
+  const syncEnabled = !isDemo && syncTargets(data.camps).length > 0;
+  const { checking: syncChecking } = usePlaylistSync(data.camps, data.playlistSync, today, !isDemo, actions);
+  const notifications = useMemo(() => (isDemo ? [] : syncNotifications(data.camps, data.playlistSync)), [isDemo, data.camps, data.playlistSync]);
 
   // The open camp: the one Kamplar manages, always a real camp. The plan
   // screens show it, or with "Tüm Kamplar" every camp with a plan, each laid
@@ -302,6 +311,37 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
     closeShiftDialog();
     setFocus({ itemId: focusCandidate.item.id, date: focusCandidate.date });
   };
+
+  const acceptNotification = ({ campId, branch, videos }: SyncNotification) => {
+    const target = data.camps.find(c => c.id === campId);
+    if (!target) return;
+    const { carried } = withAppendedVideos(target, branch.id, videos.map(draftFromPending), { completedMap: data.completedMap, today });
+    actions.acceptPlaylistVideos(campId, branch.id);
+    notify({
+      message:
+        `${videos.length} video “${branch.subject}” sonuna eklendi; plan yeniden hesaplandı.` +
+        (carried > 0 ? ` ${carried} görev yarından itibaren sırayla planlandı.` : ''),
+      tone: 'info',
+    });
+  };
+
+  const dismissNotification = ({ branch, videos }: SyncNotification) => {
+    actions.dismissPlaylistVideos(branch.id);
+    notify({ message: `${videos.length} yeni video göz ardı edildi; bir daha sorulmayacak.`, tone: 'info' });
+  };
+
+  const bell = (
+    <NotificationBell
+      notifications={notifications}
+      sync={data.playlistSync}
+      enabled={syncEnabled}
+      checking={syncChecking}
+      today={today}
+      showCamp={data.camps.length > 1}
+      onAccept={acceptNotification}
+      onDismiss={dismissNotification}
+    />
+  );
 
   const handleEditLink = (item: DailyPlanItem) => {
     const campId = campIdOf(item) ?? camp?.id;
@@ -735,6 +775,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         onSelectCamp={selectCamp}
         onSelectAll={selectAllCamps}
         isDemo={isDemo}
+        bell={bell}
       />
       <div className="min-w-0 flex-1">
         <MobileTopBar
@@ -747,6 +788,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
           onSelectCamp={selectCamp}
           onSelectAll={selectAllCamps}
           isDemo={isDemo}
+          bell={bell}
         />
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1240px] px-4 pt-5 pb-28 outline-none sm:px-6 lg:px-10 lg:pt-9 lg:pb-14">
           {(isDemo || notices.length > 0 || (hasLegacy && !legacyDismissed && !isDemo)) && (

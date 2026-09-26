@@ -2,6 +2,7 @@ import type { StudyCamp } from '../types';
 import { DEMO_TEMPLATES, cloneTemplate } from '../data/demoTemplates.ts';
 import type { PlannerData } from './persistence';
 import { addDays, buildCampSchedule } from './engine.ts';
+import { emptyPlaylistSync } from './playlistSync.ts';
 import { defaultSchedule } from './studyCamp.ts';
 
 const DEMO_TEMPLATE_IDS = ['demo-tyt-matematik', 'demo-tyt-fizik', 'demo-tyt-turkce'];
@@ -60,6 +61,7 @@ export function buildDemoData(today: string): PlannerData {
     completedMap,
     completionDates: { since: camp.schedule.startDate, dates },
     focusSessions: [],
+    playlistSync: emptyPlaylistSync(),
     dayNotes: {
       [today]: 'Demo notu: Her konudan sonra 15–20 soru çöz, yanlışlarını deftere yaz.',
     },

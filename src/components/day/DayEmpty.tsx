@@ -114,6 +114,16 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
       />
     );
   }
+  // A day inside the plan that holds nothing: tasks were carried past it (e.g. to start new videos tomorrow).
+  if (!allCamps && firstDate !== null && date > firstDate && lastDate !== null && date < lastDate) {
+    return (
+      <EmptyDay
+        icon={<Coffee className="size-5" aria-hidden="true" />}
+        title="Bu güne görev düşmedi"
+        body="Planın bu günü atlıyor; görevlerin sonraki günlerde devam ediyor."
+      />
+    );
+  }
   if (allCamps && firstDate !== null && date > firstDate && lastDate !== null && date < lastDate) {
     return (
       <EmptyDay

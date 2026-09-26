@@ -1,6 +1,8 @@
 import type { StudyCamp, UserPreferences } from '../types';
 import type { FocusSession } from './focus.ts';
 import { normalizeFocusSessions } from './focus.ts';
+import type { PlaylistSync } from './playlistSync.ts';
+import { emptyPlaylistSync, normalizePlaylistSync } from './playlistSync.ts';
 import {
   STORAGE_KEYS,
   buildSchedule,
@@ -34,6 +36,9 @@ import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } fr
 //   simply have no date.
 // - `yt_focus_sessions` (`{ version, sessions }`) keeps one record per focus
 //   player session (see `src/lib/focus.ts`).
+// - `yt_playlist_sync` (`{ version, lastAttempt, lastFailure, branches }`)
+//   remembers the daily playlist check: what each branch's playlist held and
+//   the new videos waiting in the bell (see `src/lib/playlistSync.ts`).
 // - The older flat keys (`yt_playlists`, `yt_prefs`, `yt_shift_events`,
 //   `yt_shifted_date`) are only read, once, to build the first camp when
 //   `yt_camps` does not exist yet. They are never written or removed here, so
@@ -56,6 +61,7 @@ export const CAMP_KEYS = {
 export const PROGRESS_KEYS = {
   completionDates: 'yt_completed_on',
   focusSessions: 'yt_focus_sessions',
+  playlistSync: 'yt_playlist_sync',
 } as const;
 
 export const CAMPS_VERSION = 1;
@@ -89,6 +95,7 @@ export interface PlannerData {
   completedMap: Record<string, boolean>;
   completionDates: CompletionDates;
   focusSessions: FocusSession[];
+  playlistSync: PlaylistSync;
   dayNotes: Record<string, string>;
 }
 
@@ -118,7 +125,15 @@ export function emptyCompletionDates(since: string = todayKey()): CompletionDate
 }
 
 export function emptyData(): PlannerData {
-  return { camps: [], activeCampId: null, completedMap: {}, completionDates: emptyCompletionDates(), focusSessions: [], dayNotes: {} };
+  return {
+    camps: [],
+    activeCampId: null,
+    completedMap: {},
+    completionDates: emptyCompletionDates(),
+    focusSessions: [],
+    playlistSync: emptyPlaylistSync(),
+    dayNotes: {},
+  };
 }
 
 export function campStore(camps: StudyCamp[]) {
@@ -358,6 +373,15 @@ function loadFromStorage(): LoadResult {
     notices.push(unreadableNotice(PROGRESS_KEYS.focusSessions, keepUnreadable(PROGRESS_KEYS.focusSessions, raw), 'odak oturumları'));
   }
 
+  const sync = readRaw(PROGRESS_KEYS.playlistSync);
+  const playlistSync = sync.status === 'ok' ? normalizePlaylistSync(sync.value) : null;
+  if (playlistSync) {
+    data.playlistSync = playlistSync;
+  } else if (sync.status !== 'missing') {
+    const raw = sync.status === 'unreadable' ? sync.raw : JSON.stringify(sync.value);
+    notices.push(unreadableNotice(PROGRESS_KEYS.playlistSync, keepUnreadable(PROGRESS_KEYS.playlistSync, raw), 'oynatma listesi kontrolleri'));
+  }
+
   const notes = readRaw(UI_KEYS.dayNotes);
   if (notes.status === 'ok') {
     data.dayNotes = normalizeDayNotes(notes.value);
@@ -516,6 +540,7 @@ export function createBackup(data: PlannerData, selectedDate: string) {
     completedMap: data.completedMap,
     completionDates: data.completionDates,
     focusSessions: data.focusSessions,
+    playlistSync: data.playlistSync,
     dayNotes: data.dayNotes,
     selectedDate,
   };
@@ -602,6 +627,7 @@ export function parseBackup(text: string, today: string = todayKey()): BackupPar
     completedMap
   );
   const focusSessions = normalizeFocusSessions(raw.focusSessions);
+  const playlistSync = normalizePlaylistSync(raw.playlistSync) ?? emptyPlaylistSync();
   const dayNotes = normalizeDayNotes(raw.dayNotes);
   const videoIds = new Set(allBranches(camps).flatMap(p => p.videos.map(v => v.id)));
   const completed = Object.keys(completedMap).filter(id => videoIds.has(id)).length;
@@ -610,7 +636,7 @@ export function parseBackup(text: string, today: string = todayKey()): BackupPar
 
   return {
     ok: true,
-    data: { camps, activeCampId, completedMap, completionDates, focusSessions, dayNotes },
+    data: { camps, activeCampId, completedMap, completionDates, focusSessions, playlistSync, dayNotes },
     selectedDate: isDateKey(raw.selectedDate) ? raw.selectedDate : null,
     warnings,
     summary: {

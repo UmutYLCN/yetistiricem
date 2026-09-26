@@ -129,7 +129,7 @@ export function normalizeShiftEvents(raw: unknown): ShiftEvent[] {
     if (isPostponeReason(event.reason)) normalized.reason = event.reason;
     const note = typeof event.note === 'string' ? event.note.trim().slice(0, MAX_SHIFT_NOTE_LENGTH) : '';
     if (note) normalized.note = note;
-    if (event.origin === 'branch-added') normalized.origin = 'branch-added';
+    if (event.origin === 'branch-added' || event.origin === 'videos-added') normalized.origin = event.origin;
     return [normalized];
   });
 }

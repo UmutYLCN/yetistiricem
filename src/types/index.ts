@@ -61,10 +61,12 @@ export interface ShiftEvent {
   /** A short note the user added to the reason. */
   note?: string;
   /**
-   * `branch-added`: made by the app when branches joined a running camp
-   * (`withAddedBranches`), so not a postponement. Missing = the user's own shift.
+   * Made by the app, so not a postponement: `branch-added` when branches
+   * joined a running camp (`withAddedBranches`), `videos-added` when new
+   * playlist videos were appended to a branch (`withAppendedVideos`).
+   * Missing = the user's own shift.
    */
-  origin?: 'branch-added';
+  origin?: 'branch-added' | 'videos-added';
 }
 
 /**

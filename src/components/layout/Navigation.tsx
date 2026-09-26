@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { ComponentType, SVGProps } from 'react';
+import type { ComponentType, ReactNode, SVGProps } from 'react';
 import { CalendarCheck, CalendarRange, ChartColumn, Library, Plus, Route, Settings } from 'lucide-react';
 import type { CampScope } from '../../lib/allCamps';
 import { offersAllCamps } from '../../lib/allCamps';
@@ -38,6 +38,8 @@ interface NavProps {
   onSelectCamp: (campId: string) => void;
   onSelectAll: () => void;
   isDemo: boolean;
+  /** The notification bell, top right of the navigation. */
+  bell?: ReactNode;
 }
 
 export const ALL_CAMPS_LABEL = 'Tüm Kamplar';
@@ -100,7 +102,7 @@ export function CampSwitcher({
   );
 }
 
-export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo }: NavProps) {
+export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell }: NavProps) {
   const campCount = camps.length;
   const item = ({ view: target, label, icon: Icon }: NavItem) => {
     const active = view === target;
@@ -126,17 +128,20 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-line px-4 py-5 lg:flex">
-      <a
-        href={LANDING_PATH}
-        className="-my-1 flex items-center gap-3 rounded-[10px] px-2 py-1 transition-colors hover:bg-sunk/60"
-        aria-label="Yetiştiricem ana sayfası"
-      >
-        <BrandMark />
-        <div className="min-w-0">
-          <p className="font-display text-[15.5px] leading-none text-ink">Yetiştiricem</p>
-          <p className="mt-1 text-[12px] text-ink-3">Çalışma planlayıcı</p>
-        </div>
-      </a>
+      <div className="flex items-center gap-1">
+        <a
+          href={LANDING_PATH}
+          className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-[10px] px-2 py-1 transition-colors hover:bg-sunk/60"
+          aria-label="Yetiştiricem ana sayfası"
+        >
+          <BrandMark />
+          <div className="min-w-0">
+            <p className="font-display text-[15.5px] leading-none text-ink">Yetiştiricem</p>
+            <p className="mt-1 text-[12px] text-ink-3">Çalışma planlayıcı</p>
+          </div>
+        </a>
+        {bell}
+      </div>
 
       {/* With several camps, switch the open one here (the plan screens show it). */}
       {campCount > 1 && (
@@ -168,7 +173,7 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
   );
 }
 
-export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo }: NavProps) {
+export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/80 px-4 backdrop-blur-md lg:hidden">
       <a href={LANDING_PATH} className="-m-1 shrink-0 rounded-[9px] p-1" aria-label="Yetiştiricem ana sayfası">
@@ -188,6 +193,7 @@ export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId,
           <p className="font-display text-[15.5px] text-ink">Yetiştiricem</p>
         )}
       </div>
+      {bell}
       <button
         type="button"
         className="icon-btn shrink-0"

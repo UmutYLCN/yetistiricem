@@ -32,8 +32,11 @@ interface DialogProps {
   /**
    * `side`: a full-height sheet along the right edge on larger screens (a bottom sheet on phones).
    * `full`: covers the whole viewport (the focus player).
+   * `dropdown`: a panel hanging from the control that opened it (a bottom sheet on phones).
    */
-  placement?: 'center' | 'side' | 'full';
+  placement?: 'center' | 'side' | 'full' | 'dropdown';
+  /** `dropdown`: the control the panel hangs from (a click does not focus a button in every browser). */
+  anchor?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -56,6 +59,7 @@ export function Dialog({
   dismissOnBackdrop = true,
   tone = 'default',
   placement = 'center',
+  anchor,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
@@ -74,6 +78,15 @@ export function Dialog({
     if (!dialog) return;
     if (open && !dialog.open) {
       returnTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const opener = anchor?.current ?? returnTo.current;
+      if (placement === 'dropdown' && opener) {
+        // Under the opener: left-aligned when the panel fits to its right, else right-aligned.
+        const rect = opener.getBoundingClientRect();
+        const panel = Math.min(width, window.innerWidth - 32);
+        const left = rect.left + panel + 16 <= window.innerWidth ? rect.left : Math.max(16, rect.right - panel);
+        dialog.style.setProperty('--dd-top', `${Math.round(rect.bottom + 8)}px`);
+        dialog.style.setProperty('--dd-left', `${Math.round(left)}px`);
+      }
       dialog.showModal();
       const target =
         initialFocus?.current ?? dialog.querySelector<HTMLElement>('[data-autofocus]') ?? focusables(dialog)[0] ?? dialog;
@@ -83,7 +96,7 @@ export function Dialog({
       restoreFocus(returnTo.current);
       returnTo.current = null;
     }
-  }, [open, initialFocus]);
+  }, [open, initialFocus, placement, width, anchor]);
 
   // Unmounted while open (the parent dropped it): still hand focus back.
   useEffect(
@@ -121,7 +134,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className={`dialog ${placement === 'side' ? 'dialog-side' : placement === 'full' ? 'dialog-full' : ''}`}
+      className={`dialog ${placement === 'center' ? '' : `dialog-${placement}`}`}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onCancel={event => {

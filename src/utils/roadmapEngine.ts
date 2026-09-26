@@ -315,13 +315,13 @@ function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, 
 
 /**
  * How many of the user's own shifts carried each item forward. Events the app
- * made when branches joined a running camp (`origin: 'branch-added'`) are not
+ * made itself (any `origin`, e.g. when branches joined a running camp) are not
  * postponements and are not counted.
  */
 export function postponeCounts(events: readonly ShiftEvent[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const event of events) {
-    if (event.origin === 'branch-added') continue;
+    if (event.origin) continue;
     for (const id of new Set(event.itemIds)) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   return counts;

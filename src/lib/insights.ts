@@ -215,7 +215,7 @@ export function commitmentScore(sources: readonly InsightSource[], completion: C
     // A postponed task was first due on (or before) the day of its first shift.
     const firstShift = new Map<string, string>();
     for (const event of camp.shiftEvents) {
-      if (event.origin === 'branch-added') continue;
+      if (event.origin) continue;
       for (const id of event.itemIds) {
         const known = firstShift.get(id);
         if (!known || event.date < known) firstShift.set(id, event.date);
@@ -264,7 +264,7 @@ export interface BranchPostpones {
 }
 
 export interface PostponeAnalysis {
-  /** The user's own shifts (app-made `branch-added` events are left out). */
+  /** The user's own shifts (events the app made itself are left out). */
   events: number;
   /** Most frequent first, only reasons that occur. */
   reasons: ReasonShare[];
@@ -294,7 +294,7 @@ export function analyzePostpones(sources: readonly InsightSource[]): PostponeAna
     for (const item of result.unscheduledItems) itemsById.set(item.id, item);
 
     for (const event of camp.shiftEvents) {
-      if (event.origin === 'branch-added') continue;
+      if (event.origin) continue;
       events++;
       const key: ReasonKey = event.reason ?? 'unspecified';
       reasonCounts.set(key, (reasonCounts.get(key) ?? 0) + 1);

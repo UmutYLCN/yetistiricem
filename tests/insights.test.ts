@@ -92,6 +92,7 @@ test('a tick records its day, an untick clears it, and removed videos drop their
     completedMap: {},
     completionDates: { since: '2026-09-21', dates: {} },
     focusSessions: [],
+    playlistSync: { lastAttempt: null, lastFailure: null, branches: {} },
     dayNotes: {},
   };
   const ticked = ops.setCompleted(data, 'mat-1', true, '2026-09-22');
@@ -277,6 +278,7 @@ test('completion dates start on the first load, keep only done videos and travel
     completedMap: { 'mat-1': true },
     completionDates: { since: '2026-09-01', dates: { 'mat-1': '2026-09-21' } },
     focusSessions: [],
+    playlistSync: { lastAttempt: null, lastFailure: null, branches: {} },
     dayNotes: {},
   };
   const restored = parseBackup(JSON.stringify(createBackup(data, '2026-09-21')), '2026-10-01');

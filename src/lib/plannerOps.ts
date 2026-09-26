@@ -1,8 +1,14 @@
 import type { CampSchedule, ShiftEvent, StudyCamp, SubjectPlaylist } from '../types';
+import type { DraftVideo } from '../utils/youtubeParser.ts';
+import type { PlaylistEntry } from '../utils/youtubePlaylist.ts';
+import { videoFromDraft, withVideos } from './camps.ts';
 import { addDays, buildCampSchedule } from './engine.ts';
 import type { FocusSession } from './focus.ts';
 import type { PlannerData } from './persistence.ts';
 import { datesOfCompleted, pruneCompletion } from './persistence.ts';
+import type { PlaylistFailure } from './playlistImport.ts';
+import type { PlaylistSync } from './playlistSync.ts';
+import { diffPlaylist, draftFromPending, pendingOf } from './playlistSync.ts';
 import { withBranchOnWeekdays, withoutBranch } from './studyCamp.ts';
 
 // Pure updates of the planner data. The store hook (`usePlanner`) applies
@@ -61,11 +67,13 @@ export function removeCamp(data: PlannerData, campId: string): PlannerData {
   const camp = data.camps.find(c => c.id === campId);
   const camps = data.camps.filter(c => c.id !== campId);
   const removed = camp ? camp.branches.flatMap(b => b.videos.map(v => v.id)) : [];
-  return withoutRemovedCompletion(data, {
+  const next: PlannerData = {
     ...data,
     camps,
     activeCampId: data.activeCampId === campId ? (camps[0]?.id ?? null) : data.activeCampId,
-  }, removed);
+    playlistSync: withoutBranchSync(data.playlistSync, camp ? camp.branches.map(b => b.id) : []),
+  };
+  return withoutRemovedCompletion(data, next, removed);
 }
 
 /**
@@ -116,9 +124,14 @@ export function addBranches(
   return mapCamp(data, campId, c => withAddedBranches(c, branches, { ...options, completedMap: data.completedMap }).camp);
 }
 
+/** Edits one branch. A new playlist link starts its playlist record over. */
 export function updateBranch(data: PlannerData, campId: string, branch: SubjectPlaylist): PlannerData {
   const before = data.camps.find(c => c.id === campId)?.branches.find(b => b.id === branch.id);
-  const next = mapCamp(data, campId, c => ({ ...c, branches: c.branches.map(b => (b.id === branch.id ? branch : b)) }));
+  const edited = mapCamp(data, campId, c => ({ ...c, branches: c.branches.map(b => (b.id === branch.id ? branch : b)) }));
+  const next =
+    before && before.playlistUrl !== branch.playlistUrl
+      ? { ...edited, playlistSync: withoutBranchSync(data.playlistSync, [branch.id]) }
+      : edited;
   const keptIds = new Set(branch.videos.map(v => v.id));
   const removed = before ? before.videos.filter(v => !keptIds.has(v.id)).map(v => v.id) : [];
   return withoutRemovedCompletion(data, next, removed);
@@ -126,7 +139,7 @@ export function updateBranch(data: PlannerData, campId: string, branch: SubjectP
 
 export function removeBranch(data: PlannerData, campId: string, branchId: string): PlannerData {
   const branch = data.camps.find(c => c.id === campId)?.branches.find(b => b.id === branchId);
-  const next = mapCamp(data, campId, c => ({
+  const next = mapCamp({ ...data, playlistSync: withoutBranchSync(data.playlistSync, [branchId]) }, campId, c => ({
     ...c,
     branches: c.branches.filter(b => b.id !== branchId),
     schedule: withoutBranch(c.schedule, branchId),
@@ -150,4 +163,78 @@ export function addShiftEvents(data: PlannerData, shifts: readonly { campId: str
 
 export function removeShiftEvents(data: PlannerData, shifts: readonly { campId: string; event: ShiftEvent }[]): PlannerData {
   return shifts.reduce((next, { campId, event }) => removeShiftEvent(next, campId, event), data);
+}
+
+// ---------------------------------------------------------------------------
+// Playlist sync (see `src/lib/playlistSync.ts`)
+
+function withoutBranchSync(sync: PlaylistSync, branchIds: readonly string[]): PlaylistSync {
+  if (!branchIds.some(id => id in sync.branches)) return sync;
+  const branches = { ...sync.branches };
+  for (const id of branchIds) delete branches[id];
+  return { ...sync, branches };
+}
+
+/** Stores what a fresh read of one branch's playlist found. */
+export function recordPlaylistCheck(data: PlannerData, campId: string, branchId: string, entries: readonly PlaylistEntry[], today: string): PlannerData {
+  const branch = data.camps.find(c => c.id === campId)?.branches.find(b => b.id === branchId);
+  if (!branch) return data;
+  const record = diffPlaylist(branch, entries, data.playlistSync.branches[branchId], today);
+  return { ...data, playlistSync: { ...data.playlistSync, branches: { ...data.playlistSync.branches, [branchId]: record } } };
+}
+
+/** Ends the day's check; `failure` says why it stopped early, if it did. */
+export function finishPlaylistCheck(data: PlannerData, today: string, failure: Exclude<PlaylistFailure, 'aborted'> | null): PlannerData {
+  return { ...data, playlistSync: { ...data.playlistSync, lastAttempt: today, lastFailure: failure } };
+}
+
+/**
+ * `camp` with `videos` appended to the end of one branch, in order. Like
+ * `withAddedBranches`, new tasks that would land on past days are carried
+ * (with the new ones on today) to tomorrow by one app-made event
+ * (`origin: 'videos-added'`), so none of them starts overdue.
+ */
+export function withAppendedVideos(
+  camp: StudyCamp,
+  branchId: string,
+  drafts: readonly DraftVideo[],
+  options: { completedMap?: Record<string, boolean>; today: string }
+): { camp: StudyCamp; carried: number } {
+  const branch = camp.branches.find(b => b.id === branchId);
+  if (!branch || drafts.length === 0) return { camp, carried: 0 };
+  const start = branch.videos.length;
+  const added = drafts.map((draft, i) => videoFromDraft(draft, branch.id, start + i + 1));
+  const next: StudyCamp = {
+    ...camp,
+    branches: camp.branches.map(b => (b.id === branchId ? withVideos(b, [...b.videos, ...added]) : b)),
+  };
+  const { today, completedMap = {} } = options;
+  const newIds = new Set(added.map(v => v.id));
+  const { plans } = buildCampSchedule(next, { completedMap, today });
+  const untilToday = plans
+    .filter(plan => plan.date <= today)
+    .flatMap(plan => plan.items.filter(item => newIds.has(item.videoId) && !item.completed).map(item => ({ id: item.id, date: plan.date })));
+  if (!untilToday.some(item => item.date < today)) return { camp: next, carried: 0 };
+  const shift: ShiftEvent = { date: today, resumeDate: addDays(today, 1), itemIds: untilToday.map(item => item.id), origin: 'videos-added' };
+  return { camp: { ...next, shiftEvents: [...next.shiftEvents, shift] }, carried: shift.itemIds.length };
+}
+
+/** "Planımın sonuna ekle": the branch's waiting playlist videos join its end and the plan is laid out again. */
+export function acceptPlaylistVideos(data: PlannerData, campId: string, branchId: string, today: string): PlannerData {
+  const branch = data.camps.find(c => c.id === campId)?.branches.find(b => b.id === branchId);
+  if (!branch) return data;
+  const drafts = pendingOf(data.playlistSync, branch).map(draftFromPending);
+  const cleared = dismissPlaylistVideos(data, branchId);
+  if (drafts.length === 0) return cleared;
+  return mapCamp(cleared, campId, c => withAppendedVideos(c, branchId, drafts, { completedMap: data.completedMap, today }).camp);
+}
+
+/** "Göz ardı et": the waiting videos are dropped; they stay seen, so they are not offered again. */
+export function dismissPlaylistVideos(data: PlannerData, branchId: string): PlannerData {
+  const record = data.playlistSync.branches[branchId];
+  if (!record || record.pending.length === 0) return data;
+  return {
+    ...data,
+    playlistSync: { ...data.playlistSync, branches: { ...data.playlistSync.branches, [branchId]: { ...record, pending: [] } } },
+  };
 }
