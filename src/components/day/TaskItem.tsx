@@ -1,8 +1,9 @@
 import { useId } from 'react';
-import { ExternalLink, Link2, Play, TriangleAlert } from 'lucide-react';
+import { ExternalLink, Flame, Link2, Play, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import { linkStateOf } from '../../lib/camps';
 import { formatMinutes } from '../../lib/format';
+import { criticalLabel, isCriticallyPostponed } from '../../lib/postpone';
 import type { CampInfo } from '../../lib/planView';
 import { SubjectDot } from '../ui/Bits';
 
@@ -77,6 +78,12 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact 
             <span className="chip chip-warn" title="Bu video günlük çalışma süresinden uzun; tek başına bir güne yerleştirildi.">
               <TriangleAlert aria-hidden="true" />
               Günlük süreden uzun
+            </span>
+          )}
+          {isCriticallyPostponed(item) && (
+            <span className="chip chip-danger" title="Bu görev defalarca ileri taşındı. Bugün ilk iş olarak ele almayı dene.">
+              <Flame aria-hidden="true" />
+              {criticalLabel(item.postponeCount ?? 0)}
             </span>
           )}
         </p>

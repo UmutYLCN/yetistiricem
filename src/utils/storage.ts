@@ -1,4 +1,4 @@
-import type { UserPreferences } from '../types';
+import type { PostponeReason, UserPreferences } from '../types';
 import type { ShiftEvent } from './roadmapEngine.ts';
 import { isDateKey, normalizeDateKey, todayKey } from './date.ts';
 
@@ -109,13 +109,28 @@ export function normalizeCompletedMap(raw: unknown): Record<string, boolean> {
   return result;
 }
 
+export const POSTPONE_REASONS: readonly PostponeReason[] = ['distraction', 'difficult', 'exhausted', 'emergency', 'low_motivation'];
+
+export const MAX_SHIFT_NOTE_LENGTH = 280;
+
+export function isPostponeReason(value: unknown): value is PostponeReason {
+  return typeof value === 'string' && (POSTPONE_REASONS as readonly string[]).includes(value);
+}
+
+/** Stored shift events; unusable ones are dropped, an unknown reason or origin is left out. */
 export function normalizeShiftEvents(raw: unknown): ShiftEvent[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((event): ShiftEvent[] => {
     if (!isRecord(event) || !isDateKey(event.date) || !isDateKey(event.resumeDate)) return [];
     if (event.resumeDate <= event.date || !Array.isArray(event.itemIds)) return [];
     const itemIds = event.itemIds.filter((id): id is string => typeof id === 'string');
-    return itemIds.length > 0 ? [{ date: event.date, resumeDate: event.resumeDate, itemIds }] : [];
+    if (itemIds.length === 0) return [];
+    const normalized: ShiftEvent = { date: event.date, resumeDate: event.resumeDate, itemIds };
+    if (isPostponeReason(event.reason)) normalized.reason = event.reason;
+    const note = typeof event.note === 'string' ? event.note.trim().slice(0, MAX_SHIFT_NOTE_LENGTH) : '';
+    if (note) normalized.note = note;
+    if (event.origin === 'branch-added') normalized.origin = 'branch-added';
+    return [normalized];
   });
 }
 

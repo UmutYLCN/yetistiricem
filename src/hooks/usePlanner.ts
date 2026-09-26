@@ -5,7 +5,18 @@ import { STORAGE_KEYS } from '../lib/engine';
 import { buildDemoData } from '../lib/demo';
 import * as ops from '../lib/plannerOps';
 import type { Notice, PlannerData } from '../lib/persistence';
-import { CAMP_KEYS, UI_KEYS, campStore, clearAllStorage, emptyData, loadPlannerOnce, writeKey } from '../lib/persistence';
+import type { CompletionDates } from '../lib/persistence';
+import {
+  CAMP_KEYS,
+  PROGRESS_KEYS,
+  UI_KEYS,
+  campStore,
+  clearAllStorage,
+  completionDatesStore,
+  emptyData,
+  loadPlannerOnce,
+  writeKey,
+} from '../lib/persistence';
 
 interface StoreState {
   real: PlannerData;
@@ -29,6 +40,7 @@ function usePersist(key: string, value: unknown, onFail: () => void, serialize: 
 }
 
 const serializeCamps = (camps: unknown) => campStore(camps as StudyCamp[]);
+const serializeCompletionDates = (value: unknown) => completionDatesStore(value as CompletionDates);
 
 /** `startInDemo`: open with the demo preview; the saved data still loads underneath. */
 export function usePlanner(today: string, { startInDemo = false }: { startInDemo?: boolean } = {}) {
@@ -66,6 +78,7 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
   usePersist(CAMP_KEYS.camps, state.real.camps, reportSaveFailure, serializeCamps);
   usePersist(CAMP_KEYS.activeCamp, state.real.activeCampId, reportSaveFailure);
   usePersist(STORAGE_KEYS.completed, state.real.completedMap, reportSaveFailure);
+  usePersist(PROGRESS_KEYS.completionDates, state.real.completionDates, reportSaveFailure, serializeCompletionDates);
   usePersist(UI_KEYS.dayNotes, state.real.dayNotes, reportSaveFailure);
   usePersist(UI_KEYS.selectedDate, state.realSelected, reportSaveFailure);
   usePersist(UI_KEYS.campScope, state.realScope, reportSaveFailure);
@@ -82,7 +95,8 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
       /** A view choice only; the active (managed) camp does not change. */
       setCampScope: (scope: CampScope) => setState(s => (s.demo ? { ...s, demoScope: scope } : { ...s, realScope: scope })),
 
-      setCompleted: (videoId: string, done: boolean) => update(d => ops.setCompleted(d, videoId, done)),
+      /** A tick records today as the day the video was done. */
+      setCompleted: (videoId: string, done: boolean) => update(d => ops.setCompleted(d, videoId, done, today)),
       createCamp: (camp: StudyCamp) => update(d => ops.createCamp(d, camp)),
       setActiveCamp: (campId: string) => update(d => ops.setActiveCamp(d, campId)),
       renameCamp: (campId: string, name: string) => update(d => ops.renameCamp(d, campId, name)),
@@ -112,7 +126,7 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
 
       dismissNotice: (id: string) => setNotices(current => current.filter(n => n.id !== id)),
     }),
-    [update]
+    [update, today]
   );
 
   const isDemo = state.demo !== null;

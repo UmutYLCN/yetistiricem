@@ -49,7 +49,13 @@ function twoCamps(): { data: PlannerData; tyt: StudyCamp; ayt: StudyCamp } {
       { maxSubjectsPerDay: 2 }
     ),
   });
-  const data: PlannerData = { camps: [tyt, ayt], activeCampId: tyt.id, completedMap: { 'mat-1': true, 'geo-1': true }, dayNotes: {} };
+  const data: PlannerData = {
+    camps: [tyt, ayt],
+    activeCampId: tyt.id,
+    completedMap: { 'mat-1': true, 'geo-1': true },
+    completionDates: { since: '2026-09-21', dates: { 'mat-1': '2026-09-21', 'geo-1': '2026-09-21' } },
+    dayNotes: {},
+  };
   return { data, tyt, ayt };
 }
 

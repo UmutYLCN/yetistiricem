@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Check, CircleCheck, ExternalLink, Link2, NotebookPen, Play, TriangleAlert, Undo2 } from 'lucide-react';
+import { Check, CircleCheck, ExternalLink, Flame, Link2, NotebookPen, Play, TriangleAlert, Undo2 } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import { linkStateOf } from '../../lib/camps';
 import type { PathStop, StopState } from '../../lib/dayPath';
 import { formatClock, formatMinutes } from '../../lib/format';
+import { criticalLabel, isCriticallyPostponed } from '../../lib/postpone';
 import type { CampInfo } from '../../lib/planView';
 import { KindBadge, SubjectDot } from '../ui/Bits';
 import { Dialog } from '../ui/Dialog';
@@ -123,6 +124,18 @@ function TaskDetails({
         <Fact label="Durum">
           <span className={STATE_LABEL[state].className}>{STATE_LABEL[state].text}</span>
         </Fact>
+        {item.postponeCount ? (
+          <Fact label="Ertelenme">
+            {isCriticallyPostponed(item) ? (
+              <span className="chip chip-danger">
+                <Flame aria-hidden="true" />
+                {criticalLabel(item.postponeCount)}
+              </span>
+            ) : (
+              <span className="tnum">{item.postponeCount} kez ileri taşındı</span>
+            )}
+          </Fact>
+        ) : null}
         <Fact label={linkState === 'video' ? 'Video süresi' : 'Süre'}>
           <span className="tnum">{length}</span>
         </Fact>

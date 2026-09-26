@@ -1,6 +1,7 @@
 import { CircleCheck, Forward, Gauge, TriangleAlert } from 'lucide-react';
 import type { RoadmapStats, StudyCamp, UserPreferences } from '../../types';
 import type { CampOverview } from '../../lib/allCamps';
+import type { ProgressInsights } from '../../lib/insights';
 import type { ScheduleIssue } from '../../lib/engine';
 import { addDays, assessDeadline, diffDays, formatDateKey } from '../../lib/engine';
 import {
@@ -14,6 +15,10 @@ import {
 import type { CampInfo, PlanIndex, WeekOverview } from '../../lib/planView';
 import { campProgress } from '../../lib/planView';
 import { PageHeader } from '../layout/PageHeader';
+import { CommitmentGauge } from '../progress/CommitmentGauge';
+import { PostponeInsights } from '../progress/PostponeInsights';
+import { StreakCard } from '../progress/StreakCard';
+import { StudyHeatmap } from '../progress/StudyHeatmap';
 import { KindBadge, Meter, SubjectDot } from '../ui/Bits';
 
 /** One camp (its own schedule issues), or "Tüm Kamplar" (each camp's own overview). */
@@ -28,6 +33,8 @@ interface Props {
   camps: Map<string, CampInfo>;
   weeks: WeekOverview[];
   scope: ProgressScope;
+  /** Activity, streak, commitment and postponements of the camps shown. */
+  insights: ProgressInsights;
   onShiftOverdue: () => void;
   onOpenWeek: (monday: string) => void;
   onEditTempo: (campId: string) => void;
@@ -160,7 +167,7 @@ function CampRows({ overviews, today, onEditTempo }: { overviews: CampOverview[]
   );
 }
 
-export function ProgressView({ stats, today, index, camps, weeks, scope, onShiftOverdue, onOpenWeek, onEditTempo }: Props) {
+export function ProgressView({ stats, today, index, camps, weeks, scope, insights, onShiftOverdue, onOpenWeek, onEditTempo }: Props) {
   const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
   const daysLeft = diffDays(today, stats.estimatedFinishDate);
   const thisMonday = startOfWeek(today);
@@ -292,6 +299,15 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, onShift
           />
         ))
       )}
+
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,18.5rem)]">
+        <StudyHeatmap heatmap={insights.heatmap} today={today} undated={insights.undated} since={insights.since} />
+        <StreakCard streak={insights.streak} chain={insights.chain} />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <CommitmentGauge commitment={insights.commitment} />
+        <PostponeInsights analysis={insights.postpones} camps={camps} />
+      </div>
 
       {scope.kind === 'all' && <CampRows overviews={scope.camps} today={today} onEditTempo={onEditTempo} />}
 

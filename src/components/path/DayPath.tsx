@@ -1,10 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, Ref } from 'react';
-import { Check, NotebookPen, Play, Trophy } from 'lucide-react';
+import { Check, Flame, NotebookPen, Play, Trophy } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import type { PathPoint, PathStop, StopState } from '../../lib/dayPath';
 import { bendPath, isWalked, pathGeometry } from '../../lib/dayPath';
 import { formatMinutes } from '../../lib/format';
+import { criticalLabel, isCriticallyPostponed } from '../../lib/postpone';
 
 /** How a stop is labelled: its branch colour, "Branch" (or "Camp · Branch") and whether it has a video to play. */
 export interface StopLook {
@@ -115,6 +116,13 @@ function StopButton({
             <span className={`shrink-0 ${state === 'missed' ? 'text-danger' : 'text-ink-3'}`}>
               · {state === 'missed' ? 'yetişmedi' : formatMinutes(item.durationMinutes)}
             </span>
+            {isCriticallyPostponed(item) && (
+              <span className="tnum inline-flex shrink-0 items-center gap-0.5 text-danger">
+                <Flame className="size-3" aria-hidden="true" />
+                <span aria-hidden="true">{item.postponeCount}</span>
+                <span className="visually-hidden">, {criticalLabel(item.postponeCount ?? 0)}</span>
+              </span>
+            )}
           </span>
           <span className={`path-label-title ${state === 'done' ? 'text-ink-2' : ''}`}>{item.title}</span>
         </span>

@@ -313,12 +313,30 @@ function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, 
   return { plans, unscheduled };
 }
 
-function withCompletion(plans: DailyPlan[], completedMap: Record<string, boolean>, today: string): DailyPlan[] {
+/**
+ * How many of the user's own shifts carried each item forward. Events the app
+ * made when branches joined a running camp (`origin: 'branch-added'`) are not
+ * postponements and are not counted.
+ */
+export function postponeCounts(events: readonly ShiftEvent[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const event of events) {
+    if (event.origin === 'branch-added') continue;
+    for (const id of new Set(event.itemIds)) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/** Decorates items with completion and their postpone count; the layout is untouched. */
+function withCompletion(plans: DailyPlan[], completedMap: Record<string, boolean>, postponed: Map<string, number>, today: string): DailyPlan[] {
   return plans.map(plan =>
     makeDay(
       plan.date,
       kindOfPlan(plan),
-      plan.items.map(item => ({ ...item, completed: completedMap[item.videoId] === true })),
+      plan.items.map(item => {
+        const postponeCount = postponed.get(item.id);
+        return { ...item, completed: completedMap[item.videoId] === true, ...(postponeCount ? { postponeCount } : {}) };
+      }),
       today
     )
   );
@@ -341,10 +359,11 @@ export function buildSchedule(
   const packed = packItems(buildItems(playlists, pref), pref.startDate, rules, today);
 
   let plans = packed.plans;
-  for (const event of normalizeShiftEvents(options.shiftEvents ?? [])) {
+  const events = normalizeShiftEvents(options.shiftEvents ?? []);
+  for (const event of events) {
     plans = applyShift(plans, event, rules, today);
   }
-  plans = withCompletion(plans, options.completedMap ?? {}, today);
+  plans = withCompletion(plans, options.completedMap ?? {}, postponeCounts(events), today);
 
   const capacityMinutes = getDailyCapacityMinutes(pref);
   const issues: ScheduleIssue[] = invalidFields.map(field => ({ kind: 'invalid-preference', field }));

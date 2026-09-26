@@ -26,6 +26,10 @@ import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } fr
 // - `yt_camp_scope` remembers whether the plan screens combine every camp
 //   (`all`, "Tüm Kamplar") or show the active camp (`camp`). Missing = no
 //   choice yet. It never holds a camp id; `yt_active_camp` always does.
+// - `yt_completed_on` (`{ version, since, dates }`) records the day each video
+//   was ticked, from `since` (the first day a version with this key ran) on.
+//   `yt_completed` stays the source of truth for what is done; older ticks
+//   simply have no date.
 // - The older flat keys (`yt_playlists`, `yt_prefs`, `yt_shift_events`,
 //   `yt_shifted_date`) are only read, once, to build the first camp when
 //   `yt_camps` does not exist yet. They are never written or removed here, so
@@ -45,17 +49,39 @@ export const CAMP_KEYS = {
   activeCamp: 'yt_active_camp',
 } as const;
 
-export const CAMPS_VERSION = 1;
+export const PROGRESS_KEYS = {
+  completionDates: 'yt_completed_on',
+} as const;
 
-export const ALL_KEYS = [...Object.values(STORAGE_KEYS), ...Object.values(UI_KEYS), ...Object.values(CAMP_KEYS)];
+export const CAMPS_VERSION = 1;
+export const COMPLETION_DATES_VERSION = 1;
+
+export const ALL_KEYS = [
+  ...Object.values(STORAGE_KEYS),
+  ...Object.values(UI_KEYS),
+  ...Object.values(CAMP_KEYS),
+  ...Object.values(PROGRESS_KEYS),
+];
 
 export const MAX_NOTE_LENGTH = 2000;
+
+/**
+ * The local day each video was ticked, recorded from `since` on. Ticks made
+ * before `since` have no date: they still count as done, but the activity map,
+ * the streak and the commitment score only use what was recorded.
+ */
+export interface CompletionDates {
+  since: string;
+  /** videoId -> date key; only ids that are completed. */
+  dates: Record<string, string>;
+}
 
 export interface PlannerData {
   camps: StudyCamp[];
   /** The camp the screens show; null only when there is no camp. */
   activeCampId: string | null;
   completedMap: Record<string, boolean>;
+  completionDates: CompletionDates;
   dayNotes: Record<string, string>;
 }
 
@@ -80,12 +106,38 @@ export interface LoadResult {
   seedPreferences: UserPreferences | null;
 }
 
+export function emptyCompletionDates(since: string = todayKey()): CompletionDates {
+  return { since, dates: {} };
+}
+
 export function emptyData(): PlannerData {
-  return { camps: [], activeCampId: null, completedMap: {}, dayNotes: {} };
+  return { camps: [], activeCampId: null, completedMap: {}, completionDates: emptyCompletionDates(), dayNotes: {} };
 }
 
 export function campStore(camps: StudyCamp[]) {
   return { version: CAMPS_VERSION, camps };
+}
+
+export function completionDatesStore(value: CompletionDates) {
+  return { version: COMPLETION_DATES_VERSION, since: value.since, dates: value.dates };
+}
+
+/** Keeps only the dates of videos that are still completed. */
+export function datesOfCompleted(value: CompletionDates, completedMap: Record<string, boolean>): CompletionDates {
+  const dates: Record<string, string> = {};
+  for (const [id, date] of Object.entries(value.dates)) if (completedMap[id] === true) dates[id] = date;
+  return { since: value.since, dates };
+}
+
+/** A stored `yt_completed_on` value, or null when it is not one this version understands. */
+export function normalizeCompletionDates(raw: unknown, fallbackSince: string): CompletionDates | null {
+  if (!isRecord(raw)) return null;
+  if (typeof raw.version === 'number' && raw.version > COMPLETION_DATES_VERSION) return null;
+  const dates: Record<string, string> = {};
+  if (isRecord(raw.dates)) {
+    for (const [id, date] of Object.entries(raw.dates)) if (isDateKey(date)) dates[id] = date;
+  }
+  return { since: isDateKey(raw.since) ? raw.since : fallbackSince, dates };
 }
 
 /** The camp the screens show: the active one, else the first. */
@@ -263,6 +315,22 @@ function loadFromStorage(): LoadResult {
     notices.push(unreadableNotice(STORAGE_KEYS.completed, keepUnreadable(STORAGE_KEYS.completed, completed.raw), 'tamamlananlar'));
   }
 
+  // Missing: dates are recorded from today on. Save that day now, so it stays
+  // the start of the record even before the first tick.
+  const completion = readRaw(PROGRESS_KEYS.completionDates);
+  const completionDates = completion.status === 'ok' ? normalizeCompletionDates(completion.value, today) : null;
+  if (completionDates) {
+    data.completionDates = datesOfCompleted(completionDates, data.completedMap);
+  } else {
+    data.completionDates = emptyCompletionDates(today);
+    if (completion.status === 'missing') {
+      writeKey(PROGRESS_KEYS.completionDates, completionDatesStore(data.completionDates));
+    } else {
+      const raw = completion.status === 'unreadable' ? completion.raw : JSON.stringify(completion.value);
+      notices.push(unreadableNotice(PROGRESS_KEYS.completionDates, keepUnreadable(PROGRESS_KEYS.completionDates, raw), 'tamamlanma tarihleri'));
+    }
+  }
+
   const notes = readRaw(UI_KEYS.dayNotes);
   if (notes.status === 'ok') {
     data.dayNotes = normalizeDayNotes(notes.value);
@@ -383,7 +451,7 @@ export function clearAllStorage() {
   }
 }
 
-/** Drops completion marks of videos that are no longer in any camp. */
+/** Drops completion marks of videos that are no longer in any camp (their dates go with `datesOfCompleted`). */
 export function pruneCompletion(completed: Record<string, boolean>, removedIds: Iterable<string>, camps: readonly StudyCamp[]) {
   const stillUsed = new Set(allBranches(camps).flatMap(b => b.videos.map(v => v.id)));
   const next = { ...completed };
@@ -419,6 +487,7 @@ export function createBackup(data: PlannerData, selectedDate: string) {
     camps: data.camps,
     activeCampId: data.activeCampId,
     completedMap: data.completedMap,
+    completionDates: data.completionDates,
     dayNotes: data.dayNotes,
     selectedDate,
   };
@@ -499,6 +568,11 @@ export function parseBackup(text: string, today: string = todayKey()): BackupPar
   }
 
   const completedMap = normalizeCompletedMap(raw.completedMap);
+  // Backups from before completion dates: the record starts on the restore day.
+  const completionDates = datesOfCompleted(
+    normalizeCompletionDates(raw.completionDates, today) ?? emptyCompletionDates(today),
+    completedMap
+  );
   const dayNotes = normalizeDayNotes(raw.dayNotes);
   const videoIds = new Set(allBranches(camps).flatMap(p => p.videos.map(v => v.id)));
   const completed = Object.keys(completedMap).filter(id => videoIds.has(id)).length;
@@ -507,7 +581,7 @@ export function parseBackup(text: string, today: string = todayKey()): BackupPar
 
   return {
     ok: true,
-    data: { camps, activeCampId, completedMap, dayNotes },
+    data: { camps, activeCampId, completedMap, completionDates, dayNotes },
     selectedDate: isDateKey(raw.selectedDate) ? raw.selectedDate : null,
     warnings,
     summary: {

@@ -40,6 +40,18 @@ export function formatPercent(value: number): string {
   return `%${Math.round(value)}`;
 }
 
+// Possessive suffix of a number as it is read aloud ("yüzde elli beş" -> 'i),
+// by its last word: the ones digit, else the tens, else "yüz" / "sıfır".
+const ONES_SUFFIX = ['', 'i', 'si', 'ü', 'ü', 'i', 'sı', 'si', 'i', 'u'];
+const TENS_SUFFIX = ['', 'u', 'si', 'u', 'ı', 'si', 'ı', 'i', 'i', 'ı'];
+
+/** "%55'i", "%50'si", "%40'ı", "%100'ü": a share, as in "Ertelemelerinin %55'i ...". */
+export function formatPercentShare(value: number): string {
+  const n = Math.max(0, Math.round(value));
+  const suffix = n === 0 ? 'ı' : n % 10 ? ONES_SUFFIX[n % 10] : n % 100 ? TENS_SUFFIX[(n % 100) / 10] : 'ü';
+  return `%${n}'${suffix}`;
+}
+
 export function formatSpeed(speed: number): string {
   return `${speed.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}x`;
 }

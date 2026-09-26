@@ -1,7 +1,7 @@
 import type { CampSchedule, ShiftEvent, StudyCamp, SubjectPlaylist } from '../types';
 import { addDays, buildCampSchedule } from './engine.ts';
 import type { PlannerData } from './persistence.ts';
-import { pruneCompletion } from './persistence.ts';
+import { datesOfCompleted, pruneCompletion } from './persistence.ts';
 import { withBranchOnWeekdays, withoutBranch } from './studyCamp.ts';
 
 // Pure updates of the planner data. The store hook (`usePlanner`) applies
@@ -12,11 +12,25 @@ function mapCamp(data: PlannerData, campId: string, fn: (camp: StudyCamp) => Stu
   return { ...data, camps: data.camps.map(c => (c.id === campId ? fn(c) : c)) };
 }
 
-export function setCompleted(data: PlannerData, videoId: string, done: boolean): PlannerData {
+/** Ticks or unticks a video. A tick records `today` as its day; ticking an already done video keeps its first day. */
+export function setCompleted(data: PlannerData, videoId: string, done: boolean, today: string): PlannerData {
+  if (done === (data.completedMap[videoId] === true)) return data;
   const completedMap = { ...data.completedMap };
-  if (done) completedMap[videoId] = true;
-  else delete completedMap[videoId];
-  return { ...data, completedMap };
+  const dates = { ...data.completionDates.dates };
+  if (done) {
+    completedMap[videoId] = true;
+    dates[videoId] = today;
+  } else {
+    delete completedMap[videoId];
+    delete dates[videoId];
+  }
+  return { ...data, completedMap, completionDates: { ...data.completionDates, dates } };
+}
+
+/** `next` with the completion marks (and their dates) of `removed` videos dropped when no camp uses them any more. */
+function withoutRemovedCompletion(data: PlannerData, next: PlannerData, removed: readonly string[]): PlannerData {
+  const completedMap = pruneCompletion(data.completedMap, removed, next.camps);
+  return { ...next, completedMap, completionDates: datesOfCompleted(data.completionDates, completedMap) };
 }
 
 /** Adds a new camp and makes it the active one. */
@@ -41,12 +55,11 @@ export function removeCamp(data: PlannerData, campId: string): PlannerData {
   const camp = data.camps.find(c => c.id === campId);
   const camps = data.camps.filter(c => c.id !== campId);
   const removed = camp ? camp.branches.flatMap(b => b.videos.map(v => v.id)) : [];
-  return {
+  return withoutRemovedCompletion(data, {
     ...data,
     camps,
     activeCampId: data.activeCampId === campId ? (camps[0]?.id ?? null) : data.activeCampId,
-    completedMap: pruneCompletion(data.completedMap, removed, camps),
-  };
+  }, removed);
 }
 
 /**
@@ -56,6 +69,7 @@ export function removeCamp(data: PlannerData, campId: string): PlannerData {
  * from the camp's start date, so new tasks that would land on past days are
  * carried forward from tomorrow with one stored shift event. The new tasks
  * on today go with them, so each new branch still starts at its first video.
+ * That event is marked `origin: 'branch-added'`: it is not a postponement.
  * `carried` counts the carried tasks.
  */
 export function withAddedBranches(
@@ -76,7 +90,12 @@ export function withAddedBranches(
     .filter(plan => plan.date <= today)
     .flatMap(plan => plan.items.filter(item => newIds.has(item.playlistId) && !item.completed).map(item => ({ id: item.id, date: plan.date })));
   if (!newUntilToday.some(item => item.date < today)) return { camp: next, carried: 0 };
-  const shift: ShiftEvent = { date: today, resumeDate: addDays(today, 1), itemIds: newUntilToday.map(item => item.id) };
+  const shift: ShiftEvent = {
+    date: today,
+    resumeDate: addDays(today, 1),
+    itemIds: newUntilToday.map(item => item.id),
+    origin: 'branch-added',
+  };
   return { camp: { ...next, shiftEvents: [...next.shiftEvents, shift] }, carried: shift.itemIds.length };
 }
 
@@ -96,7 +115,7 @@ export function updateBranch(data: PlannerData, campId: string, branch: SubjectP
   const next = mapCamp(data, campId, c => ({ ...c, branches: c.branches.map(b => (b.id === branch.id ? branch : b)) }));
   const keptIds = new Set(branch.videos.map(v => v.id));
   const removed = before ? before.videos.filter(v => !keptIds.has(v.id)).map(v => v.id) : [];
-  return { ...next, completedMap: pruneCompletion(data.completedMap, removed, next.camps) };
+  return withoutRemovedCompletion(data, next, removed);
 }
 
 export function removeBranch(data: PlannerData, campId: string, branchId: string): PlannerData {
@@ -107,7 +126,7 @@ export function removeBranch(data: PlannerData, campId: string, branchId: string
     schedule: withoutBranch(c.schedule, branchId),
   }));
   const removed = branch ? branch.videos.map(v => v.id) : [];
-  return { ...next, completedMap: pruneCompletion(data.completedMap, removed, next.camps) };
+  return withoutRemovedCompletion(data, next, removed);
 }
 
 export function addShiftEvent(data: PlannerData, campId: string, event: ShiftEvent): PlannerData {

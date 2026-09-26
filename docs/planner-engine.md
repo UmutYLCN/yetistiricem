@@ -51,11 +51,12 @@ const event = createShiftEvent(date, plans, today);   // null => nothing to shif
 if (event) actions.addShiftEvent(camp.id, event);      // stored in camp.shiftEvents
 ```
 
-- `ShiftEvent = { date, resumeDate, itemIds }`. It is created once, when the user clicks, and freezes which items were still incomplete on or before `date`.
+- `ShiftEvent = { date, resumeDate, itemIds, reason?, note?, origin? }`. It is created once, when the user clicks, and freezes which items were still incomplete on or before `date`. The click opens `PostponeReasonDialog`: the event is stored only once the student picks a `reason` (`distraction` | `difficult` | `exhausted` | `emergency` | `low_motivation`, with an optional `note`) or skips the question; the dialog then shows that reason's micro intervention (`src/lib/postpone.ts`). Older events have no reason (shown as "Belirtilmedi").
 - On replay, those items plus everything from `resumeDate` onwards are replanned from `resumeDate`, with the same capacity, branch, weekday-plan and rest-day rules. Every other item before `resumeDate` stays on its day, including completed items and today's tasks.
 - `resumeDate = max(date, today) + 1`: shifting a past day leaves today's plan alone and restarts tomorrow.
 - Events replay in stored order, so repeated shifts compose. Ticking or unticking any task afterwards moves nothing. No task is ever dropped. If no study day exists to move to, the event is a no-op.
-- Branches added to a running camp would land partly on past days; `withAddedBranches` (`src/lib/plannerOps.ts`) carries those new tasks, plus the new ones on today, to tomorrow with one stored event, so each new branch starts in order.
+- Branches added to a running camp would land partly on past days; `withAddedBranches` (`src/lib/plannerOps.ts`) carries those new tasks, plus the new ones on today, to tomorrow with one stored event, so each new branch starts in order. That event has `origin: 'branch-added'`: it is not a postponement.
+- Each item carries `postponeCount` (missing = 0): how many of the user's own events (not `branch-added`) name it. It is derived on every build (`postponeCounts`), never stored, so undoing a shift lowers it. From 3 on, the task is flagged "Kritik" (`isCriticallyPostponed`).
 - The legacy `yt_shifted_date` is converted once, during migration, into an event of the migrated camp.
 
 `shiftDayPlan(date, plans, preferences?, today?)` is the pure, non-persistent version (automatic mode only). It moves incomplete items on or before `date` to `date + 1` onwards and never mutates its input. Without `preferences` it assumes default rest days and a capacity of at least the busiest planned day. It reads current completion, so a derived-state shift re-run on every render **will** move tasks when they are ticked. Use the event flow for anything persisted.
@@ -66,6 +67,15 @@ A study day whose tasks were all carried stays in the list with `items: []`; ren
 
 `calculateStats(plans, totalVideos, countCompletedVideos(camp.branches, completedMap))`. Remaining minutes, days and finish date come from the plans' incomplete items. `countCompletedVideos` ignores completed ids of removed branches. The completed count is clamped to `[0, totalVideos]`.
 
+## Progress insights (`src/lib/insights.ts`, `tests/insights.test.ts`)
+
+Read-only, over the camps a screen shows (`progressInsights`). Ticking a task records the day (`setCompleted(data, videoId, done, today)` → `completionDates.dates[videoId]`); ticks from before `completionDates.since` have no day and are never placed on a guessed one.
+
+- **Heatmap**: the last 13 weeks, a level per day from its ticked videos' minutes relative to the busiest day.
+- **Streak**: consecutive days with a tick. A study day (some camp's plan is not rest, mock or free) without a tick breaks it; other days neither break nor extend it, and today only counts once ticked.
+- **Commitment score**: `(done on or before the planned day, never postponed) / (tasks due) * 100`. A task is due once its day passed, it was done, or it was postponed; today's open tasks are not measured. Only tasks first due from `max(completionDates.since, camp.createdAt)` on are measured.
+- **Postponements**: reason shares per user shift event and carried task counts per branch (`subject`), with the branch that stands out (≥ 3 and ≥ 1.5× the other branches' average).
+
 ## Storage
 
-`src/lib/persistence.ts` owns loading, migration and backups (`yt_camps`, `yt_active_camp`, shared `yt_completed` / `yt_day_notes` / `yt_selected_date`, and the view choice `yt_camp_scope`, which backups leave out). The older flat keys are read once to build the first camp and never written; see [`camp-creation-wizard-notes.md`](camp-creation-wizard-notes.md).
+`src/lib/persistence.ts` owns loading, migration and backups (`yt_camps`, `yt_active_camp`, shared `yt_completed` / `yt_completed_on` / `yt_day_notes` / `yt_selected_date`, and the view choice `yt_camp_scope`, which backups leave out). `yt_completed_on` (`{ version, since, dates }`) is written with `since` = today on the first load that lacks it; backups without it restore with `since` = the restore day. The older flat keys are read once to build the first camp and never written; see [`camp-creation-wizard-notes.md`](camp-creation-wizard-notes.md).

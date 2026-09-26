@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { CalendarCheck, Eye, Info, LogOut, TriangleAlert, X } from 'lucide-react';
-import type { CampSchedule, DailyPlanItem, StudyCamp, SubjectPlaylist } from './types';
+import type { CampSchedule, DailyPlanItem, PostponeReason, StudyCamp, SubjectPlaylist } from './types';
 import { usePlanner } from './hooks/usePlanner';
 import { useToday } from './hooks/useToday';
 import type { CampShift, ScopedCamp } from './lib/allCamps';
@@ -16,6 +16,7 @@ import {
 } from './lib/allCamps';
 import { addDays, buildCampSchedule, calculateStats, countCompletedVideos } from './lib/engine';
 import { classifyCamp, isLegacyKind } from './lib/camps';
+import { progressInsights } from './lib/insights';
 import { formatDayTitle, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
 import { indexCamps, indexPlans, summarizeDay, weeksOverview } from './lib/planView';
@@ -25,6 +26,8 @@ import { DayPanel } from './components/day/DayPanel';
 import { WeekStrip } from './components/day/WeekStrip';
 import { AddVideosDialog, EditBranchDialog, EditVideoDialog } from './components/camps/CampDialogs';
 import { CampTempoDialog, RenameCampDialog } from './components/camps/CampProgramDialogs';
+import type { PostponeChoice, PostponeRequest } from './components/camps/PostponeReasonDialog';
+import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
 import { PathView } from './components/path/PathView';
 import type { View } from './components/layout/Navigation';
 import { MobileTabBar, MobileTopBar, Sidebar } from './components/layout/Navigation';
@@ -53,6 +56,13 @@ type OpenDialog =
   | { kind: 'rename'; campId: string }
   | null;
 
+/** A shift waiting in the reason dialog; `saved` once it is stored (the dialog then shows its tip). */
+interface PendingShift {
+  shifts: CampShift[];
+  request: PostponeRequest;
+  saved: { shifts: CampShift[]; reason: PostponeReason } | null;
+}
+
 function celebrate() {
   void confetti({
     particleCount: 70,
@@ -73,6 +83,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [legacyDismissed, setLegacyDismissed] = useState(false);
+  const [pendingShift, setPendingShift] = useState<PendingShift | null>(null);
 
   // The open camp: the one Kamplar manages, always a real camp. The plan
   // screens show it, or with "Tüm Kamplar" every camp with a plan, each laid
@@ -119,6 +130,10 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
     const campPrefs = allPlan.camps.map(s => s.result.preferences);
     return weekKeys(selectedDate).map(date => summarizeAllCampsDay(date, allPlan.index, campPrefs));
   }, [allPlan, selectedDate, campIndex, prefs]);
+  const insights = useMemo(
+    () => (view === 'progress' ? progressInsights(shownCamps, data.completedMap, data.completionDates, today) : null),
+    [view, shownCamps, data.completedMap, data.completionDates, today]
+  );
   const hasCamp = camp !== null;
   const hasBranches = branches.length > 0;
   // "Tüm Kamplar" with no camp holding a video yet.
@@ -182,7 +197,8 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   };
 
   // Each camp shown gets its own event, made from its own plan, so a camp
-  // only ever carries (and replans) its own tasks.
+  // only ever carries (and replans) its own tasks. The events are stored once
+  // the student names a reason (or skips the question) in the dialog.
   const handleShift = (date: string) => {
     if (shownCamps.length === 0) return;
     const shifts: CampShift[] = shiftEventsByCamp(
@@ -194,7 +210,23 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
       notify({ message: 'Taşınacak tamamlanmamış görev yok.', tone: 'info' });
       return;
     }
-    actions.addShiftEvents(shifts);
+    const carried = new Set(shifts.flatMap(s => s.event.itemIds));
+    const shortest = index.items
+      .filter(s => carried.has(s.item.id) && s.item.durationMinutes > 0)
+      .reduce<DailyPlanItem | null>((best, s) => (!best || s.item.durationMinutes < best.durationMinutes ? s.item : best), null);
+    setPendingShift({
+      shifts,
+      request: {
+        count: shifts.reduce((acc, s) => acc + s.event.itemIds.length, 0),
+        resumeDate: shifts[0].event.resumeDate,
+        campCount: shifts.length,
+        shortest: shortest ? { title: shortest.title, minutes: shortest.durationMinutes } : undefined,
+      },
+      saved: null,
+    });
+  };
+
+  const announceShift = (shifts: CampShift[]) => {
     const count = shifts.reduce((acc, s) => acc + s.event.itemIds.length, 0);
     notify({
       message:
@@ -203,6 +235,32 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
       actionLabel: 'Geri al',
       onAction: () => actions.removeShiftEvents(shifts),
     });
+  };
+
+  const confirmShift = ({ reason, note }: PostponeChoice) => {
+    if (!pendingShift) return;
+    const shifts = pendingShift.shifts.map(({ campId, event }) => ({
+      campId,
+      event: { ...event, ...(reason ? { reason } : {}), ...(reason && note ? { note } : {}) },
+    }));
+    actions.addShiftEvents(shifts);
+    if (reason) {
+      setPendingShift({ ...pendingShift, saved: { shifts, reason } });
+    } else {
+      setPendingShift(null);
+      announceShift(shifts);
+    }
+  };
+
+  const closeShiftDialog = () => {
+    if (pendingShift?.saved) announceShift(pendingShift.saved.shifts);
+    setPendingShift(null);
+  };
+
+  const undoShift = () => {
+    if (pendingShift?.saved) actions.removeShiftEvents(pendingShift.saved.shifts);
+    setPendingShift(null);
+    notify({ message: 'Taşıma geri alındı; görevler yerinde.', tone: 'info' });
   };
 
   const handleEditLink = (item: DailyPlanItem) => {
@@ -536,7 +594,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   } else if (view === 'progress') {
     content = noCampPlans ? (
       noPlansInCamps('İlerleme')
-    ) : (allPlan || hasBranches) && camp ? (
+    ) : (allPlan || hasBranches) && camp && insights ? (
       <div className="mx-auto max-w-[920px]">
         <ProgressView
           stats={stats}
@@ -549,6 +607,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
               ? { kind: 'all', camps: allPlan.camps.map(s => campOverview(s, data.completedMap)) }
               : { kind: 'camp', camp, prefs, issues: schedule.issues }
           }
+          insights={insights}
           onShiftOverdue={() => handleShift(addDays(today, -1))}
           onOpenWeek={monday => {
             selectDate(monday <= today && today <= addDays(monday, 6) ? today : monday);
@@ -746,6 +805,13 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
           onClose={closeDialog}
         />
       )}
+      <PostponeReasonDialog
+        request={pendingShift?.request ?? null}
+        savedReason={pendingShift?.saved?.reason ?? null}
+        onConfirm={confirmShift}
+        onUndo={undoShift}
+        onClose={closeShiftDialog}
+      />
       {dialog?.kind === 'editBranch' && dialogBranch && (
         <EditBranchDialog key={dialogBranch.id} camp={dialogBranch} onSave={saveBranch} onClose={closeDialog} />
       )}

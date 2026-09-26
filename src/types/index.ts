@@ -45,6 +45,9 @@ export interface UserPreferences {
   startDate: string; // local YYYY-MM-DD
 }
 
+/** Why the user carried tasks forward, picked when they shift (see `src/lib/postpone.ts`). */
+export type PostponeReason = 'distraction' | 'difficult' | 'exhausted' | 'emergency' | 'low_motivation';
+
 /** Durable record of one "shift incomplete tasks" action. */
 export interface ShiftEvent {
   /** Items still incomplete on or before this day were carried forward. */
@@ -53,6 +56,15 @@ export interface ShiftEvent {
   resumeDate: string;
   /** `DailyPlanItem.id`s carried forward, frozen when the shift was made. */
   itemIds: string[];
+  /** The reason the user picked. Missing on older events and when they skipped the question. */
+  reason?: PostponeReason;
+  /** A short note the user added to the reason. */
+  note?: string;
+  /**
+   * `branch-added`: made by the app when branches joined a running camp
+   * (`withAddedBranches`), so not a postponement. Missing = the user's own shift.
+   */
+  origin?: 'branch-added';
 }
 
 /**
@@ -100,6 +112,8 @@ export interface DailyPlanItem {
   effectiveMinutes: number;
   completed: boolean;
   videoUrl: string;
+  /** How many of the user's own shifts carried this task forward; missing = never. */
+  postponeCount?: number;
 }
 
 export interface DailyPlan {

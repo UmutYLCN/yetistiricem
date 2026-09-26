@@ -26,7 +26,13 @@ function twoCamps(): { data: PlannerData; a: StudyCamp; b: StudyCamp } {
       { maxSubjectsPerDay: 2 }
     ),
   });
-  const data: PlannerData = { camps: [a, b], activeCampId: a.id, completedMap: { 'mat-1': true, 'geo-1': true }, dayNotes: {} };
+  const data: PlannerData = {
+    camps: [a, b],
+    activeCampId: a.id,
+    completedMap: { 'mat-1': true, 'geo-1': true },
+    completionDates: { since: '2026-09-21', dates: { 'mat-1': '2026-09-21', 'geo-1': '2026-09-21' } },
+    dayNotes: {},
+  };
   return { data, a, b };
 }
 
@@ -160,7 +166,11 @@ test('a running camp carries new tasks off past days so each new branch starts i
 
   assert.deepEqual(after, preview, 'the wizard previews exactly what is saved');
   assert.equal(after.shiftEvents.length, 1);
-  assert.deepEqual({ ...after.shiftEvents[0], itemIds: [] }, { date: today, resumeDate: '2026-10-02', itemIds: [] });
+  assert.deepEqual(
+    { ...after.shiftEvents[0], itemIds: [] },
+    { date: today, resumeDate: '2026-10-02', itemIds: [], origin: 'branch-added' },
+    'marked as made by the app, not a postponement'
+  );
   assert.equal(after.shiftEvents[0].itemIds.length, carried);
   assert.ok(carried > 0);
 
