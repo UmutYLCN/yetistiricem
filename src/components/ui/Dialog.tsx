@@ -29,8 +29,11 @@ interface DialogProps {
   /** Close when the backdrop is clicked. Off for forms, so a stray click keeps the input. */
   dismissOnBackdrop?: boolean;
   tone?: 'default' | 'danger';
-  /** `side`: a full-height sheet along the right edge on larger screens (a bottom sheet on phones). */
-  placement?: 'center' | 'side';
+  /**
+   * `side`: a full-height sheet along the right edge on larger screens (a bottom sheet on phones).
+   * `full`: covers the whole viewport (the focus player).
+   */
+  placement?: 'center' | 'side' | 'full';
 }
 
 /**
@@ -118,7 +121,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className={`dialog ${placement === 'side' ? 'dialog-side' : ''}`}
+      className={`dialog ${placement === 'side' ? 'dialog-side' : placement === 'full' ? 'dialog-full' : ''}`}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onCancel={event => {

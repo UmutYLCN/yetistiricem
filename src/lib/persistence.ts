@@ -1,4 +1,6 @@
 import type { StudyCamp, UserPreferences } from '../types';
+import type { FocusSession } from './focus.ts';
+import { normalizeFocusSessions } from './focus.ts';
 import {
   STORAGE_KEYS,
   buildSchedule,
@@ -30,6 +32,8 @@ import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } fr
 //   was ticked, from `since` (the first day a version with this key ran) on.
 //   `yt_completed` stays the source of truth for what is done; older ticks
 //   simply have no date.
+// - `yt_focus_sessions` (`{ version, sessions }`) keeps one record per focus
+//   player session (see `src/lib/focus.ts`).
 // - The older flat keys (`yt_playlists`, `yt_prefs`, `yt_shift_events`,
 //   `yt_shifted_date`) are only read, once, to build the first camp when
 //   `yt_camps` does not exist yet. They are never written or removed here, so
@@ -51,10 +55,12 @@ export const CAMP_KEYS = {
 
 export const PROGRESS_KEYS = {
   completionDates: 'yt_completed_on',
+  focusSessions: 'yt_focus_sessions',
 } as const;
 
 export const CAMPS_VERSION = 1;
 export const COMPLETION_DATES_VERSION = 1;
+export const FOCUS_SESSIONS_VERSION = 1;
 
 export const ALL_KEYS = [
   ...Object.values(STORAGE_KEYS),
@@ -82,6 +88,7 @@ export interface PlannerData {
   activeCampId: string | null;
   completedMap: Record<string, boolean>;
   completionDates: CompletionDates;
+  focusSessions: FocusSession[];
   dayNotes: Record<string, string>;
 }
 
@@ -111,7 +118,7 @@ export function emptyCompletionDates(since: string = todayKey()): CompletionDate
 }
 
 export function emptyData(): PlannerData {
-  return { camps: [], activeCampId: null, completedMap: {}, completionDates: emptyCompletionDates(), dayNotes: {} };
+  return { camps: [], activeCampId: null, completedMap: {}, completionDates: emptyCompletionDates(), focusSessions: [], dayNotes: {} };
 }
 
 export function campStore(camps: StudyCamp[]) {
@@ -120,6 +127,17 @@ export function campStore(camps: StudyCamp[]) {
 
 export function completionDatesStore(value: CompletionDates) {
   return { version: COMPLETION_DATES_VERSION, since: value.since, dates: value.dates };
+}
+
+export function focusSessionsStore(sessions: FocusSession[]) {
+  return { version: FOCUS_SESSIONS_VERSION, sessions };
+}
+
+/** A stored `yt_focus_sessions` value, or null when it is not one this version understands. */
+export function readFocusSessions(raw: unknown): FocusSession[] | null {
+  if (!isRecord(raw) || !Array.isArray(raw.sessions)) return null;
+  if (typeof raw.version === 'number' && raw.version > FOCUS_SESSIONS_VERSION) return null;
+  return normalizeFocusSessions(raw.sessions);
 }
 
 /** Keeps only the dates of videos that are still completed. */
@@ -331,6 +349,15 @@ function loadFromStorage(): LoadResult {
     }
   }
 
+  const focus = readRaw(PROGRESS_KEYS.focusSessions);
+  const focusSessions = focus.status === 'ok' ? readFocusSessions(focus.value) : null;
+  if (focusSessions) {
+    data.focusSessions = focusSessions;
+  } else if (focus.status !== 'missing') {
+    const raw = focus.status === 'unreadable' ? focus.raw : JSON.stringify(focus.value);
+    notices.push(unreadableNotice(PROGRESS_KEYS.focusSessions, keepUnreadable(PROGRESS_KEYS.focusSessions, raw), 'odak oturumları'));
+  }
+
   const notes = readRaw(UI_KEYS.dayNotes);
   if (notes.status === 'ok') {
     data.dayNotes = normalizeDayNotes(notes.value);
@@ -488,6 +515,7 @@ export function createBackup(data: PlannerData, selectedDate: string) {
     activeCampId: data.activeCampId,
     completedMap: data.completedMap,
     completionDates: data.completionDates,
+    focusSessions: data.focusSessions,
     dayNotes: data.dayNotes,
     selectedDate,
   };
@@ -573,6 +601,7 @@ export function parseBackup(text: string, today: string = todayKey()): BackupPar
     normalizeCompletionDates(raw.completionDates, today) ?? emptyCompletionDates(today),
     completedMap
   );
+  const focusSessions = normalizeFocusSessions(raw.focusSessions);
   const dayNotes = normalizeDayNotes(raw.dayNotes);
   const videoIds = new Set(allBranches(camps).flatMap(p => p.videos.map(v => v.id)));
   const completed = Object.keys(completedMap).filter(id => videoIds.has(id)).length;
@@ -581,7 +610,7 @@ export function parseBackup(text: string, today: string = todayKey()): BackupPar
 
   return {
     ok: true,
-    data: { camps, activeCampId, completedMap, completionDates, dayNotes },
+    data: { camps, activeCampId, completedMap, completionDates, focusSessions, dayNotes },
     selectedDate: isDateKey(raw.selectedDate) ? raw.selectedDate : null,
     warnings,
     summary: {

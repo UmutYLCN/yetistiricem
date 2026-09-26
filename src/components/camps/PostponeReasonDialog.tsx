@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Check, Forward, Lightbulb, Undo2 } from 'lucide-react';
+import { Check, Forward, Lightbulb, Play, Undo2 } from 'lucide-react';
 import type { PostponeReason } from '../../types';
 import { MAX_SHIFT_NOTE_LENGTH, POSTPONE_REASONS } from '../../lib/engine';
 import { formatLongDate, formatMinutes } from '../../lib/format';
@@ -35,6 +35,8 @@ interface Props {
   onUndo: () => void;
   /** Before saving: nothing is shifted. After: the tip is done. */
   onClose: () => void;
+  /** Opens focus mode on the next task with a video; missing when there is none. */
+  onStartFocus?: () => void;
 }
 
 /**
@@ -42,7 +44,7 @@ interface Props {
  * the tasks were left (or skips the question), the shift is stored with that
  * reason, and a small, concrete next step for that reason is suggested.
  */
-export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, onClose }: Props) {
+export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, onClose, onStartFocus }: Props) {
   const [reason, setReason] = useState<PostponeReason | null>(null);
   const [note, setNote] = useState('');
   const doneRef = useRef<HTMLButtonElement>(null);
@@ -107,6 +109,12 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
               {tip.title}
             </h3>
             <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">{tip.body}</p>
+            {savedReason === 'distraction' && onStartFocus && (
+              <button type="button" className="btn btn-primary btn-sm mt-3" onClick={onStartFocus}>
+                <Play aria-hidden="true" />
+                Odak modunu aç
+              </button>
+            )}
             {savedReason === 'exhausted' && request?.shortest && (
               <p className="mt-3 rounded-[10px] bg-sunk px-3 py-2 text-[13.5px] text-ink-2">
                 En kısa görevin: <span className="font-semibold break-words text-ink">{request.shortest.title}</span>

@@ -32,6 +32,8 @@ interface Props {
   onShift: (date: string) => void;
   onShiftOverdue: () => void;
   onEditLink: (item: DailyPlanItem) => void;
+  /** Plays the task in focus mode (tasks with a video only). */
+  onFocus?: (item: DailyPlanItem) => void;
   onAddBranches: () => void;
   /** "Tüm Kamplar": the camps on screen; each stop then names its camp. */
   campLabels?: Map<string, CampLabel>;
@@ -55,6 +57,7 @@ export function PathView({
   onShift,
   onShiftOverdue,
   onEditLink,
+  onFocus,
   onAddBranches,
   campLabels,
 }: Props) {
@@ -186,6 +189,13 @@ export function PathView({
         oversized={openStop ? oversizedIds.has(openStop.item.id) : false}
         onToggle={onToggle}
         onEditLink={onEditLink}
+        onFocus={
+          onFocus &&
+          (item => {
+            setOpenId(null);
+            onFocus(item);
+          })
+        }
         onClose={() => setOpenId(null)}
       />
     </div>

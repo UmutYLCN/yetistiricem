@@ -5,6 +5,7 @@ import { STORAGE_KEYS } from '../lib/engine';
 import { buildDemoData } from '../lib/demo';
 import * as ops from '../lib/plannerOps';
 import type { Notice, PlannerData } from '../lib/persistence';
+import type { FocusSession } from '../lib/focus';
 import type { CompletionDates } from '../lib/persistence';
 import {
   CAMP_KEYS,
@@ -14,6 +15,7 @@ import {
   clearAllStorage,
   completionDatesStore,
   emptyData,
+  focusSessionsStore,
   loadPlannerOnce,
   writeKey,
 } from '../lib/persistence';
@@ -41,6 +43,7 @@ function usePersist(key: string, value: unknown, onFail: () => void, serialize: 
 
 const serializeCamps = (camps: unknown) => campStore(camps as StudyCamp[]);
 const serializeCompletionDates = (value: unknown) => completionDatesStore(value as CompletionDates);
+const serializeFocusSessions = (value: unknown) => focusSessionsStore(value as FocusSession[]);
 
 /** `startInDemo`: open with the demo preview; the saved data still loads underneath. */
 export function usePlanner(today: string, { startInDemo = false }: { startInDemo?: boolean } = {}) {
@@ -79,6 +82,7 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
   usePersist(CAMP_KEYS.activeCamp, state.real.activeCampId, reportSaveFailure);
   usePersist(STORAGE_KEYS.completed, state.real.completedMap, reportSaveFailure);
   usePersist(PROGRESS_KEYS.completionDates, state.real.completionDates, reportSaveFailure, serializeCompletionDates);
+  usePersist(PROGRESS_KEYS.focusSessions, state.real.focusSessions, reportSaveFailure, serializeFocusSessions);
   usePersist(UI_KEYS.dayNotes, state.real.dayNotes, reportSaveFailure);
   usePersist(UI_KEYS.selectedDate, state.realSelected, reportSaveFailure);
   usePersist(UI_KEYS.campScope, state.realScope, reportSaveFailure);
@@ -97,6 +101,7 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
 
       /** A tick records today as the day the video was done. */
       setCompleted: (videoId: string, done: boolean) => update(d => ops.setCompleted(d, videoId, done, today)),
+      addFocusSession: (session: FocusSession) => update(d => ops.addFocusSession(d, session)),
       createCamp: (camp: StudyCamp) => update(d => ops.createCamp(d, camp)),
       setActiveCamp: (campId: string) => update(d => ops.setActiveCamp(d, campId)),
       renameCamp: (campId: string, name: string) => update(d => ops.renameCamp(d, campId, name)),

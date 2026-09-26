@@ -13,6 +13,8 @@ interface Props {
   oversized: boolean;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onEditLink?: (item: DailyPlanItem) => void;
+  /** Plays the video in focus mode; without it "İzle" opens YouTube. */
+  onFocus?: (item: DailyPlanItem) => void;
   compact?: boolean;
   /** Extra context shown before the title, e.g. the day in "next up" lists. */
   showCamp?: boolean;
@@ -20,7 +22,7 @@ interface Props {
   campName?: string;
 }
 
-export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact = false, showCamp = true, campName }: Props) {
+export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus, compact = false, showCamp = true, campName }: Props) {
   const checkId = useId();
   const metaId = useId();
   const color = camp?.color.solid ?? 'var(--color-ink-3)';
@@ -89,7 +91,19 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact 
         </p>
       </div>
       <div className="shrink-0 self-center">
-        {linkState === 'video' && (
+        {linkState === 'video' && onFocus && (
+          <button
+            type="button"
+            className={`btn btn-secondary btn-sm ${compact ? 'px-2.5' : ''}`}
+            onClick={() => onFocus(item)}
+            aria-label={`${item.title} videosunu odak modunda izle`}
+            aria-haspopup="dialog"
+          >
+            <Play aria-hidden="true" />
+            <span className={compact ? 'max-sm:hidden' : ''}>Odaklan</span>
+          </button>
+        )}
+        {linkState === 'video' && !onFocus && (
           <a
             href={item.videoUrl}
             target="_blank"

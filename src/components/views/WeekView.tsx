@@ -25,6 +25,8 @@ interface Props {
   onOpenDay: (date: string) => void;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  /** Plays the task in focus mode (tasks with a video only). */
+  onFocus?: (item: DailyPlanItem) => void;
   /** "Tüm Kamplar": the camps on screen; each task then names its camp. */
   campLabels?: Map<string, CampLabel>;
 }
@@ -71,10 +73,12 @@ interface DayCardProps {
   onOpenDay: (date: string) => void;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  /** Plays the task in focus mode (tasks with a video only). */
+  onFocus?: (item: DailyPlanItem) => void;
   campLabels?: Map<string, CampLabel>;
 }
 
-function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggle, onEditLink, campLabels }: DayCardProps) {
+function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggle, onEditLink, onFocus, campLabels }: DayCardProps) {
   const isToday = day.date === today;
   // Combined view: every camp's tasks, camp by camp, each knowing its camp.
   const items: (DailyPlanItem | CampPlanItem)[] = day.camps ? day.camps.flatMap(part => part.items) : (day.plan?.items ?? []);
@@ -155,6 +159,7 @@ function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggl
               oversized={oversizedIds.has(item.id)}
               onToggle={onToggle}
               onEditLink={onEditLink}
+              onFocus={onFocus}
               compact
               campName={'campId' in item ? campLabels?.get(item.campId)?.name : undefined}
             />
@@ -192,6 +197,7 @@ export function WeekView({
   onOpenDay,
   onToggle,
   onEditLink,
+  onFocus,
   campLabels,
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -344,6 +350,7 @@ export function WeekView({
             onOpenDay={onOpenDay}
             onToggle={onToggle}
             onEditLink={onEditLink}
+            onFocus={onFocus}
             campLabels={campLabels}
           />
         ))}

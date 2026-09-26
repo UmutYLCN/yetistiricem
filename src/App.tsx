@@ -16,6 +16,7 @@ import {
 } from './lib/allCamps';
 import { addDays, buildCampSchedule, calculateStats, countCompletedVideos } from './lib/engine';
 import { classifyCamp, isLegacyKind } from './lib/camps';
+import { focusTotals, focusableVideoId, nextFocusItem } from './lib/focus';
 import { progressInsights } from './lib/insights';
 import { formatDayTitle, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
@@ -27,6 +28,8 @@ import { WeekStrip } from './components/day/WeekStrip';
 import { AddVideosDialog, EditBranchDialog, EditVideoDialog } from './components/camps/CampDialogs';
 import { CampTempoDialog, RenameCampDialog } from './components/camps/CampProgramDialogs';
 import type { PostponeChoice, PostponeRequest } from './components/camps/PostponeReasonDialog';
+import type { FocusTarget } from './components/focus/FocusModal';
+import { FocusModal } from './components/focus/FocusModal';
 import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
 import { PathView } from './components/path/PathView';
 import type { View } from './components/layout/Navigation';
@@ -84,6 +87,8 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [legacyDismissed, setLegacyDismissed] = useState(false);
   const [pendingShift, setPendingShift] = useState<PendingShift | null>(null);
+  /** The task playing in focus mode (its id and day in the plan shown). */
+  const [focus, setFocus] = useState<{ itemId: string; date: string } | null>(null);
 
   // The open camp: the one Kamplar manages, always a real camp. The plan
   // screens show it, or with "Tüm Kamplar" every camp with a plan, each laid
@@ -140,6 +145,28 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   const noCampPlans = allPlan !== null && allPlan.camps.length === 0;
   const hasLegacy = allBranches(data.camps).some(b => isLegacyKind(classifyCamp(b)));
   const campOptions = useMemo(() => data.camps.map(c => ({ id: c.id, name: c.name })), [data.camps]);
+
+  // Focus mode reads the task from the plan shown, so it always has the current completion.
+  const canFocus = (item: DailyPlanItem) => focusableVideoId(item, camps.get(item.playlistId)?.kind ?? 'manual') !== null;
+  const focusEntry = focus ? index.items.find(s => s.item.id === focus.itemId && s.date === focus.date) : undefined;
+  const focusTarget: FocusTarget | null = (() => {
+    if (!focusEntry) return null;
+    const { item, date } = focusEntry;
+    const info = camps.get(item.playlistId);
+    const videoId = focusableVideoId(item, info?.kind ?? 'manual');
+    if (!videoId) return null;
+    const campId = campIdOf(item) ?? camp?.id;
+    const owner = data.camps.find(c => c.id === campId);
+    return {
+      item,
+      date,
+      videoId,
+      info,
+      campName: campId ? campLabels?.get(campId)?.name : undefined,
+      speed: owner?.schedule.playbackSpeed ?? 1,
+    };
+  })();
+  const nextFocus = focusEntry ? nextFocusItem(index.items, { id: focusEntry.item.id, date: focusEntry.date }, canFocus) : null;
 
   // --- actions -----------------------------------------------------------
 
@@ -261,6 +288,19 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
     if (pendingShift?.saved) actions.removeShiftEvents(pendingShift.saved.shifts);
     setPendingShift(null);
     notify({ message: 'Taşıma geri alındı; görevler yerinde.', tone: 'info' });
+  };
+
+  const openFocus = (item: DailyPlanItem) => {
+    const entry = index.items.find(s => s.item.id === item.id);
+    if (entry) setFocus({ itemId: entry.item.id, date: entry.date });
+  };
+
+  // From the "distraction" tip: the first open task with a video, from today on.
+  const focusCandidate = index.items.find(s => s.date >= today && !s.item.completed && canFocus(s.item));
+  const startFocusFromTip = () => {
+    if (!focusCandidate) return;
+    closeShiftDialog();
+    setFocus({ itemId: focusCandidate.item.id, date: focusCandidate.date });
   };
 
   const handleEditLink = (item: DailyPlanItem) => {
@@ -526,6 +566,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
             onToggle={handleToggle}
             onShift={handleShift}
             onEditLink={handleEditLink}
+            onFocus={openFocus}
             onAddBranches={openAddBranches}
             campLabels={campLabels}
           />
@@ -564,6 +605,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         onShift={handleShift}
         onShiftOverdue={() => handleShift(addDays(today, -1))}
         onEditLink={handleEditLink}
+        onFocus={openFocus}
         onAddBranches={openAddBranches}
         campLabels={campLabels}
       />
@@ -585,6 +627,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
           onOpenDay={openDay}
           onToggle={handleToggle}
           onEditLink={handleEditLink}
+          onFocus={openFocus}
           campLabels={campLabels}
         />
       </div>
@@ -811,6 +854,18 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         onConfirm={confirmShift}
         onUndo={undoShift}
         onClose={closeShiftDialog}
+        onStartFocus={focusCandidate ? startFocusFromTip : undefined}
+      />
+      <FocusModal
+        target={focusTarget}
+        next={nextFocus?.item ?? null}
+        pastSeconds={focusTarget ? focusTotals(data.focusSessions, focusTarget.item.videoId).seconds : 0}
+        today={today}
+        onComplete={item => actions.setCompleted(item.videoId, true)}
+        onUndoComplete={item => actions.setCompleted(item.videoId, false)}
+        onSession={actions.addFocusSession}
+        onNext={() => nextFocus && setFocus({ itemId: nextFocus.item.id, date: nextFocus.date })}
+        onClose={() => setFocus(null)}
       />
       {dialog?.kind === 'editBranch' && dialogBranch && (
         <EditBranchDialog key={dialogBranch.id} camp={dialogBranch} onSave={saveBranch} onClose={closeDialog} />

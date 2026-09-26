@@ -65,7 +65,7 @@ export function microTipFor(reason: PostponeReason): MicroTip {
     case 'distraction':
       return {
         title: 'Dikkat kalkanı',
-        body: 'Telefonu başka bir odaya koy, 20 dakikalık bir sayaç kur ve yalnızca tek bir videoya odaklan. Kısa ama kesintisiz bir blok, dağınık bir saatten verimlidir.',
+        body: 'Telefonu başka bir odaya koyup 20 dakikalık bir Odak Modu bloğunu denemek ister misin? Video, YouTube’un önerileri olmadan açılır; kısa ama kesintisiz bir blok, dağınık bir saatten verimlidir.',
       };
     case 'exhausted':
       return {

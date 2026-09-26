@@ -59,6 +59,7 @@ export function buildDemoData(today: string): PlannerData {
     activeCampId: camp.id,
     completedMap,
     completionDates: { since: camp.schedule.startDate, dates },
+    focusSessions: [],
     dayNotes: {
       [today]: 'Demo notu: Her konudan sonra 15–20 soru çöz, yanlışlarını deftere yaz.',
     },

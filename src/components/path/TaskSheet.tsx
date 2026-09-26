@@ -22,6 +22,8 @@ interface Props {
   oversized: boolean;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  /** Plays the task in focus mode (tasks with a video only). */
+  onFocus?: (item: DailyPlanItem) => void;
   onClose: () => void;
 }
 
@@ -48,7 +50,8 @@ function TaskDetails({
   campName,
   oversized,
   onEditLink,
-}: Pick<Props, 'info' | 'campName' | 'oversized' | 'onEditLink'> & { stop: PathStop }) {
+  onFocus,
+}: Pick<Props, 'info' | 'campName' | 'oversized' | 'onEditLink' | 'onFocus'> & { stop: PathStop }) {
   const { item, state } = stop;
   const [brokenThumbnail, setBrokenThumbnail] = useState(false);
   const video = info?.camp.videos.find(v => v.id === item.videoId);
@@ -86,15 +89,21 @@ function TaskDetails({
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
+        {linkState === 'video' && onFocus && (
+          <button type="button" className="btn btn-secondary flex-1" onClick={() => onFocus(item)} aria-haspopup="dialog">
+            <Play aria-hidden="true" />
+            Odak modunda izle
+          </button>
+        )}
         {linkState === 'video' && (
           <a
             href={item.videoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-secondary flex-1"
+            className={`btn ${onFocus ? 'btn-ghost' : 'btn-secondary flex-1'}`}
             aria-label={`${item.title} videosunu YouTube’da izle (yeni sekme)`}
           >
-            <Play aria-hidden="true" />
+            {!onFocus && <Play aria-hidden="true" />}
             YouTube’da izle
             <ExternalLink className="text-ink-3" aria-hidden="true" />
           </a>
@@ -180,7 +189,7 @@ function TaskDetails({
  * One stop of the day's path, opened from the path: the task, where to watch
  * it and, at the bottom, "İzledim" to tick it off.
  */
-export function TaskSheet({ stop, index, total, info, campName, oversized, onToggle, onEditLink, onClose }: Props) {
+export function TaskSheet({ stop, index, total, info, campName, oversized, onToggle, onEditLink, onFocus, onClose }: Props) {
   const item = stop?.item;
   const color = info?.color.solid ?? 'var(--color-ink-3)';
   return (
@@ -232,7 +241,15 @@ export function TaskSheet({ stop, index, total, info, campName, oversized, onTog
       }
     >
       {stop && (
-        <TaskDetails key={stop.item.id} stop={stop} info={info} campName={campName} oversized={oversized} onEditLink={onEditLink} />
+        <TaskDetails
+          key={stop.item.id}
+          stop={stop}
+          info={info}
+          campName={campName}
+          oversized={oversized}
+          onEditLink={onEditLink}
+          onFocus={onFocus}
+        />
       )}
     </Dialog>
   );

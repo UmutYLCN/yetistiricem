@@ -31,6 +31,7 @@ function twoCamps(): { data: PlannerData; a: StudyCamp; b: StudyCamp } {
     activeCampId: a.id,
     completedMap: { 'mat-1': true, 'geo-1': true },
     completionDates: { since: '2026-09-21', dates: { 'mat-1': '2026-09-21', 'geo-1': '2026-09-21' } },
+    focusSessions: [],
     dayNotes: {},
   };
   return { data, a, b };

@@ -91,6 +91,7 @@ test('a tick records its day, an untick clears it, and removed videos drop their
     activeCampId: c.id,
     completedMap: {},
     completionDates: { since: '2026-09-21', dates: {} },
+    focusSessions: [],
     dayNotes: {},
   };
   const ticked = ops.setCompleted(data, 'mat-1', true, '2026-09-22');
@@ -275,6 +276,7 @@ test('completion dates start on the first load, keep only done videos and travel
     activeCampId: c.id,
     completedMap: { 'mat-1': true },
     completionDates: { since: '2026-09-01', dates: { 'mat-1': '2026-09-21' } },
+    focusSessions: [],
     dayNotes: {},
   };
   const restored = parseBackup(JSON.stringify(createBackup(data, '2026-09-21')), '2026-10-01');

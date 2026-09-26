@@ -1666,6 +1666,183 @@
       radial-gradient(70% 60% at 0% 0%, color-mix(in srgb, var(--color-accent) 11%, transparent), transparent 70%),
       var(--color-card);
   }
+
+  /* Focus mode ------------------------------------------------------------------------------ */
+  .dialog-full[open] {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  .dialog-full .dialog-panel,
+  .dialog-full .dialog-panel-tall {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+    background:
+      radial-gradient(60% 40% at 50% 0%, color-mix(in srgb, var(--color-forest) 6%, transparent), transparent 70%),
+      var(--color-paper);
+  }
+  .dialog-full .dialog-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .focus-stage {
+    width: 100%;
+    /* The whole 16:9 frame fits under the header and above the footer. */
+    max-width: min(1100px, calc((100dvh - 290px) * 16 / 9));
+    min-width: min(100%, 320px);
+    margin-inline: auto;
+  }
+  .focus-frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #000;
+    box-shadow: 0 0 0 1px var(--color-line), 0 30px 80px -30px rgb(0 0 0 / 0.9);
+  }
+  .focus-player,
+  .focus-player iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .focus-cover {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    background: var(--color-card);
+  }
+  .focus-cover-paused {
+    bottom: 52px;
+    background: color-mix(in srgb, var(--color-paper) 88%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .focus-cover-done {
+    background:
+      radial-gradient(55% 55% at 50% 40%, color-mix(in srgb, var(--color-forest) 16%, transparent), transparent 70%),
+      var(--color-card);
+    animation: pop-in 220ms ease-out both;
+  }
+  .focus-resume {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-on-fill);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
+    transition: transform 120ms ease;
+  }
+  .focus-resume:hover {
+    transform: scale(1.06);
+  }
+  .focus-resume svg {
+    width: 26px;
+    height: 26px;
+    translate: 2px 0;
+  }
+  .focus-done-mark {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    background: var(--color-forest);
+    color: var(--color-on-fill);
+    box-shadow: 0 0 0 8px var(--color-forest-soft), 0 0 40px color-mix(in srgb, var(--color-forest) 45%, transparent);
+  }
+  .focus-done-mark svg {
+    width: 30px;
+    height: 30px;
+  }
+  .focus-done-mark,
+  .focus-resume {
+    flex-shrink: 0;
+  }
+  @media (max-width: 639px) {
+    .focus-cover {
+      padding: 12px;
+    }
+    .focus-done-mark {
+      width: 42px;
+      height: 42px;
+      box-shadow: 0 0 0 5px var(--color-forest-soft);
+    }
+    .focus-done-mark svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+  .focus-meter {
+    height: 3px;
+    margin-top: 12px;
+    border-radius: 999px;
+    background: var(--color-sunk);
+    overflow: hidden;
+  }
+  .focus-meter > span {
+    display: block;
+    height: 100%;
+    background: var(--color-forest);
+    transition: width 500ms linear;
+  }
+  .focus-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .focus-stats > div {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    background: var(--color-card);
+  }
+  .focus-stats dt {
+    font-size: 11.5px;
+    color: var(--color-ink-3);
+  }
+  .focus-stats dd {
+    margin-top: 2px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media (max-width: 639px) {
+    .focus-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .focus-frame {
+      border-radius: 12px;
+    }
+  }
+  .focus-next {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-forest) 60%, transparent), 0 0 28px color-mix(in srgb, var(--color-forest) 45%, transparent);
+    animation: focus-glow 1.8s ease-in-out infinite;
+  }
+  .focus-confetti {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
 }
 
 @keyframes shimmer {
@@ -1771,6 +1948,16 @@
   }
   50% {
     transform: translateY(-4px);
+  }
+}
+
+@keyframes focus-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-forest) 60%, transparent), 0 0 18px color-mix(in srgb, var(--color-forest) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-forest) 80%, transparent), 0 0 36px color-mix(in srgb, var(--color-forest) 55%, transparent);
   }
 }
 

@@ -24,6 +24,8 @@ interface Props {
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onShift: (date: string) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  /** Plays the task in focus mode (tasks with a video only). */
+  onFocus?: (item: DailyPlanItem) => void;
   onAddBranches: () => void;
   /**
    * "Tüm Kamplar": the camps on screen. The day is then listed camp by camp
@@ -40,6 +42,7 @@ function CampSection({
   oversizedIds,
   onToggle,
   onEditLink,
+  onFocus,
 }: {
   part: CampDaySummary;
   label: CampLabel | undefined;
@@ -47,6 +50,8 @@ function CampSection({
   oversizedIds: Set<string>;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   onEditLink: (item: DailyPlanItem) => void;
+  /** Plays the task in focus mode (tasks with a video only). */
+  onFocus?: (item: DailyPlanItem) => void;
 }) {
   const name = label?.name ?? 'Kamp';
   const headingId = `day-camp-${part.campId}`;
@@ -74,6 +79,7 @@ function CampSection({
             oversized={oversizedIds.has(item.id)}
             onToggle={onToggle}
             onEditLink={onEditLink}
+            onFocus={onFocus}
             campName={name}
           />
         ))}
@@ -94,6 +100,7 @@ export function DayPanel({
   onToggle,
   onShift,
   onEditLink,
+  onFocus,
   onAddBranches,
   campLabels,
 }: Props) {
@@ -124,6 +131,7 @@ export function DayPanel({
                 oversizedIds={oversizedIds}
                 onToggle={onToggle}
                 onEditLink={onEditLink}
+                onFocus={onFocus}
               />
             ))}
         </div>
@@ -145,6 +153,7 @@ export function DayPanel({
             oversized={oversizedIds.has(item.id)}
             onToggle={onToggle}
             onEditLink={onEditLink}
+            onFocus={onFocus}
           />
         ))}
       </ul>

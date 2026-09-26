@@ -1,5 +1,6 @@
 import type { CampSchedule, ShiftEvent, StudyCamp, SubjectPlaylist } from '../types';
 import { addDays, buildCampSchedule } from './engine.ts';
+import type { FocusSession } from './focus.ts';
 import type { PlannerData } from './persistence.ts';
 import { datesOfCompleted, pruneCompletion } from './persistence.ts';
 import { withBranchOnWeekdays, withoutBranch } from './studyCamp.ts';
@@ -25,6 +26,11 @@ export function setCompleted(data: PlannerData, videoId: string, done: boolean, 
     delete dates[videoId];
   }
   return { ...data, completedMap, completionDates: { ...data.completionDates, dates } };
+}
+
+/** Keeps what one focus player session did. */
+export function addFocusSession(data: PlannerData, session: FocusSession): PlannerData {
+  return { ...data, focusSessions: [...data.focusSessions, session] };
 }
 
 /** `next` with the completion marks (and their dates) of `removed` videos dropped when no camp uses them any more. */
