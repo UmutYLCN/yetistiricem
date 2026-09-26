@@ -46,6 +46,26 @@ export function takeImportRequest(): string | null {
   return payload;
 }
 
+const VIEW_PARAM = 'view';
+const DISCOVER_VIEW = 'kesfet';
+
+/**
+ * `/app?view=kesfet`: open on Keşfet (where sign-in links bring the student
+ * back). Removed from the address bar like the other flags; a sign-in answer
+ * in the hash stays for the auth client to read.
+ */
+export function takeDiscoverRequest(): boolean {
+  const url = new URL(window.location.href);
+  if (url.searchParams.get(VIEW_PARAM) !== DISCOVER_VIEW) return false;
+  dropParam(url, VIEW_PARAM);
+  return true;
+}
+
+/** Where sign-in (magic link, Google) returns: the planner on Keşfet. */
+export function discoverReturnUrl(origin: string = window.location.origin): string {
+  return `${origin}${APP_PATH}?${VIEW_PARAM}=${DISCOVER_VIEW}`;
+}
+
 /** The link that opens the planner and offers the shared camp. */
 export function campImportUrl(payload: string, origin: string = window.location.origin): string {
   return `${origin}${APP_PATH}?${IMPORT_PARAM}=${payload}`;

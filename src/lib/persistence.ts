@@ -68,11 +68,15 @@ export const CAMPS_VERSION = 1;
 export const COMPLETION_DATES_VERSION = 1;
 export const FOCUS_SESSIONS_VERSION = 1;
 
+/** The Keşfet sign-in session (written by supabase-js, see `src/lib/catalogApi.ts`). */
+export const AUTH_KEY = 'yt_auth';
+
 export const ALL_KEYS = [
   ...Object.values(STORAGE_KEYS),
   ...Object.values(UI_KEYS),
   ...Object.values(CAMP_KEYS),
   ...Object.values(PROGRESS_KEYS),
+  AUTH_KEY,
 ];
 
 export const MAX_NOTE_LENGTH = 2000;

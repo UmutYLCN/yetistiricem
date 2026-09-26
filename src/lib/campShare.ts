@@ -163,7 +163,7 @@ const bytesStream = (bytes: Uint8Array) => new Blob([new Uint8Array(bytes)]).str
 
 /** The share payload of a camp (`z.` + base64url of the deflated JSON). */
 export async function encodeCampShare(shared: SharedCamp): Promise<string> {
-  const json = JSON.stringify({ app: SHARE_APP, type: SHARE_TYPE, version: SHARE_VERSION, camp: shared });
+  const json = JSON.stringify(shareDocument(shared));
   const deflated = await readAll(bytesStream(new TextEncoder().encode(json)).pipeThrough(new CompressionStream('deflate-raw')), Infinity);
   return `z.${toBase64Url(deflated ?? new Uint8Array())}`;
 }
@@ -282,6 +282,16 @@ export async function decodeCampShare(payload: string): Promise<ShareDecode> {
   } catch {
     return { ok: false, error: UNREADABLE };
   }
+  return readShareDocument(raw);
+}
+
+/** The share document (`{ app, type, version, camp }`), from a link or from the Keşfet catalog. */
+export function shareDocument(shared: SharedCamp) {
+  return { app: SHARE_APP, type: SHARE_TYPE, version: SHARE_VERSION, camp: shared };
+}
+
+/** Checks a parsed share document; any broken part refuses it. */
+export function readShareDocument(raw: unknown): ShareDecode {
   if (!isRecord(raw) || raw.app !== SHARE_APP || raw.type !== SHARE_TYPE) {
     return { ok: false, error: 'Bu bağlantı bir Yetiştiricem kampı içermiyor.' };
   }

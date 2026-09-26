@@ -1,8 +1,8 @@
 # Camp share links
 
-Code: `src/lib/campShare.ts` (format, validation, camp creation), `src/lib/routes.ts` (`takeImportRequest`, `campImportUrl`), `src/components/camps/ShareCampDialog.tsx` and `ImportCampDialog.tsx`. Behaviour is pinned by `tests/campShare.test.ts`.
+Code: `src/lib/campShare.ts` (format, validation, camp creation), `src/lib/routes.ts` (`takeImportRequest`, `campImportUrl`), `src/components/camps/ImportCampDialog.tsx`. Behaviour is pinned by `tests/campShare.test.ts`.
 
-A link `https://<host>/app?import=<payload>` opens the planner and asks "Yeni kampı içe aktarmak istiyor musun?". On "İçe aktar" the camp is added as a new camp that starts today; nothing else changes. The parameter leaves the address bar as soon as the page opens, so a reload never asks again. Kamplar → "Paylaş" builds such a link for any camp. The same format is meant for a future community catalog and for tools (e.g. an MCP server) that build links for the student.
+A link `https://<host>/app?import=<payload>` opens the planner and asks "Yeni kampı içe aktarmak istiyor musun?". On "İçe aktar" the camp is added as a new camp that starts today; nothing else changes. The parameter leaves the address bar as soon as the page opens, so a reload never asks again. The app itself shares camps through [Keşfet](kesfet.md), which stores this same document; links are for tools (e.g. an MCP server) that build a camp for the student.
 
 ## Payload
 

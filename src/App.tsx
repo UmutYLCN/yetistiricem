@@ -35,7 +35,13 @@ import { CampTempoDialog, RenameCampDialog } from './components/camps/CampProgra
 import type { PostponeChoice, PostponeRequest } from './components/camps/PostponeReasonDialog';
 import type { ImportOffer } from './components/camps/ImportCampDialog';
 import { ImportCampDialog } from './components/camps/ImportCampDialog';
-import { ShareCampDialog } from './components/camps/ShareCampDialog';
+import { PublishCampDialog } from './components/camps/PublishCampDialog';
+import { RenameDialog, SignInDialog } from './components/discover/AccountDialogs';
+import { CampDetail } from './components/discover/CampDetail';
+import { DiscoverView } from './components/views/DiscoverView';
+import { useCatalogAccount } from './hooks/useCatalogAccount';
+import type { CatalogEntry } from './lib/catalog';
+import { unpublishCamp } from './lib/catalogApi';
 import type { FocusTarget } from './components/focus/FocusModal';
 import { FocusModal } from './components/focus/FocusModal';
 import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
@@ -66,7 +72,7 @@ type OpenDialog =
   /** Adds branches to this existing camp (fixed when the wizard opens). */
   | { kind: 'addBranches'; campId: string }
   | { kind: 'rename'; campId: string }
-  | { kind: 'share'; campId: string }
+  | { kind: 'publish'; campId: string }
   | null;
 
 /** A shift waiting in the reason dialog; `saved` once it is stored (the dialog then shows its tip). */
@@ -87,18 +93,31 @@ function celebrate() {
   });
 }
 
-function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importPayload: string | null }) {
+interface PlannerProps {
+  startInDemo: boolean;
+  importPayload: string | null;
+  /** Open on Keşfet (a sign-in link brought the student back). */
+  openDiscover: boolean;
+}
+
+function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
   const today = useToday();
   const { data, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
   const notify = useToast();
   const confirm = useConfirm();
-  const [view, setView] = useState<View>('today');
+  const [view, setView] = useState<View>(openDiscover ? 'discover' : 'today');
   const [wizardOpen, setWizardOpen] = useState(false);
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [legacyDismissed, setLegacyDismissed] = useState(false);
   const [pendingShift, setPendingShift] = useState<PendingShift | null>(null);
   /** The task playing in focus mode (its id and day in the plan shown). */
   const [focus, setFocus] = useState<{ itemId: string; date: string } | null>(null);
+  // Keşfet: the account loads when Keşfet or the publish dialog is first used.
+  const account = useCatalogAccount(view === 'discover' || dialog?.kind === 'publish');
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [discoverId, setDiscoverId] = useState<string | null>(null);
+  const [catalogVersion, setCatalogVersion] = useState(0);
   // A camp from a share link (`/app?import=…`), read once when the page opens.
   const [importOffer, setImportOffer] = useState<ImportOffer | null>(importPayload ? { status: 'loading' } : null);
   useEffect(() => {
@@ -201,6 +220,7 @@ function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importP
 
   const navigate = (next: View) => {
     if (next === 'today' || next === 'path') selectDate(today);
+    if (next === 'discover') setDiscoverId(null);
     setView(next);
   };
 
@@ -460,6 +480,40 @@ function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importP
     setImportOffer(null);
     if (isDemo) actions.exitDemo();
     handleCreateCamp(campFromShare(shared, today));
+  };
+
+  const openCatalogEntry = (entry: CatalogEntry) => {
+    setDialog(null);
+    setDiscoverId(entry.id);
+    setView('discover');
+  };
+
+  const handleUnpublish = async (entry: CatalogEntry) => {
+    const ok = await confirm({
+      title: 'Kamp yayından kaldırılsın mı?',
+      tone: 'danger',
+      confirmLabel: 'Yayından kaldır',
+      body: (
+        <p>
+          <span className="font-semibold text-ink">{entry.name}</span> Keşfet’ten kalkar. Kendi kampın ve daha önce ekleyenlerin
+          kampları olduğu gibi kalır.
+        </p>
+      ),
+    });
+    if (!ok) return;
+    const result = await unpublishCamp(entry.id);
+    if (!result.ok) {
+      notify({ message: result.error, tone: 'info' });
+      return;
+    }
+    setDiscoverId(null);
+    setCatalogVersion(v => v + 1);
+    notify({ message: `“${entry.name}” yayından kaldırıldı.`, tone: 'info' });
+  };
+
+  const handleSignOut = async () => {
+    await account.signOut();
+    notify({ message: 'Keşfet’ten çıkış yaptın.', tone: 'info' });
   };
 
   const handleSaveTempo = (target: StudyCamp, next: CampSchedule) => {
@@ -726,6 +780,29 @@ function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importP
     ) : (
       noPlanYet('İlerleme', 'progress')
     );
+  } else if (view === 'discover') {
+    content = discoverId ? (
+      <CampDetail
+        key={discoverId}
+        id={discoverId}
+        today={today}
+        userId={account.state.status === 'signed-in' ? account.state.userId : null}
+        onBack={() => setDiscoverId(null)}
+        onImport={handleImportCamp}
+        onUnpublish={entry => void handleUnpublish(entry)}
+      />
+    ) : (
+      <DiscoverView
+        account={account.state}
+        today={today}
+        version={catalogVersion}
+        onOpen={setDiscoverId}
+        onSignIn={() => setSignInOpen(true)}
+        onRename={() => setRenameOpen(true)}
+        onSignOut={() => void handleSignOut()}
+        onOpenCamps={() => setView('camps')}
+      />
+    );
   } else if (view === 'camps') {
     content = (
       <CampsView
@@ -742,7 +819,7 @@ function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importP
         onSelectCamp={scope === 'all' ? manageCamp : selectCamp}
         onEditTempo={() => openTempo()}
         onRenameCamp={campId => setDialog({ kind: 'rename', campId })}
-        onShareCamp={campId => setDialog({ kind: 'share', campId })}
+        onPublishCamp={campId => setDialog({ kind: 'publish', campId })}
         onDeleteCamp={handleDeleteCamp}
         onAddBranches={openAddBranches}
         onEditBranch={branchId => camp && setDialog({ kind: 'editBranch', campId: camp.id, branchId })}
@@ -934,7 +1011,30 @@ function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importP
         onNext={() => nextFocus && setFocus({ itemId: nextFocus.item.id, date: nextFocus.date })}
         onClose={() => setFocus(null)}
       />
-      {dialog?.kind === 'share' && dialogCamp && <ShareCampDialog key={dialogCamp.id} camp={dialogCamp} onClose={closeDialog} />}
+      {dialog?.kind === 'publish' && dialogCamp && (
+        <PublishCampDialog
+          key={dialogCamp.id}
+          camp={dialogCamp}
+          account={account.state}
+          onSignIn={() => setSignInOpen(true)}
+          onRename={() => setRenameOpen(true)}
+          onClose={closeDialog}
+          onView={openCatalogEntry}
+          onPublished={() => setCatalogVersion(v => v + 1)}
+        />
+      )}
+      <SignInDialog
+        open={signInOpen && account.state.status !== 'signed-in'}
+        onClose={() => setSignInOpen(false)}
+        onEmail={account.signInWithEmail}
+        onGoogle={account.continueWithGoogle}
+      />
+      <RenameDialog
+        open={renameOpen}
+        current={account.state.status === 'signed-in' ? account.state.displayName : null}
+        onClose={() => setRenameOpen(false)}
+        onSave={account.rename}
+      />
       <ImportCampDialog
         offer={importOffer}
         today={today}
@@ -956,10 +1056,10 @@ function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importP
 }
 
 /** The planner ("Dashboard"). `startInDemo`: open the demo preview (the landing page's "Demo ile göz at"). */
-const App = ({ startInDemo = false, importPayload = null }: { startInDemo?: boolean; importPayload?: string | null }) => (
+const App = ({ startInDemo = false, importPayload = null, openDiscover = false }: Partial<PlannerProps>) => (
   <ToastProvider>
     <ConfirmProvider>
-      <Planner startInDemo={startInDemo} importPayload={importPayload} />
+      <Planner startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
     </ConfirmProvider>
   </ToastProvider>
 );
