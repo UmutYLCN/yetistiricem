@@ -298,8 +298,8 @@ export function DayPanel({
       {(isPast && open > 0) || hasSample || (total > 0 && open === 0) ? (
         <div className="space-y-2 border-b border-line px-4 py-3 sm:px-5">
           {isPast && open > 0 && (
-            <div className="callout callout-accent">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-accent-strong" aria-hidden="true" />
+            <div className="callout callout-danger">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-ink">Bu günden {open} görev yetişmedi.</p>
                 <p className="mt-0.5 text-[13px] text-ink-2">

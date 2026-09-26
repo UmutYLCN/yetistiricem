@@ -266,8 +266,8 @@ export function Features({ preview }: { preview: LandingPreview }) {
         <Bento id="ritim" className="lg:col-span-2" title="Kendi ritmin" visual={<RhythmVisual preview={preview} />}>
           Branşları otomatik dağıt ya da hangi gün hangisinin geleceğini kendin seç. Dinlenme ve deneme günleri de planda.
         </Bento>
-        <Bento id="ileri-tasi" className="lg:col-span-2" title="Geride mi kaldın? Sorun değil" visual={<CatchUpVisual preview={preview} />}>
-          İşaretlemek planı değiştirmez. Yetişmeyen görevleri yalnızca sen istediğinde sonraki çalışma günlerine taşırsın.
+        <Bento id="ileri-tasi" className="lg:col-span-2" title="Geride kalan gözden kaçmaz" visual={<CatchUpVisual preview={preview} />}>
+          Yetişmeyen görevler kırmızıyla öne çıkar. Tek dokunuşla sonraki çalışma günlerine taşırsın; plan sen istemedikçe değişmez.
         </Bento>
         <Bento
           id="ilerleme"

@@ -61,7 +61,7 @@ export function ProgressCard({
                 {formatLongDate(stats.estimatedFinishDate)}
                 {daysLeft > 0 && <span className="block text-[12px] font-normal text-ink-3">{daysLeft} gün sonra</span>}
                 {daysLeft < 0 && (
-                  <span className="block text-[12px] font-normal text-accent-strong">geride kalan görevler var</span>
+                  <span className="block text-[12px] font-normal text-danger">geride kalan görevler var</span>
                 )}
               </>
             )}
@@ -184,8 +184,8 @@ export function WeekCard({
 export function OverdueCard({ count, today, onShift, className = '' }: { count: number; today: string; onShift: () => void; className?: string }) {
   if (count === 0) return null;
   return (
-    <section className={`callout callout-accent ${className}`} aria-labelledby="rail-overdue">
-      <TriangleAlert className="mt-0.5 size-4 shrink-0 text-accent-strong" aria-hidden="true" />
+    <section className={`callout callout-danger ${className}`} aria-labelledby="rail-overdue">
+      <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <h2 id="rail-overdue" className="font-semibold text-ink">
           {count} geciken görev

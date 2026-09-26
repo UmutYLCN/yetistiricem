@@ -207,7 +207,7 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, onShift
       label: 'Geciken',
       value: String(index.overdue.length),
       note: index.overdue.length > 0 ? 'geçmiş günlerden' : 'Geride kalan yok',
-      accent: index.overdue.length > 0,
+      overdue: index.overdue.length > 0,
     },
   ];
 
@@ -219,7 +219,7 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, onShift
         {tiles.map(tile => (
           <div key={tile.label} className="card min-w-0 p-4 sm:p-5">
             <p className="eyebrow">{tile.label}</p>
-            <p className={`font-display tnum mt-2 text-[30px] leading-none ${tile.accent ? 'text-accent-strong' : 'text-ink'}`}>
+            <p className={`font-display tnum mt-2 text-[30px] leading-none ${tile.overdue ? 'text-danger' : 'text-ink'}`}>
               {tile.value}
             </p>
             <p className="mt-1.5 text-[12.5px] text-ink-3">{tile.note}</p>
@@ -228,8 +228,8 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, onShift
       </div>
 
       {index.overdue.length > 0 && (
-        <div className="callout callout-accent flex-wrap items-center">
-          <TriangleAlert className="size-4 shrink-0 text-accent-strong" aria-hidden="true" />
+        <div className="callout callout-danger flex-wrap items-center">
+          <TriangleAlert className="size-4 shrink-0 text-danger" aria-hidden="true" />
           <p className="min-w-[14rem] flex-1 text-[14px] text-ink-2">
             <span className="font-semibold text-ink">{index.overdue.length} görev geride kaldı.</span> Yeniden planlarsan{' '}
             {formatLongDate(addDays(today, 1))} gününden itibaren dağıtılır.
@@ -357,7 +357,7 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, onShift
                       value={week.done}
                       max={week.planned}
                       label={`${formatShortDate(week.monday)} haftası`}
-                      color={past && week.done < week.planned ? 'var(--color-accent)' : undefined}
+                      color={past && week.done < week.planned ? 'var(--color-danger)' : undefined}
                     />
                     <span className="tnum text-right text-[13px] text-ink-2">
                       <span className="font-semibold text-ink">{week.done}</span>/{week.planned}

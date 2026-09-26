@@ -117,7 +117,7 @@ export function WeekStrip({ days, selectedDate, today, onSelect }: Props) {
                 ) : null}
               </span>
               {isToday && !selected && <span className="absolute bottom-1 h-[3px] w-4 rounded-full bg-accent" aria-hidden="true" />}
-              {overdue && <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-accent" aria-hidden="true" />}
+              {overdue && <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-danger" aria-hidden="true" />}
             </button>
           );
         })}

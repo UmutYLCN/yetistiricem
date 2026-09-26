@@ -106,7 +106,7 @@ export function WeekRoute({ days, today, selectedDate, labelledBy, onGo }: Props
                 >
                   <Ring day={day} />
                   {overdue && (
-                    <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-accent ring-2 ring-card" aria-hidden="true" />
+                    <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-danger ring-2 ring-card" aria-hidden="true" />
                   )}
                 </span>
                 <span

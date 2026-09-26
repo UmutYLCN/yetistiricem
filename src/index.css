@@ -4,8 +4,9 @@
    Yetiştiricem design tokens (dark only)
    Near-black surfaces in steps (paper → card → sunk), hairline borders and
    white text in three strengths. Primary actions are white; green marks
-   progress and done states, orange only "today" and things that need
-   attention. Names are roles: `paper` is the page, `ink` the main text.
+   progress and done states, orange "today" and heads-ups (mock days, target
+   forecasts), red tasks left undone and destructive actions. Names are
+   roles: `paper` is the page, `ink` the main text.
    ------------------------------------------------------------------------ */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -388,6 +389,10 @@
   .callout-accent {
     background: var(--color-accent-soft);
     border-color: color-mix(in srgb, var(--color-accent) 28%, transparent);
+  }
+  .callout-danger {
+    background: var(--color-danger-soft);
+    border-color: color-mix(in srgb, var(--color-danger) 32%, transparent);
   }
   .callout-info {
     background: var(--color-forest-tint);
