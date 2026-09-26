@@ -61,7 +61,12 @@ export function takeDiscoverRequest(): boolean {
   return true;
 }
 
-/** Where sign-in (magic link, Google) returns: the planner on Keşfet. */
+/** Where signing in to the planner (magic link, Google) returns. */
+export function appReturnUrl(origin: string = window.location.origin): string {
+  return `${origin}${APP_PATH}`;
+}
+
+/** Where signing in from Keşfet in the demo returns: the planner on Keşfet. */
 export function discoverReturnUrl(origin: string = window.location.origin): string {
   return `${origin}${APP_PATH}?${VIEW_PARAM}=${DISCOVER_VIEW}`;
 }

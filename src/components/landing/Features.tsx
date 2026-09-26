@@ -227,7 +227,7 @@ function BackupVisual({ today }: { today: string }) {
       </div>
       <p className="mt-4 flex items-center gap-1.5 text-[12.5px] text-ink-3">
         <Lock className="size-3.5" />
-        Her şey bu tarayıcıda; sunucuya gönderilmez.
+        Planın bu tarayıcıda; sunucuya gönderilmez.
       </p>
     </div>
   );
@@ -280,7 +280,7 @@ export function Features({ preview }: { preview: LandingPreview }) {
         <Bento id="tum-kamplar" className="lg:col-span-3" title="Tüm Kamplar, tek akış" visual={<AllCampsVisual />}>
           Sınav hazırlığını ve İngilizceyi ayrı tempolarla sürdür. Bugün ekranında hepsi birlikte görünür, günlük hedefler toplanır.
         </Bento>
-        <Bento id="veriler" className="lg:col-span-3" title="Hesap yok, veriler senin" visual={<BackupVisual today={preview.today} />}>
+        <Bento id="veriler" className="lg:col-span-3" title="Veriler senin, tarayıcında" visual={<BackupVisual today={preview.today} />}>
           Kampların ve ilerlemen yalnızca kullandığın tarayıcıda saklanır. Yedeğini indir, başka bir tarayıcıda geri yükle.
         </Bento>
       </div>

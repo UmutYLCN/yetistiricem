@@ -1,8 +1,13 @@
 import { useId, useRef } from 'react';
 import { Download, Eye, Gauge, LogOut, RotateCcw, Upload } from 'lucide-react';
+import type { AccountState } from '../../hooks/useAccount';
+import { AuthorBadge } from '../discover/AuthorBadge';
 import { PageHeader } from '../layout/PageHeader';
 
 interface Props {
+  account: AccountState;
+  onRename: () => void;
+  onSignOut: () => void;
   isDemo: boolean;
   campCount: number;
   onBackup: () => void;
@@ -14,13 +19,37 @@ interface Props {
 }
 
 /** App-level options. Each camp's tempo is edited from the camp itself. */
-export function SettingsView({ isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo, onOpenCamps }: Props) {
+export function SettingsView({ account, onRename, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo, onOpenCamps }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
   return (
     <div className="mx-auto max-w-[760px] space-y-5">
       <PageHeader title="Ayarlar" subtitle={isDemo ? 'Demo açık: buradaki değişiklikler kaydedilmez.' : 'Uygulama ve verilerin.'} />
+
+      {account.status === 'signed-in' && (
+        <section className="card flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 sm:px-6" aria-labelledby={`${uid}-account`}>
+          <div className="min-w-0 flex-1">
+            <h2 id={`${uid}-account`} className="eyebrow">
+              Hesap
+            </h2>
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+              <AuthorBadge name={account.displayName ?? '…'} />
+              {account.email && <span className="min-w-0 truncate text-[13px] text-ink-3">{account.email}</span>}
+            </div>
+            <p className="mt-1.5 text-[12.5px] text-ink-3">Görünen adın Keşfet’te yayınladığın kamplarda yer alır; e-postan gösterilmez.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={onRename}>
+              Adını değiştir
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={onSignOut}>
+              <LogOut aria-hidden="true" />
+              Çıkış yap
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="callout callout-info items-start" aria-labelledby={`${uid}-tempo`}>
         <Gauge className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
@@ -46,7 +75,8 @@ export function SettingsView({ isDemo, campCount, onBackup, onRestoreFile, onRes
             Verilerin
           </h2>
           <p className="mt-0.5 text-[13px] text-ink-2">
-            Her şey yalnızca bu tarayıcıda saklanır; sunucuya gönderilmez. Tarayıcı verisini temizlemeden önce yedek al.
+            Kampların, ilerlemen ve notların yalnızca bu tarayıcıda saklanır; sunucuya yalnızca Keşfet’te yayınladığın kamplar gider.
+            Tarayıcı verisini temizlemeden önce yedek al.
           </p>
         </div>
         <ul className="divide-y divide-line">

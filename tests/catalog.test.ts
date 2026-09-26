@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { SharedCamp } from '../src/lib/campShare.ts';
+import { hasAuthCallback, hasSavedSignIn, readAuthError } from '../src/lib/authKey.ts';
 import { shareDocument } from '../src/lib/campShare.ts';
 import type { CatalogEntry } from '../src/lib/catalog.ts';
 import { displayNameProblem, publishRow, publishedLabel, readCatalogCamp, readCatalogRow, searchCatalog } from '../src/lib/catalog.ts';
@@ -97,4 +98,15 @@ test('public names and publish dates read naturally', () => {
   assert.equal(publishedLabel(at(2026, 9, 25), '2026-09-26'), 'Dün');
   assert.equal(publishedLabel(at(2026, 9, 22), '2026-09-26'), '4 gün önce');
   assert.equal(publishedLabel(at(2026, 8, 1), '2026-09-26'), '1 Ağustos 2026');
+});
+
+test('a sign-in answer is recognised in the address bar hash, and storage errors mean no saved session', () => {
+  assert.ok(hasAuthCallback('#access_token=abc&refresh_token=def&type=magiclink'));
+  assert.ok(hasAuthCallback('#error=access_denied&error_description=Email+link+is+invalid'));
+  assert.ok(!hasAuthCallback(''));
+  assert.ok(!hasAuthCallback('#icerik'));
+  assert.equal(hasSavedSignIn(), false, 'no localStorage here: not signed in');
+  assert.match(readAuthError('#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired') ?? '', /süresi dolmuş/);
+  assert.match(readAuthError('#error=access_denied') ?? '', /tamamlanmadı/);
+  assert.equal(readAuthError('#access_token=abc'), null);
 });

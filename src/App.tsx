@@ -39,9 +39,12 @@ import { PublishCampDialog } from './components/camps/PublishCampDialog';
 import { RenameDialog, SignInDialog } from './components/discover/AccountDialogs';
 import { CampDetail } from './components/discover/CampDetail';
 import { DiscoverView } from './components/views/DiscoverView';
-import { useCatalogAccount } from './hooks/useCatalogAccount';
+import { AuthGate } from './components/auth/AuthGate';
+import type { Account } from './hooks/useAccount';
 import type { CatalogEntry } from './lib/catalog';
+import { encodeCampShare } from './lib/campShare';
 import { unpublishCamp } from './lib/catalogApi';
+import { APP_PATH, campImportUrl, discoverReturnUrl } from './lib/routes';
 import type { FocusTarget } from './components/focus/FocusModal';
 import { FocusModal } from './components/focus/FocusModal';
 import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
@@ -98,9 +101,11 @@ interface PlannerProps {
   importPayload: string | null;
   /** Open on Keşfet (a sign-in link brought the student back). */
   openDiscover: boolean;
+  /** The student's account (`AuthGate` shows the planner only with one, or in the demo). */
+  account: Account;
 }
 
-function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
+function Planner({ startInDemo, importPayload, openDiscover, account }: PlannerProps) {
   const today = useToday();
   const { data, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
   const notify = useToast();
@@ -112,8 +117,6 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
   const [pendingShift, setPendingShift] = useState<PendingShift | null>(null);
   /** The task playing in focus mode (its id and day in the plan shown). */
   const [focus, setFocus] = useState<{ itemId: string; date: string } | null>(null);
-  // Keşfet: the account loads when Keşfet or the publish dialog is first used.
-  const account = useCatalogAccount(view === 'discover' || dialog?.kind === 'publish');
   const [signInOpen, setSignInOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [discoverId, setDiscoverId] = useState<string | null>(null);
@@ -386,15 +389,31 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
     if (campId) setDialog({ kind: 'editVideo', campId, branchId: item.playlistId, videoId: item.videoId });
   };
 
+  // Leaving the demo opens the student's own plan, which needs an account:
+  // without one, a fresh page starts on the sign-in screen.
+  const signedIn = account.state.status === 'signed-in' || account.state.status === 'off';
+  const leaveDemo = () => {
+    if (signedIn) {
+      actions.exitDemo();
+      return true;
+    }
+    window.location.assign(APP_PATH);
+    return false;
+  };
+
   const openNewCamp = async () => {
     if (isDemo) {
       const ok = await confirm({
         title: 'Demodan çıkılsın mı?',
-        body: <p>Kendi planını kurmak için demodan çıkman gerekiyor. Demo verileri kaydedilmez ve silinir.</p>,
-        confirmLabel: 'Demodan çık ve kamp oluştur',
+        body: (
+          <p>
+            Kendi planını kurmak için demodan çıkman gerekiyor{signedIn ? '' : ' ve giriş yapman gerekiyor'}. Demo verileri kaydedilmez ve
+            silinir.
+          </p>
+        ),
+        confirmLabel: signedIn ? 'Demodan çık ve kamp oluştur' : 'Demodan çık ve giriş yap',
       });
-      if (!ok) return;
-      actions.exitDemo();
+      if (!ok || !leaveDemo()) return;
     }
     setWizardOpen(true);
   };
@@ -476,8 +495,13 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
     notify({ message: `“${target.name}” silindi.`, tone: 'info' });
   };
 
-  const handleImportCamp = (shared: SharedCamp) => {
+  const handleImportCamp = async (shared: SharedCamp) => {
     setImportOffer(null);
+    if (isDemo && !signedIn) {
+      // The camp travels in an import link, offered again once the student has signed in.
+      window.location.assign(campImportUrl(await encodeCampShare(shared)));
+      return;
+    }
     if (isDemo) actions.exitDemo();
     handleCreateCamp(campFromShare(shared, today));
   };
@@ -511,9 +535,10 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
     notify({ message: `“${entry.name}” yayından kaldırıldı.`, tone: 'info' });
   };
 
+  // Outside the demo the gate then starts a fresh page on the sign-in screen.
   const handleSignOut = async () => {
     await account.signOut();
-    notify({ message: 'Keşfet’ten çıkış yaptın.', tone: 'info' });
+    if (isDemo) notify({ message: 'Çıkış yaptın.', tone: 'info' });
   };
 
   const handleSaveTempo = (target: StudyCamp, next: CampSchedule) => {
@@ -610,8 +635,7 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
   };
 
   const exitDemo = () => {
-    actions.exitDemo();
-    notify({ message: 'Demodan çıktın; kendi verilerine döndün.', tone: 'info' });
+    if (leaveDemo()) notify({ message: 'Demodan çıktın; kendi verilerine döndün.', tone: 'info' });
   };
 
   // --- views -------------------------------------------------------------
@@ -788,7 +812,7 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
         today={today}
         userId={account.state.status === 'signed-in' ? account.state.userId : null}
         onBack={() => setDiscoverId(null)}
-        onImport={handleImportCamp}
+        onImport={shared => void handleImportCamp(shared)}
         onUnpublish={entry => void handleUnpublish(entry)}
       />
     ) : (
@@ -831,6 +855,9 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
   } else {
     content = (
       <SettingsView
+        account={account.state}
+        onRename={() => setRenameOpen(true)}
+        onSignOut={() => void handleSignOut()}
         isDemo={isDemo}
         campCount={data.camps.length}
         onBackup={handleBackup}
@@ -1026,8 +1053,8 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
       <SignInDialog
         open={signInOpen && account.state.status !== 'signed-in'}
         onClose={() => setSignInOpen(false)}
-        onEmail={account.signInWithEmail}
-        onGoogle={account.continueWithGoogle}
+        onEmail={email => account.signInWithEmail(email, discoverReturnUrl())}
+        onGoogle={() => account.continueWithGoogle(discoverReturnUrl())}
       />
       <RenameDialog
         open={renameOpen}
@@ -1039,7 +1066,7 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
         offer={importOffer}
         today={today}
         isDemo={isDemo}
-        onImport={handleImportCamp}
+        onImport={shared => void handleImportCamp(shared)}
         onClose={() => setImportOffer(null)}
       />
       {dialog?.kind === 'editBranch' && dialogBranch && (
@@ -1056,10 +1083,12 @@ function Planner({ startInDemo, importPayload, openDiscover }: PlannerProps) {
 }
 
 /** The planner ("Dashboard"). `startInDemo`: open the demo preview (the landing page's "Demo ile göz at"). */
-const App = ({ startInDemo = false, importPayload = null, openDiscover = false }: Partial<PlannerProps>) => (
+const App = ({ startInDemo = false, importPayload = null, openDiscover = false }: Partial<Omit<PlannerProps, 'account'>>) => (
   <ToastProvider>
     <ConfirmProvider>
-      <Planner startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
+      <AuthGate startInDemo={startInDemo}>
+        {account => <Planner startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} account={account} />}
+      </AuthGate>
     </ConfirmProvider>
   </ToastProvider>
 );

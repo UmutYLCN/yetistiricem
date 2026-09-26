@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
+import { hasAuthCallback, readAuthError } from '../lib/authKey';
 import type { ApiResult } from '../lib/catalogApi';
 import {
   catalogConfigured,
   getDisplayName,
-  hasAuthCallback,
   sendMagicLink,
   setDisplayName,
   signInWithGoogle,
   signOut,
   watchSession,
 } from '../lib/catalogApi';
-import { discoverReturnUrl } from '../lib/routes';
+import { appReturnUrl } from '../lib/routes';
 
 export type AccountState =
-  /** Keşfet is not set up on this server. */
+  /** Sign-in is not set up on this server (no Supabase config): the planner opens without it. */
   | { status: 'off' }
   /** Nothing asked for the account yet (the client is not loaded). */
   | { status: 'idle' }
@@ -22,12 +22,14 @@ export type AccountState =
   | { status: 'signed-in'; userId: string; email: string | null; displayName: string | null };
 
 /**
- * The Keşfet account. The auth client loads the first time `wanted` is true
- * (or at once when the address bar carries a sign-in answer) and then keeps
- * following the session.
+ * The student's account (the planner needs one; Keşfet shows its name). The
+ * auth client loads the first time `wanted` is true (or at once when the
+ * address bar carries a sign-in answer) and then keeps following the session.
  */
-export function useCatalogAccount(wanted: boolean) {
+export function useAccount(wanted: boolean) {
   const [started, setStarted] = useState(() => catalogConfigured && hasAuthCallback());
+  // A failed sign-in answer (e.g. an expired link), read before the address bar is cleaned.
+  const [callbackError] = useState(() => readAuthError());
   const [state, setState] = useState<AccountState>(!catalogConfigured ? { status: 'off' } : started ? { status: 'loading' } : { status: 'idle' });
   if (catalogConfigured && wanted && !started) {
     setStarted(true);
@@ -40,6 +42,8 @@ export function useCatalogAccount(wanted: boolean) {
     let unsubscribe: (() => void) | null = null;
     void watchSession(session => {
       if (cancelled) return;
+      // The auth client has read any sign-in answer by now; tokens and errors leave the address bar.
+      if (hasAuthCallback()) window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
       if (!session) {
         setState({ status: 'signed-out' });
         return;
@@ -62,8 +66,9 @@ export function useCatalogAccount(wanted: boolean) {
     };
   }, [started]);
 
-  const signInWithEmail = useCallback((email: string) => sendMagicLink(email, discoverReturnUrl()), []);
-  const continueWithGoogle = useCallback(() => signInWithGoogle(discoverReturnUrl()), []);
+  /** `returnTo`: where the link brings the student back (the planner by default). */
+  const signInWithEmail = useCallback((email: string, returnTo: string = appReturnUrl()) => sendMagicLink(email, returnTo), []);
+  const continueWithGoogle = useCallback((returnTo: string = appReturnUrl()) => signInWithGoogle(returnTo), []);
   const leave = useCallback(async () => {
     await signOut();
     setState({ status: 'signed-out' });
@@ -78,7 +83,7 @@ export function useCatalogAccount(wanted: boolean) {
     [state]
   );
 
-  return { state, signInWithEmail, continueWithGoogle, signOut: leave, rename };
+  return { state, callbackError, signInWithEmail, continueWithGoogle, signOut: leave, rename };
 }
 
-export type CatalogAccount = ReturnType<typeof useCatalogAccount>;
+export type Account = ReturnType<typeof useAccount>;

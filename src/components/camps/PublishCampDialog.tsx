@@ -5,7 +5,7 @@ import { shareSummary, toSharedCamp } from '../../lib/campShare';
 import type { CatalogEntry } from '../../lib/catalog';
 import { MAX_DESCRIPTION, MAX_PUBLISHED_NAME, publishRow } from '../../lib/catalog';
 import { findPublication, publishCamp } from '../../lib/catalogApi';
-import type { AccountState } from '../../hooks/useCatalogAccount';
+import type { AccountState } from '../../hooks/useAccount';
 import { AuthorBadge } from '../discover/AuthorBadge';
 import { Dialog } from '../ui/Dialog';
 

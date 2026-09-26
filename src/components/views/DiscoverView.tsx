@@ -5,7 +5,7 @@ import { publishedLabel, searchCatalog } from '../../lib/catalog';
 import { listPublishedCamps } from '../../lib/catalogApi';
 import { formatHours } from '../../lib/format';
 import { resolveColor } from '../../lib/subjects';
-import type { AccountState } from '../../hooks/useCatalogAccount';
+import type { AccountState } from '../../hooks/useAccount';
 import { AuthorBadge } from '../discover/AuthorBadge';
 import { PageHeader } from '../layout/PageHeader';
 import { EmptyState } from '../ui/EmptyState';

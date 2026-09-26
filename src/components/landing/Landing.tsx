@@ -12,10 +12,11 @@ import {
   PencilRuler,
   Plus,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useToday } from '../../hooks/useToday';
 import type { LandingPreview } from '../../lib/landingPreview';
 import { buildLandingPreview } from '../../lib/landingPreview';
+import { hasSavedSignIn } from '../../lib/authKey';
 import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark } from '../ui/BrandMark';
 import { Features } from './Features';
@@ -58,7 +59,7 @@ const STEPS = [
 const FAQ = [
   {
     q: 'Hesap açmam gerekiyor mu?',
-    a: 'Hayır. Yetiştiricem hesap olmadan çalışır; kampların ve ilerlemen kullandığın tarayıcıda saklanır.',
+    a: 'Planına girmek için e-postanla ücretsiz giriş yaparsın; şifre yok, e-postana gelen bağlantıyla girersin. Kampların ve ilerlemen yine kullandığın tarayıcıda saklanır. Demoya giriş yapmadan göz atabilirsin.',
   },
   {
     q: 'Verilerim başka cihazla eşitlenir mi?',
@@ -86,7 +87,17 @@ const FAQ = [
   },
 ];
 
-function SiteHeader() {
+/**
+ * The planner needs an account: `/app` shows its sign-in page to signed-out
+ * visitors. The buttons say where they lead, by whether this browser has a
+ * saved session (the planner confirms it).
+ */
+function dashboardLabel(signedIn: boolean, long: boolean): string {
+  if (signedIn) return long ? 'Dashboard’a git' : 'Dashboard';
+  return long ? 'Giriş yap ve başla' : 'Giriş yap';
+}
+
+function SiteHeader({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-8 px-4 sm:px-6">
@@ -113,7 +124,7 @@ function SiteHeader() {
             Demo
           </a>
           <a href={APP_PATH} className="btn btn-primary btn-sm group">
-            Dashboard
+            {dashboardLabel(signedIn, false)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
         </div>
@@ -122,7 +133,7 @@ function SiteHeader() {
   );
 }
 
-function Hero({ preview }: { preview: LandingPreview }) {
+function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolean }) {
   // `overflow-clip`, not `overflow-hidden`: a scroll container here would pin the preview's scroll-driven tilt.
   return (
     <section aria-labelledby="hero-title" className="relative overflow-clip">
@@ -144,7 +155,7 @@ function Hero({ preview }: { preview: LandingPreview }) {
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={APP_PATH} className="btn btn-primary btn-lg group">
-            Dashboard’a git
+            {dashboardLabel(signedIn, true)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
           <a href={DEMO_APP_PATH} className="btn btn-secondary btn-lg">
@@ -153,7 +164,7 @@ function Hero({ preview }: { preview: LandingPreview }) {
           </a>
         </div>
         <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] text-ink-3">
-          {['Hesap gerekmez', 'Veriler tarayıcında kalır', 'Kurulum yok'].map(point => (
+          {['Ücretsiz', 'Şifresiz giriş', 'Veriler tarayıcında kalır'].map(point => (
             <li key={point} className="flex items-center gap-1.5">
               <Check className="size-3.5 text-forest" strokeWidth={2.5} aria-hidden="true" />
               {point}
@@ -264,7 +275,7 @@ function Faq() {
   );
 }
 
-function FinalCta() {
+function FinalCta({ signedIn }: { signedIn: boolean }) {
   return (
     <section aria-labelledby="son-cagri-baslik" className="mx-auto max-w-[1200px] px-4 pb-24 sm:px-6 sm:pb-32">
       <div className="cta-panel reveal px-6 py-16 text-center sm:px-12 sm:py-24">
@@ -279,7 +290,7 @@ function FinalCta() {
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={APP_PATH} className="btn btn-primary btn-lg group">
-            Dashboard’a git
+            {dashboardLabel(signedIn, true)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
           <a href={DEMO_APP_PATH} className="btn btn-secondary btn-lg">
@@ -292,7 +303,7 @@ function FinalCta() {
   );
 }
 
-function SiteFooter() {
+function SiteFooter({ signedIn }: { signedIn: boolean }) {
   return (
     <footer className="border-t border-line/70">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row md:items-start md:justify-between">
@@ -319,7 +330,7 @@ function SiteFooter() {
             </li>
             <li>
               <a href={APP_PATH} className="transition-colors hover:text-ink">
-                Dashboard
+                {dashboardLabel(signedIn, false)}
               </a>
             </li>
           </ul>
@@ -332,25 +343,29 @@ function SiteFooter() {
   );
 }
 
-/** The landing page at `/`. Its "Dashboard" links open the planner at `/app` (a full page load, see `lib/routes`). */
+/**
+ * The landing page at `/`. Its "Dashboard" / "Giriş yap" links open the planner
+ * at `/app` (a full page load, see `lib/routes`), which asks signed-out visitors to sign in.
+ */
 export default function Landing() {
   const today = useToday();
   const preview = useMemo(() => buildLandingPreview(today), [today]);
+  const [signedIn] = useState(hasSavedSignIn);
   return (
     <div className="landing overflow-x-clip">
       <a href="#icerik" className="skip-link">
         İçeriğe geç
       </a>
-      <SiteHeader />
+      <SiteHeader signedIn={signedIn} />
       <main id="icerik" tabIndex={-1} className="outline-none">
-        <Hero preview={preview} />
+        <Hero preview={preview} signedIn={signedIn} />
         <Goals />
         <Features preview={preview} />
         <Steps />
         <Faq />
-        <FinalCta />
+        <FinalCta signedIn={signedIn} />
       </main>
-      <SiteFooter />
+      <SiteFooter signedIn={signedIn} />
     </div>
   );
 }

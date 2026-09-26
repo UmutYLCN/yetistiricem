@@ -2,9 +2,10 @@ import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import type { SharedCamp } from './campShare';
 import type { CatalogEntry, PublishRow } from './catalog';
 import { CATALOG_COLUMNS, readCatalogCamp, readCatalogRow } from './catalog';
-import { AUTH_KEY } from './persistence';
+import { AUTH_KEY } from './authKey';
 
-// Keşfet's connection to Supabase (docs/kesfet.md). The URL and the
+// The app's connection to Supabase: sign-in (the planner needs an account)
+// and Keşfet (docs/kesfet.md). The URL and the
 // publishable key are public by design (row level security guards the
 // data); a service-role key must never reach the browser. The client loads
 // on demand, so the planner does not ship it until Keşfet is used.
@@ -12,8 +13,7 @@ import { AUTH_KEY } from './persistence';
 const URL_ENV: string | undefined = import.meta.env.VITE_SUPABASE_URL;
 const KEY_ENV: string | undefined = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-/** Where supabase-js keeps the session (next to the app's other `yt_*` keys; "Tüm verileri sil" clears it). */
-export const AUTH_STORAGE_KEY = AUTH_KEY;
+
 
 export const catalogConfigured = Boolean(URL_ENV && KEY_ENV);
 
@@ -25,7 +25,7 @@ export function getSupabase(): Promise<SupabaseClient | null> {
   clientPromise ??= import('@supabase/supabase-js')
     .then(({ createClient }) =>
       createClient(url, key, {
-        auth: { storageKey: AUTH_STORAGE_KEY, persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' },
+        auth: { storageKey: AUTH_KEY, persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' },
       })
     )
     .catch(() => {
@@ -33,11 +33,6 @@ export function getSupabase(): Promise<SupabaseClient | null> {
       return null;
     });
   return clientPromise;
-}
-
-/** The address bar holds a sign-in answer (the magic link or Google sent the student back). */
-export function hasAuthCallback(): boolean {
-  return /(?:^|[#&])(access_token|error_description)=/.test(window.location.hash);
 }
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
