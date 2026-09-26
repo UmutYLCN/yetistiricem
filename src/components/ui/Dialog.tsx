@@ -13,6 +13,8 @@ interface DialogProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** A small line above the title (what the dialog is about). */
+  eyebrow?: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -27,6 +29,8 @@ interface DialogProps {
   /** Close when the backdrop is clicked. Off for forms, so a stray click keeps the input. */
   dismissOnBackdrop?: boolean;
   tone?: 'default' | 'danger';
+  /** `side`: a full-height sheet along the right edge on larger screens (a bottom sheet on phones). */
+  placement?: 'center' | 'side';
 }
 
 /**
@@ -38,6 +42,7 @@ export function Dialog({
   open,
   onClose,
   title,
+  eyebrow,
   description,
   children,
   footer,
@@ -47,6 +52,7 @@ export function Dialog({
   initialFocus,
   dismissOnBackdrop = true,
   tone = 'default',
+  placement = 'center',
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
@@ -112,7 +118,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className="dialog"
+      className={`dialog ${placement === 'side' ? 'dialog-side' : ''}`}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onCancel={event => {
@@ -130,6 +136,7 @@ export function Dialog({
         <div className={`dialog-panel ${tall ? 'dialog-panel-tall' : ''}`} style={{ ['--dialog-width' as string]: `${width}px` }}>
           <header className="flex items-start gap-4 px-6 pt-5 pb-4 max-sm:px-4">
             <div className="min-w-0 flex-1">
+              {eyebrow && <div className="eyebrow mb-1.5">{eyebrow}</div>}
               <h2
                 id={titleId}
                 className={`font-display text-[22px] leading-tight ${tone === 'danger' ? 'text-danger' : 'text-ink'}`}

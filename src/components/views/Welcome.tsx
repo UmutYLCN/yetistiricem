@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { CalendarRange, CircleCheck, Eye, ListVideo, Plus } from 'lucide-react';
 import { EmptyState, FeaturedIcon } from '../ui/EmptyState';
-import { BranchesArt, CampsArt, ProgressArt, WeekArt, WelcomeArt } from './EmptyArt';
+import { BranchesArt, CampsArt, PathArt, ProgressArt, WeekArt, WelcomeArt } from './EmptyArt';
 
 interface Props {
   onAddCamp: () => void;
@@ -86,9 +86,14 @@ function EmptyPage(props: Parameters<typeof EmptyState>[0]) {
   );
 }
 
-export type NoCampsView = 'week' | 'progress' | 'camps';
+export type NoCampsView = 'path' | 'week' | 'progress' | 'camps';
 
 const NO_CAMPS: Record<NoCampsView, { art: ReactNode; title: string; body: string }> = {
+  path: {
+    art: <PathArt />,
+    title: 'Günün yolu burada çizilecek',
+    body: 'Bir kamp kurduğunda her günün videoları bir yol olur: birini izleyip işaretlersin, sıradakine geçersin.',
+  },
   week: {
     art: <WeekArt />,
     title: 'Haftan burada şekillenecek',

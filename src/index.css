@@ -460,6 +460,25 @@
     }
   }
 
+  /* A sheet along the right edge (on phones the bottom sheet above). */
+  @media (min-width: 640px) {
+    .dialog-side[open] {
+      align-items: stretch;
+      justify-content: flex-end;
+      padding: 12px;
+    }
+    .dialog-side .dialog-panel {
+      width: min(100%, var(--dialog-width, 440px));
+      max-height: none;
+      animation: sheet-in-side 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+  }
+  @media (max-width: 639px) {
+    .dialog-side .dialog-panel {
+      animation: sheet-in-up 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+  }
+
   /* Checkbox --------------------------------------------------------------- */
   .check {
     appearance: none;
@@ -965,6 +984,307 @@
     }
   }
 
+  /* Day path ("Yol"): the day's tasks as stops on a winding path ------------------ */
+  .day-path {
+    position: relative;
+    isolation: isolate;
+    margin-inline: auto;
+    max-width: 600px;
+  }
+  /* The ground: a faint dotted map, fading out to the sides. */
+  .day-path::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(circle at 1px 1px, var(--color-line-strong) 1px, transparent 0);
+    background-size: 18px 18px;
+    mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .path-trail {
+    fill: none;
+    stroke: var(--color-line-strong);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 0.1 13;
+  }
+  /* Drawn over the trail once walked (the path has pathLength="1"). */
+  .path-walked {
+    fill: none;
+    stroke: var(--color-forest);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    animation: trail-draw 560ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 60ms + 120ms);
+  }
+
+  /* A stop: its island (the round button face) and its label beside it. */
+  .path-row {
+    display: flex;
+    max-width: 100%;
+    height: var(--node);
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    animation: stop-in 420ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+    animation-delay: calc(var(--i, 0) * 55ms);
+  }
+  .path-row[data-side="left"] {
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+  .path-stop {
+    border-radius: 999px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .path-stop:focus-visible {
+    outline: none;
+  }
+  .path-stop:focus-visible .path-node {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 5px;
+  }
+
+  .path-island {
+    --fill: var(--color-sunk);
+    --lip: #050506;
+    --glyph: var(--color-ink-3);
+    --lift: 6px;
+    position: relative;
+    flex-shrink: 0;
+    width: var(--node);
+    height: var(--node);
+  }
+  .path-island[data-state="done"] {
+    --fill: var(--color-forest);
+    --lip: color-mix(in srgb, var(--color-forest) 42%, #000);
+    --glyph: var(--color-on-fill);
+  }
+  .path-island[data-state="next"] {
+    --fill: var(--branch);
+    --lip: color-mix(in srgb, var(--branch) 42%, #000);
+    --glyph: var(--color-on-fill);
+  }
+  .path-island[data-state="open"] {
+    --glyph: var(--branch);
+  }
+  .path-island[data-state="missed"] {
+    --fill: var(--color-danger-soft);
+    --lip: color-mix(in srgb, var(--color-danger) 30%, #000);
+    --glyph: var(--color-danger);
+  }
+  .path-island[data-state="finish"] {
+    --fill: var(--color-warn);
+    --lip: color-mix(in srgb, var(--color-warn) 45%, #000);
+    --glyph: var(--color-on-fill);
+  }
+  .path-node {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--fill);
+    color: var(--glyph);
+    box-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 0.16),
+      0 var(--lift) 0 var(--lip),
+      0 calc(var(--lift) + 12px) 22px -8px rgb(0 0 0 / 0.85);
+    transition: translate 140ms ease, box-shadow 140ms ease;
+    animation: node-pop 380ms cubic-bezier(0.2, 0.8, 0.3, 1.4) backwards;
+  }
+  .path-island[data-state="open"] .path-node,
+  .path-island[data-state="locked"] .path-node {
+    box-shadow:
+      inset 0 0 0 1px var(--color-line-strong),
+      inset 0 2px 0 rgb(255 255 255 / 0.05),
+      0 var(--lift) 0 var(--lip),
+      0 calc(var(--lift) + 12px) 22px -8px rgb(0 0 0 / 0.85);
+  }
+  .path-island[data-state="missed"] .path-node {
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in srgb, var(--color-danger) 55%, transparent),
+      0 var(--lift) 0 var(--lip),
+      0 calc(var(--lift) + 12px) 22px -8px rgb(0 0 0 / 0.85);
+  }
+  .path-node svg {
+    width: 40%;
+    height: 40%;
+  }
+  .path-stop:hover .path-node {
+    --lift: 8px;
+    translate: 0 -2px;
+  }
+  .path-stop:active .path-node {
+    --lift: 1px;
+    translate: 0 5px;
+  }
+  /* The light a stop throws on the ground. */
+  .path-glow {
+    position: absolute;
+    left: 50%;
+    top: calc(100% - 2px);
+    width: 170%;
+    height: 30px;
+    translate: -50% 0;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--fill) 34%, transparent), transparent);
+    pointer-events: none;
+  }
+  .path-island[data-state="open"] .path-glow,
+  .path-island[data-state="locked"] .path-glow {
+    background: radial-gradient(closest-side, rgb(255 255 255 / 0.05), transparent);
+  }
+  /* Where the path waits: a ring around the stop and a bubble over it. */
+  .path-island[data-state="next"]::before {
+    content: "";
+    position: absolute;
+    inset: -9px;
+    border-radius: 999px;
+    border: 3px solid color-mix(in srgb, var(--branch) 45%, transparent);
+    pointer-events: none;
+  }
+  .path-bubble {
+    position: absolute;
+    bottom: calc(100% + 16px);
+    left: 50%;
+    translate: -50% 0;
+    padding: 6px 11px;
+    border-radius: 10px;
+    background: var(--color-ink);
+    color: var(--color-on-fill);
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 10px 22px -8px rgb(0 0 0 / 0.8);
+    pointer-events: none;
+  }
+  .path-bubble::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: inherit;
+    translate: -50% -60%;
+    rotate: 45deg;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .path-island[data-state="next"]::before {
+      animation: halo 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+    }
+    .path-bubble {
+      animation: bob 1.9s ease-in-out infinite;
+    }
+  }
+  .path-label {
+    display: flex;
+    min-width: 0;
+    max-width: 17.5rem;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .path-row[data-side="left"] .path-label {
+    align-items: flex-end;
+  }
+  .path-label-title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: anywhere;
+    font-size: 14.5px;
+    font-weight: 550;
+    line-height: 1.35;
+    color: var(--color-ink);
+    transition: color 120ms ease;
+  }
+  .path-stop:hover .path-label-title {
+    color: #fff;
+  }
+  @media (max-width: 519px) {
+    .path-label-title {
+      font-size: 13.5px;
+    }
+  }
+
+  /* The task sheet --------------------------------------------------------------- */
+  .sheet-media {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-sunk);
+  }
+  .sheet-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: scale 300ms ease;
+  }
+  a.sheet-media:hover img {
+    scale: 1.03;
+  }
+  .sheet-art {
+    display: grid;
+    height: 100%;
+    place-items: center;
+    background:
+      radial-gradient(70% 90% at 50% 100%, color-mix(in srgb, var(--branch) 22%, transparent), transparent 70%),
+      radial-gradient(circle at 1px 1px, var(--color-line-strong) 1px, transparent 0) 0 0 / 16px 16px,
+      var(--branch-soft);
+    color: var(--branch);
+  }
+  .sheet-art svg {
+    width: 40px;
+    height: 40px;
+  }
+  .sheet-play {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    width: 58px;
+    height: 58px;
+    margin: auto;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    background: rgb(8 9 10 / 0.7);
+    color: var(--color-ink);
+    backdrop-filter: blur(6px);
+    transition: scale 150ms ease, background-color 150ms ease, color 150ms ease;
+  }
+  .sheet-play svg {
+    width: 22px;
+    height: 22px;
+    translate: 1px 0;
+  }
+  a.sheet-media:hover .sheet-play {
+    scale: 1.06;
+    background: var(--color-ink);
+    color: var(--color-on-fill);
+  }
+  .sheet-duration {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgb(0 0 0 / 0.78);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
   /* Loading and arrival ------------------------------------------------------------ */
   .skeleton {
     background: var(--color-sunk);
@@ -1254,6 +1574,61 @@
   }
   to {
     transform: none;
+  }
+}
+
+@keyframes sheet-in-side {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+@keyframes sheet-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
+@keyframes stop-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+@keyframes node-pop {
+  from {
+    scale: 0.6;
+  }
+}
+
+@keyframes trail-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes halo {
+  0% {
+    scale: 0.94;
+    opacity: 1;
+  }
+  75%,
+  100% {
+    scale: 1.24;
+    opacity: 0;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
   }
 }
 

@@ -1,17 +1,16 @@
 import type { ReactNode } from 'react';
-import { ArrowRight, CircleCheck, Coffee, Flag, Forward, TriangleAlert } from 'lucide-react';
+import { CircleCheck, Forward, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import type { CampDaySummary, CampLabel } from '../../lib/allCamps';
-import { dayGoals, everyCampOff } from '../../lib/allCamps';
+import { dayGoals } from '../../lib/allCamps';
 import { addDays } from '../../lib/engine';
 import { formatDayTitle, formatLongDate, formatMinutes } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
 import { groupByBranch } from '../../lib/planView';
 import { linkStateOf } from '../../lib/camps';
 import { Meter } from '../ui/Bits';
-import type { EmptyTone } from '../ui/EmptyState';
-import { EmptyState } from '../ui/EmptyState';
 import { CampDayTypeRows } from './CampDayTypes';
+import { DayEmpty } from './DayEmpty';
 import { TaskItem } from './TaskItem';
 
 interface Props {
@@ -31,26 +30,6 @@ interface Props {
    * (each with its own daily goal), and camps without tasks show their day type.
    */
   campLabels?: Map<string, CampLabel>;
-}
-
-function EmptyDay({
-  icon,
-  tone,
-  title,
-  body,
-  action,
-}: {
-  icon: ReactNode;
-  tone?: EmptyTone;
-  title: string;
-  body: string;
-  action?: ReactNode;
-}) {
-  return (
-    <EmptyState className="overflow-hidden px-6 pt-14 pb-14" icon={icon} tone={tone} title={title} actions={action}>
-      {body}
-    </EmptyState>
-  );
 }
 
 /** One camp's tasks of the day in the combined view, under the camp's name and daily goal. */
@@ -118,7 +97,7 @@ export function DayPanel({
   onAddBranches,
   campLabels,
 }: Props) {
-  const { date, plan, kind, total, done, minutes, doneMinutes } = summary;
+  const { date, plan, total, done, minutes, doneMinutes } = summary;
   const items = groupByBranch(plan?.items ?? []);
   const open = total - done;
   const isPast = date < today;
@@ -127,10 +106,6 @@ export function DayPanel({
   const allCamps = campLabels !== undefined;
   const parts = summary.camps ?? [];
   const offCamps = parts.filter(p => p.total === 0);
-  // No camp studies, some have a mock exam and some rest: neither camp's copy fits the whole day.
-  const mixedOff = allCamps && kind === 'mock' && parts.some(p => p.kind === 'rest');
-  // Some camp is on a (free or shifted) study day: no full empty state, each camp's day type instead.
-  const campsNotOff = allCamps && items.length === 0 && parts.length > 0 && !everyCampOff(parts);
   const goals = allCamps ? dayGoals(summary, campLabels) : null;
 
   let body: ReactNode;
@@ -174,105 +149,18 @@ export function DayPanel({
         ))}
       </ul>
     );
-  } else if (campsNotOff) {
-    body = (
-      <div>
-        <p className="px-4 pt-4 pb-1 text-[14px] font-semibold text-ink sm:px-5">Bu gün kamplarında görev yok</p>
-        <CampDayTypeRows parts={parts} labels={campLabels} />
-      </div>
-    );
-  } else if (mixedOff) {
-    body = (
-      <EmptyDay
-        icon={<Flag className="size-5" aria-hidden="true" />}
-        tone="accent"
-        title="Deneme ve dinlenme günü"
-        body="Bu gün hiçbir kampında video yok. Deneme günü olan kampın için bir deneme çöz; diğerlerinde dinlen."
-      />
-    );
-  } else if (kind === 'rest') {
-    body = (
-      <EmptyDay
-        icon={<Coffee className="size-5" aria-hidden="true" />}
-        title="Dinlenme günü"
-        body={
-          allCamps
-            ? 'Bu gün hiçbir kampında video yok. Dinlen, zihnini topla; planların yarın kaldığı yerden devam eder.'
-            : 'Bu gün için video planlanmadı. Dinlen, zihnini topla; plan yarın kaldığı yerden devam eder.'
-        }
-      />
-    );
-  } else if (kind === 'mock') {
-    body = (
-      <EmptyDay
-        icon={<Flag className="size-5" aria-hidden="true" />}
-        tone="accent"
-        title="Deneme günü"
-        body="Bugün video yok. Bir deneme çöz, yanlışlarını analiz et ve not al."
-      />
-    );
-  } else if (plan?.isFreeDay) {
-    body = (
-      <EmptyDay
-        icon={<CircleCheck className="size-5" aria-hidden="true" />}
-        tone="forest"
-        title="Bu günün branşları bitti"
-        body="Bu güne yerleştirdiğin branşların videoları tamamlandı. Diğer branşlar kendi günlerinde devam ediyor."
-      />
-    );
-  } else if (plan) {
-    body = (
-      <EmptyDay
-        icon={<Forward className="size-5" aria-hidden="true" />}
-        title="Görevler ileri taşındı"
-        body="Bu günün tamamlanmamış görevleri sonraki günlere kaydırıldı."
-      />
-    );
-  } else if (allCamps && firstDate !== null && date > firstDate && lastDate !== null && date < lastDate) {
-    body = (
-      <EmptyDay
-        icon={<CircleCheck className="size-5" aria-hidden="true" />}
-        title="Bu gün planların dışında"
-        body="Bu tarihte hiçbir kampının planı yok: biri bitmiş, diğeri henüz başlamamış."
-      />
-    );
-  } else if (firstDate === null) {
-    body = (
-      <EmptyDay
-        icon={<Coffee className="size-5" aria-hidden="true" />}
-        title="Bu gün boş"
-        body="Bu kampta henüz video yok. Bir branş eklediğinde görevler buraya gelir."
-        action={
-          <button type="button" className="btn btn-primary btn-sm" onClick={onAddBranches}>
-            Branş ekle
-          </button>
-        }
-      />
-    );
-  } else if (date < (firstDate ?? startDate)) {
-    body = (
-      <EmptyDay
-        icon={<ArrowRight className="size-5" aria-hidden="true" />}
-        title="Plan henüz başlamadı"
-        body={
-          allCamps
-            ? `İlk kampın ${formatLongDate(firstDate ?? startDate)} tarihinde başlıyor.`
-            : `Planın ${formatLongDate(firstDate ?? startDate)} tarihinde başlıyor.`
-        }
-      />
-    );
   } else {
     body = (
-      <EmptyDay
-        icon={<CircleCheck className="size-5" aria-hidden="true" />}
-        tone="forest"
-        title={allCamps ? 'Planların bu tarihten önce bitiyor' : 'Planın bu tarihten önce bitiyor'}
-        body={lastDate ? `Son görevlerin ${formatLongDate(lastDate)} tarihinde. Yeni branş ekleyerek planı uzatabilirsin.` : ''}
+      <DayEmpty
+        summary={summary}
+        firstDate={firstDate}
+        lastDate={lastDate}
+        startDate={startDate}
+        onAddBranches={onAddBranches}
+        campLabels={campLabels}
       />
     );
   }
-  // A mock exam day where other camps rest still says what each camp does that day.
-  const offRows = mixedOff ? <CampDayTypeRows parts={parts} labels={campLabels} /> : null;
 
   return (
     <section
@@ -350,7 +238,6 @@ export function DayPanel({
       ) : null}
 
       {body}
-      {offRows && <div className="border-t border-line">{offRows}</div>}
 
       {isToday && open > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-paper/60 px-4 py-3 sm:px-5">

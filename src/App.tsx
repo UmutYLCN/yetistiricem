@@ -25,6 +25,7 @@ import { DayPanel } from './components/day/DayPanel';
 import { WeekStrip } from './components/day/WeekStrip';
 import { AddVideosDialog, EditBranchDialog, EditVideoDialog } from './components/camps/CampDialogs';
 import { CampTempoDialog, RenameCampDialog } from './components/camps/CampProgramDialogs';
+import { PathView } from './components/path/PathView';
 import type { View } from './components/layout/Navigation';
 import { MobileTabBar, MobileTopBar, Sidebar } from './components/layout/Navigation';
 import { PageHeader } from './components/layout/PageHeader';
@@ -130,7 +131,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   const selectDate = actions.setSelectedDate;
 
   const navigate = (next: View) => {
-    if (next === 'today') selectDate(today);
+    if (next === 'today' || next === 'path') selectDate(today);
     setView(next);
   };
 
@@ -487,6 +488,30 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         </aside>
       </div>
     );
+  } else if (view === 'path') {
+    content = noCampPlans ? (
+      noPlansInCamps('Günün yolu')
+    ) : allPlan || hasBranches ? (
+      <PathView
+        summary={summary}
+        today={today}
+        camps={camps}
+        oversizedIds={oversizedIds}
+        overdueCount={index.overdue.length}
+        firstDate={index.firstDate}
+        lastDate={index.lastDate}
+        startDate={firstStart}
+        onSelectDate={selectDate}
+        onToggle={handleToggle}
+        onShift={handleShift}
+        onShiftOverdue={() => handleShift(addDays(today, -1))}
+        onEditLink={handleEditLink}
+        onAddBranches={openAddBranches}
+        campLabels={campLabels}
+      />
+    ) : (
+      noPlanYet('Günün yolu', 'path')
+    );
   } else if (view === 'week') {
     content = noCampPlans ? (
       noPlansInCamps('Haftalık plan')
@@ -576,7 +601,13 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
 
   // Line notices up with the page below them.
   const noticeWidth =
-    view === 'settings' || (view === 'today' && !hasCamp && !isDemo) ? 'max-w-[760px]' : view === 'today' ? '' : 'max-w-[920px]';
+    view === 'settings' || (view === 'today' && !hasCamp && !isDemo)
+      ? 'max-w-[760px]'
+      : view === 'today'
+        ? ''
+        : view === 'path' && (allPlan || hasBranches)
+          ? 'max-w-[720px]'
+          : 'max-w-[920px]';
 
   const dialogCamp = dialog ? data.camps.find(c => c.id === dialog.campId) : undefined;
   const dialogBranch = dialog && 'branchId' in dialog ? dialogCamp?.branches.find(p => p.id === dialog.branchId) : undefined;

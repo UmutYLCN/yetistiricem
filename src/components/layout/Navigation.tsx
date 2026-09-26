@@ -1,12 +1,12 @@
 import { useId } from 'react';
 import type { ComponentType, SVGProps } from 'react';
-import { CalendarCheck, CalendarRange, ChartColumn, Library, Plus, Settings } from 'lucide-react';
+import { CalendarCheck, CalendarRange, ChartColumn, Library, Plus, Route, Settings } from 'lucide-react';
 import type { CampScope } from '../../lib/allCamps';
 import { offersAllCamps } from '../../lib/allCamps';
 import { LANDING_PATH } from '../../lib/routes';
 import { BrandMark } from '../ui/BrandMark';
 
-export type View = 'today' | 'week' | 'progress' | 'camps' | 'settings';
+export type View = 'today' | 'path' | 'week' | 'progress' | 'camps' | 'settings';
 
 interface NavItem {
   view: View;
@@ -16,6 +16,7 @@ interface NavItem {
 
 const PRIMARY_NAV: NavItem[] = [
   { view: 'today', label: 'Bugün', icon: CalendarCheck },
+  { view: 'path', label: 'Yol', icon: Route },
   { view: 'week', label: 'Haftalık', icon: CalendarRange },
   { view: 'progress', label: 'İlerleme', icon: ChartColumn },
   { view: 'camps', label: 'Kamplar', icon: Library },
@@ -214,7 +215,7 @@ export function MobileTabBar({ view, onNavigate }: Pick<NavProps, 'view' | 'onNa
       aria-label="Ana menü"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {PRIMARY_NAV.map(({ view: target, label, icon: Icon }) => {
           const active = view === target;
           return (

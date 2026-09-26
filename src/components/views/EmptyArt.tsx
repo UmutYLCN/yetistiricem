@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Check, Flag, Link2, Moon, Play, Plus, Timer } from 'lucide-react';
+import { Check, Flag, Link2, Moon, Play, Plus, Timer, Trophy } from 'lucide-react';
 import { SHORT_WEEKDAYS, WEEK_ORDER } from '../../lib/format';
 import { resolveColor } from '../../lib/subjects';
 
@@ -158,6 +158,69 @@ export function WeekArt() {
           })}
         </div>
       </Sheet>
+    </Stage>
+  );
+}
+
+// The sketched path's stops on a 400×200 stage: two walked, the next one, one ahead.
+const PATH_STOPS = [
+  { x: 48, y: 140, state: 'done' },
+  { x: 120, y: 72, state: 'done' },
+  { x: 200, y: 124, state: 'next' },
+  { x: 280, y: 60, state: 'open' },
+] as const;
+const PATH_FINISH = { x: 352, y: 112 };
+
+/** Yol: a winding path of stops, the first ones walked, a trophy at the end. */
+export function PathArt() {
+  const points = [...PATH_STOPS, PATH_FINISH];
+  const bend = (i: number) => {
+    const a = points[i];
+    const b = points[i + 1];
+    const mid = (a.x + b.x) / 2;
+    return `M ${a.x} ${a.y} C ${mid} ${a.y} ${mid} ${b.y} ${b.x} ${b.y}`;
+  };
+  const at = (p: { x: number; y: number }) => ({ left: `${(p.x / 400) * 100}%`, top: `${(p.y / 200) * 100}%` });
+  return (
+    <Stage className="h-[200px] max-w-[400px]">
+      <svg className="absolute inset-0 size-full" viewBox="0 0 400 200" fill="none">
+        {points.slice(1).map((_, i) => (
+          <path
+            key={i}
+            d={bend(i)}
+            stroke={i < 2 ? 'var(--color-forest)' : 'var(--color-line-strong)'}
+            strokeWidth={i < 2 ? 5 : 4}
+            strokeLinecap="round"
+            strokeDasharray={i < 2 ? undefined : '0.1 11'}
+          />
+        ))}
+      </svg>
+      {PATH_STOPS.map((stop, i) => (
+        <span
+          key={i}
+          className={`absolute grid size-10 -translate-1/2 place-items-center rounded-full ${
+            stop.state === 'done'
+              ? 'bg-forest text-on-fill shadow-[0_4px_0_color-mix(in_srgb,var(--color-forest)_42%,#000)]'
+              : stop.state === 'next'
+                ? 'bg-[var(--branch)] text-on-fill shadow-[0_4px_0_color-mix(in_srgb,var(--branch)_42%,#000)] ring-[3px] ring-[color-mix(in_srgb,var(--branch)_40%,transparent)] ring-offset-[5px] ring-offset-paper'
+                : 'bg-sunk text-[var(--branch)] shadow-[inset_0_0_0_1px_var(--color-line-strong),0_4px_0_#050506]'
+          }`}
+          style={{ ...at(stop), ['--branch' as string]: INK }}
+        >
+          {stop.state === 'done' ? <Check className="size-4" strokeWidth={3.25} /> : <Play className="size-4" fill={stop.state === 'next' ? 'currentColor' : 'none'} />}
+          {stop.state === 'next' && (
+            <span className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 rounded-[8px] bg-ink px-2 py-1 text-[10.5px] font-bold whitespace-nowrap text-on-fill">
+              Sıradaki
+            </span>
+          )}
+        </span>
+      ))}
+      <span
+        className="absolute grid size-11 -translate-1/2 place-items-center rounded-full bg-sunk text-ink-3 shadow-[inset_0_0_0_1px_var(--color-line-strong),0_4px_0_#050506]"
+        style={at(PATH_FINISH)}
+      >
+        <Trophy className="size-4.5" />
+      </span>
     </Stage>
   );
 }
