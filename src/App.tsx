@@ -35,7 +35,8 @@ import { CampsView } from './components/views/CampsView';
 import { ProgressView } from './components/views/ProgressView';
 import { SettingsView } from './components/views/SettingsView';
 import { WeekView } from './components/views/WeekView';
-import { NoCampsYet, Welcome } from './components/views/Welcome';
+import type { NoCampsView } from './components/views/Welcome';
+import { NoBranchesYet, NoCampVideos, NoCampsYet, Welcome } from './components/views/Welcome';
 import { AddBranchWizard } from './components/wizard/AddBranchWizard';
 import { CampWizard } from './components/wizard/CampWizard';
 
@@ -408,37 +409,16 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   const noPlansInCamps = (title: string) => (
     <div className="mx-auto max-w-[920px]">
       <PageHeader title={title} subtitle="Tüm kamplar" />
-      <div className="card flex flex-col items-center px-6 py-12 text-center">
-        <p className="font-display text-[21px] text-ink">Kamplarında henüz video yok</p>
-        <p className="mt-1 max-w-md text-[14px] text-ink-2">
-          Tüm Kamplar, video içeren kampları tarihe göre birlikte gösterir. Bir kampa branş ekle; o kamp kendi temposuyla buraya katılır.
-        </p>
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
-          {camp && (
-            <button type="button" className="btn btn-primary" onClick={openAddBranches}>
-              “{camp.name}” kampına branş ekle
-            </button>
-          )}
-          <button type="button" className="btn btn-secondary" onClick={() => setView('camps')}>
-            Kamplara git
-          </button>
-        </div>
-      </div>
+      <NoCampVideos campName={camp?.name} onAddBranches={openAddBranches} onOpenCamps={() => setView('camps')} />
     </div>
   );
-  const noPlanYet = (title: string) => (
+  const noPlanYet = (title: string, emptyView: NoCampsView) => (
     <div className="mx-auto max-w-[920px]">
       <PageHeader title={title} />
       {camp ? (
-        <div className="card flex flex-col items-center px-6 py-12 text-center">
-          <p className="font-display text-[21px] text-ink">Bu kampta branş yok</p>
-          <p className="mt-1 max-w-sm text-[14px] text-ink-2">Bir oynatma listesi ekle; her liste bir branş olur ve plan kendiliğinden kurulur.</p>
-          <button type="button" className="btn btn-primary mt-5" onClick={openAddBranches}>
-            Branş ekle
-          </button>
-        </div>
+        <NoBranchesYet onAddBranches={openAddBranches} />
       ) : (
-        <NoCampsYet onAddCamp={openNewCamp} onStartDemo={startDemo} />
+        <NoCampsYet view={emptyView} onAddCamp={openNewCamp} onStartDemo={startDemo} />
       )}
     </div>
   );
@@ -526,7 +506,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         />
       </div>
     ) : (
-      noPlanYet('Haftalık plan')
+      noPlanYet('Haftalık plan', 'week')
     );
   } else if (view === 'progress') {
     content = noCampPlans ? (
@@ -553,7 +533,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         />
       </div>
     ) : (
-      noPlanYet('İlerleme')
+      noPlanYet('İlerleme', 'progress')
     );
   } else if (view === 'camps') {
     content = (

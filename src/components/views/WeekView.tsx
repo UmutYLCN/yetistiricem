@@ -12,6 +12,8 @@ import { TaskItem } from '../day/TaskItem';
 import { WeekRoute } from '../day/WeekRoute';
 import { PageHeader } from '../layout/PageHeader';
 import { Meter } from '../ui/Bits';
+import type { EmptyTone } from '../ui/EmptyState';
+import { EmptyState } from '../ui/EmptyState';
 
 interface Props {
   days: DaySummary[];
@@ -44,15 +46,17 @@ function cardOf(track: HTMLElement | null, date: string): HTMLElement | null {
 
 interface EmptyCopy {
   icon: LucideIcon;
+  tone?: EmptyTone;
   title: string;
   body: string;
 }
 
 function emptyCopy(day: DaySummary): EmptyCopy {
   if (day.kind === 'rest') return { icon: Moon, title: 'Dinlenme günü', body: 'Video planlanmadı. Dinlen, zihnini topla.' };
-  if (day.kind === 'mock') return { icon: Flag, title: 'Deneme günü', body: 'Video yok. Bir deneme çöz, yanlışlarını analiz et.' };
+  if (day.kind === 'mock')
+    return { icon: Flag, tone: 'accent', title: 'Deneme günü', body: 'Video yok. Bir deneme çöz, yanlışlarını analiz et.' };
   if (day.plan?.isFreeDay)
-    return { icon: CircleCheck, title: 'Bu günün branşları bitti', body: 'Bu güne yerleşen branşların videoları tamamlandı.' };
+    return { icon: CircleCheck, tone: 'forest', title: 'Bu günün branşları bitti', body: 'Bu güne yerleşen branşların videoları tamamlandı.' };
   if (day.plan)
     return { icon: Forward, title: 'Görevler ileri taşındı', body: 'Tamamlanmayan görevler sonraki günlere kaydırıldı.' };
   return { icon: CalendarX, title: 'Planlanmış görev yok', body: 'Bu gün planın dışında kalıyor.' };
@@ -163,13 +167,15 @@ function DayCard({ day, today, selected, camps, oversizedIds, onOpenDay, onToggl
       ) : (
         empty &&
         EmptyIcon && (
-          <div className="flex flex-1 flex-col items-center border-t border-line bg-paper/50 px-6 pt-10 pb-12 text-center">
-            <span className="mb-3 flex size-10 items-center justify-center rounded-full bg-sunk text-ink-2">
-              <EmptyIcon className="size-[18px]" aria-hidden="true" />
-            </span>
-            <p className="text-[15px] font-semibold text-ink">{empty.title}</p>
-            <p className="mt-1 max-w-[15rem] text-[13px] text-ink-3">{empty.body}</p>
-          </div>
+          <EmptyState
+            className="flex-1 overflow-hidden border-t border-line bg-paper/50 px-6 pt-12 pb-12"
+            size="sm"
+            icon={<EmptyIcon aria-hidden="true" />}
+            tone={empty.tone}
+            title={empty.title}
+          >
+            {empty.body}
+          </EmptyState>
         )
       )}
     </section>

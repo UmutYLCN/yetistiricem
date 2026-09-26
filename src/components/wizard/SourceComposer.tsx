@@ -13,6 +13,7 @@ import type { PlaylistInfo } from '../../utils/youtubePlaylist';
 import { PlaylistImport } from '../camps/PlaylistImport';
 import { BulkVideoForm, SingleVideoForm } from '../camps/VideoForms';
 import { SubjectDot } from '../ui/Bits';
+import { EmptyState } from '../ui/EmptyState';
 
 type SourceMode = 'playlist' | 'single' | 'bulk' | 'template';
 const NEW_BRANCH = '__new__';
@@ -209,15 +210,16 @@ function TemplatePicker({ added, onAdd }: { added: string[]; onAdd: (template: S
 export function NoSourcesYet({ error, adding = false }: { error?: string; adding?: boolean }) {
   return (
     <div
-      className={`flex flex-col items-center rounded-[14px] border border-dashed px-5 py-8 text-center ${error ? 'border-danger/70' : 'border-line-strong'}`}
+      className={`flex flex-col items-center overflow-hidden rounded-[14px] border border-dashed px-5 pt-10 pb-9 text-center ${error ? 'border-danger/70' : 'border-line-strong'}`}
     >
-      <span className="flex size-11 items-center justify-center rounded-full bg-forest-soft text-forest">
-        <ListVideo className="size-5" aria-hidden="true" />
-      </span>
-      <p className="mt-3 font-semibold text-ink">{adding ? 'Henüz yeni branş yok' : 'Henüz branş yok'}</p>
-      <p className="mt-1 max-w-sm text-[13.5px] text-ink-2">
+      <EmptyState
+        size="sm"
+        icon={<ListVideo aria-hidden="true" />}
+        tone="forest"
+        title={adding ? 'Henüz yeni branş yok' : 'Henüz branş yok'}
+      >
         Yukarıya bir YouTube oynatma listesi bağlantısı yapıştır. Her liste, adı ve gerçek süreleriyle ayrı bir branş olur.
-      </p>
+      </EmptyState>
       {error && (
         <p className="field-error" role="alert">
           {error}

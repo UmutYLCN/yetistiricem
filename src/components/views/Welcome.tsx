@@ -1,5 +1,7 @@
-import { Eye, Plus } from 'lucide-react';
-import { BrandMark } from '../ui/BrandMark';
+import type { ReactNode } from 'react';
+import { CalendarRange, CircleCheck, Eye, ListVideo, Plus } from 'lucide-react';
+import { EmptyState, FeaturedIcon } from '../ui/EmptyState';
+import { BranchesArt, CampsArt, ProgressArt, WeekArt, WelcomeArt } from './EmptyArt';
 
 interface Props {
   onAddCamp: () => void;
@@ -8,79 +10,166 @@ interface Props {
 
 const STEPS = [
   {
+    icon: ListVideo,
     title: 'Kaynaklarını ekle',
     body: 'YouTube oynatma listelerini yapıştır; her liste adı ve gerçek süreleriyle bir branş olur (Matematik, Fizik…).',
   },
   {
+    icon: CalendarRange,
     title: 'Kampını ve ritmini kur',
     body: 'Kampına ad ve tarih ver. Branşları otomatik dağıt ya da hangi gün hangi branşın geleceğini kendin seç.',
   },
   {
+    icon: CircleCheck,
     title: 'Her gün işaretle',
     body: 'İzlediğini işaretle; görev yerinde kalır. Geride kalırsan kalanları tek dokunuşla ileri taşı.',
   },
 ];
 
+const DEMO_NOTE = 'Demo örnek bir plan gösterir; hiçbir şey kaydedilmez ve çıktığında planın yine boş olur.';
+
 /** First-run screen. Nothing is created until the user asks for it. */
 export function Welcome({ onAddCamp, onStartDemo }: Props) {
   return (
-    <div className="mx-auto max-w-[760px] py-4 sm:py-10">
-      <div className="card overflow-hidden">
-        <div className="border-b border-line px-6 pt-8 pb-7 sm:px-10 sm:pt-10">
-          <BrandMark size={40} />
-          <h1 className="font-display mt-5 text-[30px] leading-[1.15] text-ink sm:text-[36px]">
-            Planını kur, her gün biraz yetiştir.
-          </h1>
-          <p className="mt-3 max-w-[560px] text-[15.5px] text-ink-2">
-            Yetiştiricem, bir kampın tüm branşlarındaki ders videolarını günlük çalışma süreni aşmayacak şekilde günlere böler
-            ve nerede olduğunu gösterir. Planın şu an boş.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2.5">
-            <button type="button" className="btn btn-primary" onClick={onAddCamp}>
-              <Plus aria-hidden="true" />
-              İlk kampını kur
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={onStartDemo}>
-              <Eye aria-hidden="true" />
-              Demo ile göz at
-            </button>
+    <div className="mx-auto max-w-[1040px] py-2 sm:py-6">
+      <section aria-labelledby="welcome-title" className="card empty-surface overflow-hidden">
+        <div className="grid items-center gap-10 px-6 pt-9 pb-10 sm:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-8 lg:py-14">
+          <div className="min-w-0">
+            <span className="chip chip-forest">Başlangıç</span>
+            <h1 id="welcome-title" className="font-display mt-4 text-[30px] leading-[1.12] text-ink sm:text-[38px]">
+              İlk kampını kur, gerisini Yetiştiricem planlasın.
+            </h1>
+            <p className="mt-4 max-w-[500px] text-[15.5px] leading-relaxed text-ink-2">
+              Oynatma listelerini ekle, günlük çalışma süreni seç. Ders videoları bu süreyi aşmayacak şekilde günlere bölünür; her gün ne
+              çalışacağını ve hedefe ne kadar kaldığını görürsün. Planın şu an boş.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-2.5">
+              <button type="button" className="btn btn-primary btn-lg" onClick={onAddCamp}>
+                <Plus aria-hidden="true" />
+                İlk kampını kur
+              </button>
+              <button type="button" className="btn btn-secondary btn-lg" onClick={onStartDemo}>
+                <Eye aria-hidden="true" />
+                Demo ile göz at
+              </button>
+            </div>
+            <p className="mt-3.5 text-[12.5px] text-ink-3">{DEMO_NOTE}</p>
           </div>
-          <p className="mt-3 text-[12.5px] text-ink-3">
-            Demo örnek bir plan gösterir; hiçbir şey kaydedilmez ve çıktığında planın yine boş olur.
-          </p>
+          <WelcomeArt />
         </div>
-        <ol className="grid gap-px bg-line sm:grid-cols-3">
-          {STEPS.map((step, i) => (
-            <li key={step.title} className="bg-card px-6 py-5 sm:px-7">
-              <span className="tnum flex size-7 items-center justify-center rounded-full bg-forest-soft text-[13px] font-bold text-forest-strong">
-                {i + 1}
-              </span>
-              <p className="mt-3 font-semibold text-ink">{step.title}</p>
-              <p className="mt-1 text-[13.5px] text-ink-2">{step.body}</p>
+        <ol className="grid border-t border-line sm:grid-cols-3">
+          {STEPS.map(({ icon: Icon, title, body }, i) => (
+            <li
+              key={title}
+              className="flex gap-4 border-line px-6 py-6 not-first:border-t sm:flex-col sm:px-8 sm:not-first:border-t-0 sm:not-first:border-l"
+            >
+              <FeaturedIcon icon={<Icon />} size="sm" rings={false} />
+              <div className="min-w-0">
+                <p className="tnum text-[12px] font-semibold text-ink-3">{i + 1}. adım</p>
+                <p className="mt-0.5 font-semibold text-ink">{title}</p>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">{body}</p>
+              </div>
             </li>
           ))}
         </ol>
-      </div>
+      </section>
     </div>
   );
 }
 
-/** Compact empty state for views other than the day plan. */
-export function NoCampsYet({ onAddCamp, onStartDemo }: { onAddCamp: () => void; onStartDemo: () => void }) {
+/** A page-sized empty state on a card. */
+function EmptyPage(props: Parameters<typeof EmptyState>[0]) {
   return (
-    <div className="card flex flex-col items-center px-6 py-12 text-center">
-      <p className="font-display text-[21px] text-ink">Henüz kamp yok</p>
-      <p className="mt-1 max-w-sm text-[14px] text-ink-2">Bir kamp kurduğunda planın, haftan ve ilerlemen burada görünür.</p>
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
-        <button type="button" className="btn btn-primary" onClick={onAddCamp}>
-          <Plus aria-hidden="true" />
-          Kamp kur
-        </button>
-        <button type="button" className="btn btn-secondary" onClick={onStartDemo}>
-          <Eye aria-hidden="true" />
-          Demo ile göz at
-        </button>
-      </div>
+    <div className="card empty-surface overflow-hidden px-6 pt-10 pb-12 sm:pt-12 sm:pb-14">
+      <EmptyState {...props} />
     </div>
+  );
+}
+
+export type NoCampsView = 'week' | 'progress' | 'camps';
+
+const NO_CAMPS: Record<NoCampsView, { art: ReactNode; title: string; body: string }> = {
+  week: {
+    art: <WeekArt />,
+    title: 'Haftan burada şekillenecek',
+    body: 'Bir kamp kurduğunda her günün görevleri, haftanın rotası ve toplam çalışma süresi burada görünür.',
+  },
+  progress: {
+    art: <ProgressArt />,
+    title: 'İlerlemen burada birikecek',
+    body: 'Görevleri işaretledikçe tamamlanan videolar, kalan çalışma süresi ve tahmini bitiş tarihi burada görünür.',
+  },
+  camps: {
+    art: <CampsArt />,
+    title: 'Henüz kamp yok',
+    body: 'Kamp, bir hedefin tamamıdır: TYT 2027 ya da İngilizce gibi. Her kampın kendi branşları, tarihleri ve temposu olur.',
+  },
+};
+
+/** Empty state for the views other than the day plan, before the first camp. */
+export function NoCampsYet({ view, onAddCamp, onStartDemo }: Props & { view: NoCampsView }) {
+  const { art, title, body } = NO_CAMPS[view];
+  return (
+    <EmptyPage
+      art={art}
+      title={title}
+      footnote={DEMO_NOTE}
+      actions={
+        <>
+          <button type="button" className="btn btn-primary" onClick={onAddCamp}>
+            <Plus aria-hidden="true" />
+            Kamp kur
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={onStartDemo}>
+            <Eye aria-hidden="true" />
+            Demo ile göz at
+          </button>
+        </>
+      }
+    >
+      {body}
+    </EmptyPage>
+  );
+}
+
+/** The open camp has no branch yet. */
+export function NoBranchesYet({ onAddBranches }: { onAddBranches: () => void }) {
+  return (
+    <EmptyPage
+      art={<BranchesArt />}
+      title="Bu kampta henüz branş yok"
+      actions={
+        <button type="button" className="btn btn-primary" onClick={onAddBranches}>
+          <Plus aria-hidden="true" />
+          Branş ekle
+        </button>
+      }
+    >
+      Bir oynatma listesi ekle; her liste bir branş olur ve plan kendiliğinden kurulur.
+    </EmptyPage>
+  );
+}
+
+/** "Tüm Kamplar" before any camp has a video. `campName`: the open camp, offered for adding branches. */
+export function NoCampVideos({ campName, onAddBranches, onOpenCamps }: { campName?: string; onAddBranches: () => void; onOpenCamps: () => void }) {
+  return (
+    <EmptyPage
+      art={<BranchesArt />}
+      title="Kamplarında henüz video yok"
+      actions={
+        <>
+          {campName && (
+            <button type="button" className="btn btn-primary" onClick={onAddBranches}>
+              <Plus aria-hidden="true" />“{campName}” kampına branş ekle
+            </button>
+          )}
+          <button type="button" className="btn btn-secondary" onClick={onOpenCamps}>
+            Kamplara git
+          </button>
+        </>
+      }
+    >
+      Tüm Kamplar, video içeren kampları tarihe göre birlikte gösterir. Bir kampa branş ekle; o kamp kendi temposuyla buraya katılır.
+    </EmptyPage>
   );
 }

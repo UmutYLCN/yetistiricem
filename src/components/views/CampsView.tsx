@@ -100,7 +100,7 @@ export function CampsView({
       />
 
       {allCamps.length === 0 || !activeCamp ? (
-        <NoCampsYet onAddCamp={onAddCamp} onStartDemo={onStartDemo} />
+        <NoCampsYet view="camps" onAddCamp={onAddCamp} onStartDemo={onStartDemo} />
       ) : (
         <>
           <ul className="mb-8 grid gap-3 sm:grid-cols-2" aria-label="Kampların">

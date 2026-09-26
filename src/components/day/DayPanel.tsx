@@ -9,6 +9,8 @@ import type { CampInfo, DaySummary } from '../../lib/planView';
 import { groupByBranch } from '../../lib/planView';
 import { linkStateOf } from '../../lib/camps';
 import { Meter } from '../ui/Bits';
+import type { EmptyTone } from '../ui/EmptyState';
+import { EmptyState } from '../ui/EmptyState';
 import { CampDayTypeRows } from './CampDayTypes';
 import { TaskItem } from './TaskItem';
 
@@ -31,14 +33,23 @@ interface Props {
   campLabels?: Map<string, CampLabel>;
 }
 
-function EmptyDay({ icon, title, body, action }: { icon: ReactNode; title: string; body: string; action?: ReactNode }) {
+function EmptyDay({
+  icon,
+  tone,
+  title,
+  body,
+  action,
+}: {
+  icon: ReactNode;
+  tone?: EmptyTone;
+  title: string;
+  body: string;
+  action?: ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center px-6 py-12 text-center">
-      <span className="mb-3 flex size-11 items-center justify-center rounded-full bg-sunk text-ink-2">{icon}</span>
-      <p className="font-display text-[19px] text-ink">{title}</p>
-      <p className="mt-1 max-w-sm text-[14px] text-ink-2">{body}</p>
-      {action && <div className="mt-4">{action}</div>}
-    </div>
+    <EmptyState className="overflow-hidden px-6 pt-14 pb-14" icon={icon} tone={tone} title={title} actions={action}>
+      {body}
+    </EmptyState>
   );
 }
 
@@ -174,6 +185,7 @@ export function DayPanel({
     body = (
       <EmptyDay
         icon={<Flag className="size-5" aria-hidden="true" />}
+        tone="accent"
         title="Deneme ve dinlenme günü"
         body="Bu gün hiçbir kampında video yok. Deneme günü olan kampın için bir deneme çöz; diğerlerinde dinlen."
       />
@@ -194,6 +206,7 @@ export function DayPanel({
     body = (
       <EmptyDay
         icon={<Flag className="size-5" aria-hidden="true" />}
+        tone="accent"
         title="Deneme günü"
         body="Bugün video yok. Bir deneme çöz, yanlışlarını analiz et ve not al."
       />
@@ -202,6 +215,7 @@ export function DayPanel({
     body = (
       <EmptyDay
         icon={<CircleCheck className="size-5" aria-hidden="true" />}
+        tone="forest"
         title="Bu günün branşları bitti"
         body="Bu güne yerleştirdiğin branşların videoları tamamlandı. Diğer branşlar kendi günlerinde devam ediyor."
       />
@@ -251,6 +265,7 @@ export function DayPanel({
     body = (
       <EmptyDay
         icon={<CircleCheck className="size-5" aria-hidden="true" />}
+        tone="forest"
         title={allCamps ? 'Planların bu tarihten önce bitiyor' : 'Planın bu tarihten önce bitiyor'}
         body={lastDate ? `Son görevlerin ${formatLongDate(lastDate)} tarihinde. Yeni branş ekleyerek planı uzatabilirsin.` : ''}
       />
