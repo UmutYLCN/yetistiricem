@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRightLeft, ChevronDown, ExternalLink, Gauge, ListVideo, Pencil, Play, Plus, SlidersHorizontal, Trash2, TriangleAlert } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ExternalLink, Gauge, ListVideo, Pencil, Play, Plus, Share2, SlidersHorizontal, Trash2, TriangleAlert } from 'lucide-react';
 import type { StudyCamp } from '../../types';
 import type { CampInfo, PlanIndex } from '../../lib/planView';
 import { campProgress, tempoSummary } from '../../lib/planView';
@@ -29,6 +29,7 @@ interface Props {
   onSelectCamp: (campId: string) => void;
   onEditTempo: () => void;
   onRenameCamp: (campId: string) => void;
+  onShareCamp: (campId: string) => void;
   onDeleteCamp: (campId: string) => void;
   onAddBranches: () => void;
   onEditBranch: (campId: string) => void;
@@ -62,6 +63,7 @@ export function CampsView({
   onSelectCamp,
   onEditTempo,
   onRenameCamp,
+  onShareCamp,
   onDeleteCamp,
   onAddBranches,
   onEditBranch,
@@ -152,6 +154,10 @@ export function CampsView({
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => onRenameCamp(camp.id)}>
                       <Pencil aria-hidden="true" />
                       Adını değiştir
+                    </button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => onShareCamp(camp.id)} aria-haspopup="dialog">
+                      <Share2 aria-hidden="true" />
+                      Paylaş
                     </button>
                     <button
                       type="button"

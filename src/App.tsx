@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { CalendarCheck, Eye, Info, LogOut, TriangleAlert, X } from 'lucide-react';
 import type { CampSchedule, DailyPlanItem, PostponeReason, StudyCamp, SubjectPlaylist } from './types';
@@ -16,6 +16,8 @@ import {
   summarizeAllCampsDay,
 } from './lib/allCamps';
 import { addDays, buildCampSchedule, calculateStats, countCompletedVideos } from './lib/engine';
+import type { SharedCamp } from './lib/campShare';
+import { campFromShare, decodeCampShare } from './lib/campShare';
 import { classifyCamp, isLegacyKind } from './lib/camps';
 import { focusTotals, focusableVideoId, nextFocusItem } from './lib/focus';
 import { progressInsights } from './lib/insights';
@@ -31,6 +33,9 @@ import { WeekStrip } from './components/day/WeekStrip';
 import { AddVideosDialog, EditBranchDialog, EditVideoDialog } from './components/camps/CampDialogs';
 import { CampTempoDialog, RenameCampDialog } from './components/camps/CampProgramDialogs';
 import type { PostponeChoice, PostponeRequest } from './components/camps/PostponeReasonDialog';
+import type { ImportOffer } from './components/camps/ImportCampDialog';
+import { ImportCampDialog } from './components/camps/ImportCampDialog';
+import { ShareCampDialog } from './components/camps/ShareCampDialog';
 import type { FocusTarget } from './components/focus/FocusModal';
 import { FocusModal } from './components/focus/FocusModal';
 import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
@@ -61,6 +66,7 @@ type OpenDialog =
   /** Adds branches to this existing camp (fixed when the wizard opens). */
   | { kind: 'addBranches'; campId: string }
   | { kind: 'rename'; campId: string }
+  | { kind: 'share'; campId: string }
   | null;
 
 /** A shift waiting in the reason dialog; `saved` once it is stored (the dialog then shows its tip). */
@@ -81,7 +87,7 @@ function celebrate() {
   });
 }
 
-function Planner({ startInDemo }: { startInDemo: boolean }) {
+function Planner({ startInDemo, importPayload }: { startInDemo: boolean; importPayload: string | null }) {
   const today = useToday();
   const { data, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
   const notify = useToast();
@@ -93,6 +99,18 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
   const [pendingShift, setPendingShift] = useState<PendingShift | null>(null);
   /** The task playing in focus mode (its id and day in the plan shown). */
   const [focus, setFocus] = useState<{ itemId: string; date: string } | null>(null);
+  // A camp from a share link (`/app?import=…`), read once when the page opens.
+  const [importOffer, setImportOffer] = useState<ImportOffer | null>(importPayload ? { status: 'loading' } : null);
+  useEffect(() => {
+    if (!importPayload) return;
+    let cancelled = false;
+    void decodeCampShare(importPayload).then(result => {
+      if (!cancelled) setImportOffer(result.ok ? { status: 'ready', camp: result.camp } : { status: 'error', message: result.error });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [importPayload]);
 
   // The daily check of the branches' YouTube playlists (never in the demo).
   const syncEnabled = !isDemo && syncTargets(data.camps).length > 0;
@@ -438,6 +456,12 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
     notify({ message: `“${target.name}” silindi.`, tone: 'info' });
   };
 
+  const handleImportCamp = (shared: SharedCamp) => {
+    setImportOffer(null);
+    if (isDemo) actions.exitDemo();
+    handleCreateCamp(campFromShare(shared, today));
+  };
+
   const handleSaveTempo = (target: StudyCamp, next: CampSchedule) => {
     actions.setCampSchedule(target.id, next);
     notify({ message: `“${target.name}” temposu kaydedildi; plan yeniden dağıtıldı.`, tone: 'info' });
@@ -718,6 +742,7 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         onSelectCamp={scope === 'all' ? manageCamp : selectCamp}
         onEditTempo={() => openTempo()}
         onRenameCamp={campId => setDialog({ kind: 'rename', campId })}
+        onShareCamp={campId => setDialog({ kind: 'share', campId })}
         onDeleteCamp={handleDeleteCamp}
         onAddBranches={openAddBranches}
         onEditBranch={branchId => camp && setDialog({ kind: 'editBranch', campId: camp.id, branchId })}
@@ -909,6 +934,14 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
         onNext={() => nextFocus && setFocus({ itemId: nextFocus.item.id, date: nextFocus.date })}
         onClose={() => setFocus(null)}
       />
+      {dialog?.kind === 'share' && dialogCamp && <ShareCampDialog key={dialogCamp.id} camp={dialogCamp} onClose={closeDialog} />}
+      <ImportCampDialog
+        offer={importOffer}
+        today={today}
+        isDemo={isDemo}
+        onImport={handleImportCamp}
+        onClose={() => setImportOffer(null)}
+      />
       {dialog?.kind === 'editBranch' && dialogBranch && (
         <EditBranchDialog key={dialogBranch.id} camp={dialogBranch} onSave={saveBranch} onClose={closeDialog} />
       )}
@@ -923,10 +956,10 @@ function Planner({ startInDemo }: { startInDemo: boolean }) {
 }
 
 /** The planner ("Dashboard"). `startInDemo`: open the demo preview (the landing page's "Demo ile göz at"). */
-const App = ({ startInDemo = false }: { startInDemo?: boolean }) => (
+const App = ({ startInDemo = false, importPayload = null }: { startInDemo?: boolean; importPayload?: string | null }) => (
   <ToastProvider>
     <ConfirmProvider>
-      <Planner startInDemo={startInDemo} />
+      <Planner startInDemo={startInDemo} importPayload={importPayload} />
     </ConfirmProvider>
   </ToastProvider>
 );

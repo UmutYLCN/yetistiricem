@@ -15,6 +15,14 @@ export function isAppPath(pathname: string): boolean {
   return pathname === APP_PATH || pathname.startsWith(`${APP_PATH}/`);
 }
 
+const IMPORT_PARAM = 'import';
+
+/** Removes a parameter from the address bar (reloading then opens the saved plan). */
+function dropParam(url: URL, name: string) {
+  url.searchParams.delete(name);
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
 /**
  * Whether this page load asked for the demo preview. The flag is removed from
  * the address bar, so reloading opens the saved plan instead.
@@ -22,7 +30,23 @@ export function isAppPath(pathname: string): boolean {
 export function takeDemoRequest(): boolean {
   const url = new URL(window.location.href);
   if (!url.searchParams.has(DEMO_PARAM)) return false;
-  url.searchParams.delete(DEMO_PARAM);
-  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  dropParam(url, DEMO_PARAM);
   return true;
+}
+
+/**
+ * A camp share payload this page load was opened with (`/app?import=…`), or
+ * null. It leaves the address bar at once, so a reload never asks again.
+ */
+export function takeImportRequest(): string | null {
+  const url = new URL(window.location.href);
+  const payload = url.searchParams.get(IMPORT_PARAM);
+  if (payload === null) return null;
+  dropParam(url, IMPORT_PARAM);
+  return payload;
+}
+
+/** The link that opens the planner and offers the shared camp. */
+export function campImportUrl(payload: string, origin: string = window.location.origin): string {
+  return `${origin}${APP_PATH}?${IMPORT_PARAM}=${payload}`;
 }
