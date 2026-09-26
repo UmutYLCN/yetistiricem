@@ -30,12 +30,13 @@ function usePersist(key: string, value: unknown, onFail: () => void, serialize: 
 
 const serializeCamps = (camps: unknown) => campStore(camps as StudyCamp[]);
 
-export function usePlanner(today: string) {
+/** `startInDemo`: open with the demo preview; the saved data still loads underneath. */
+export function usePlanner(today: string, { startInDemo = false }: { startInDemo?: boolean } = {}) {
   const [state, setState] = useState<StoreState>(() => {
     const initial = loadPlannerOnce();
     return {
       real: initial.data,
-      demo: null,
+      demo: startInDemo ? buildDemoData(today) : null,
       realSelected: initial.selectedDate,
       demoSelected: today,
       realScope: initial.campScope,

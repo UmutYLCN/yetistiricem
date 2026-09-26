@@ -1,5 +1,5 @@
 import { Eye, Plus } from 'lucide-react';
-import { BrandMark } from '../layout/Navigation';
+import { BrandMark } from '../ui/BrandMark';
 
 interface Props {
   onAddCamp: () => void;

@@ -41,6 +41,8 @@ npm start için önce npm run build çalıştır. Varsayılan adres 127.0.0.1:30
 
 Pages yapılandırması `wrangler.jsonc` içinde; Node build sürümü `.nvmrc` ile sabitlenir. Pages build ayarları `npm run build` komutunu ve `dist` çıktı klasörünü kullanır. Üretim `main` dalındaki GitHub commit’lerinden otomatik yayınlanır.
 
+Planlayıcı `/app` adresinde çalışır ve bu yol için ayrı bir dosya yoktur. Pages, çıktının kökünde `404.html` bulunmadığı sürece bilinmeyen yolları `index.html` ile yanıtlar; `public/` içine `404.html` ekleme, yoksa `/app` açılmaz. `npm start` sunucusu ve Vite de aynı şekilde uygulama kabuğunu döndürür.
+
 Oynatma listesi servisi Pages Function olarak `functions/api/youtube/playlist.ts` içinde çalışır ve aynı doğrulama/API kodunu `server/` ile paylaşır. `public/_routes.json` yalnızca `/api/youtube/playlist` yolunu Function’a yönlendirir; diğer istekler statik dosya olarak sunulur.
 
 Cloudflare Pages projesinin Production ortamında `YOUTUBE_API_KEY` adında gizli bir secret tanımla. Preview dağıtımlarında YouTube içe aktarımı kullanılacaksa Preview ortamına da ayrı ayrı ekle. Anahtarı `vars` alanına, GitHub’a veya tarayıcıya koyma. `npm run pages:dev` ile yerelde Pages Function davranışını deneyebilirsin; yerel denemede gizli değişkeni `.dev.vars` içine koy ve dosyayı commit etme.

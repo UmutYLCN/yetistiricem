@@ -357,7 +357,7 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, onShift
                       value={week.done}
                       max={week.planned}
                       label={`${formatShortDate(week.monday)} haftası`}
-                      color={past && week.done < week.planned ? '#c85d1c' : undefined}
+                      color={past && week.done < week.planned ? 'var(--color-accent)' : undefined}
                     />
                     <span className="tnum text-right text-[13px] text-ink-2">
                       <span className="font-semibold text-ink">{week.done}</span>/{week.planned}

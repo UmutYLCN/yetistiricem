@@ -91,7 +91,7 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
                 className="flex size-8 items-center justify-center rounded-full"
                 style={{ background: color.solid, boxShadow: selected ? `0 0 0 2px var(--color-card), 0 0 0 4px ${color.solid}` : undefined }}
               >
-                {selected && <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />}
+                {selected && <Check className="size-4 text-on-fill" strokeWidth={3} aria-hidden="true" />}
               </button>
             );
           })}

@@ -57,14 +57,14 @@ function celebrate() {
     spread: 65,
     startVelocity: 32,
     origin: { y: 0.75 },
-    colors: ['#1f5a43', '#e0782f', '#34496b', '#e2ede6'],
+    colors: ['#3ecf8e', '#ff8a3d', '#8fa0f8', '#f4f5f6'],
     disableForReducedMotion: true,
   });
 }
 
-function Planner() {
+function Planner({ startInDemo }: { startInDemo: boolean }) {
   const today = useToday();
-  const { data, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today);
+  const { data, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
   const notify = useToast();
   const confirm = useConfirm();
   const [view, setView] = useState<View>('today');
@@ -402,6 +402,7 @@ function Planner() {
     ? summarizeAllCampsDay(selectedDate, allPlan.index, allPlan.camps.map(s => s.result.preferences))
     : summarizeDay(selectedDate, index, prefs);
   const isToday = selectedDate === today;
+  const hasOverdue = index.overdue.length > 0;
   const firstStart = allPlan ? (shownCamps.map(s => s.result.preferences.startDate).sort()[0] ?? prefs.startDate) : prefs.startDate;
   // "Tüm Kamplar" before any camp has a video: nothing to combine yet.
   const noPlansInCamps = (title: string) => (
@@ -449,7 +450,7 @@ function Planner() {
     ) : noCampPlans ? (
       noPlansInCamps('Bugün')
     ) : (
-      <div className="grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className={`grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_320px] ${hasOverdue ? 'xl:grid-rows-[auto_auto_1fr]' : ''}`}>
         <div className="min-w-0">
           <PageHeader
             eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(selectedDate, today)}</span>}
@@ -465,14 +466,15 @@ function Planner() {
             }
           />
         </div>
-        {/* After the title below xl; from xl beside it, above the summary column. */}
+        {/* After the title below xl; from xl the first card of the summary column, level with the week strip. */}
         <OverdueCard
-          className="min-w-0 xl:col-start-2 xl:row-start-1 xl:self-start"
+          className="min-w-0 xl:col-start-2 xl:row-start-2 xl:self-start"
           count={index.overdue.length}
           today={today}
           onShift={() => handleShift(addDays(today, -1))}
         />
-        <div className="min-w-0 space-y-4 xl:col-start-1 xl:row-start-2">
+        {/* Spans the overdue card's row too, so the card never pushes the week strip down. */}
+        <div className={`min-w-0 space-y-4 xl:col-start-1 xl:row-start-2 ${hasOverdue ? 'xl:row-span-2' : ''}`}>
           <WeekStrip days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
           <DayPanel
             summary={summary}
@@ -489,8 +491,11 @@ function Planner() {
             campLabels={campLabels}
           />
         </div>
-        {/* Side by side under the day below xl; from xl a column that starts level with the week strip. */}
-        <aside aria-label="Özet" className="mt-2 grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:col-start-2 xl:row-start-2 xl:mt-0 xl:grid-cols-1">
+        {/* Side by side under the day below xl; from xl a column level with the week strip, under the overdue card if any. */}
+        <aside
+          aria-label="Özet"
+          className={`mt-2 grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:col-start-2 xl:mt-0 xl:grid-cols-1 ${hasOverdue ? 'xl:row-start-3' : 'xl:row-start-2'}`}
+        >
           <ProgressCard
             stats={stats}
             prefs={prefs}
@@ -743,10 +748,11 @@ function Planner() {
   );
 }
 
-const App = () => (
+/** The planner ("Dashboard"). `startInDemo`: open the demo preview (the landing page's "Demo ile göz at"). */
+const App = ({ startInDemo = false }: { startInDemo?: boolean }) => (
   <ToastProvider>
     <ConfirmProvider>
-      <Planner />
+      <Planner startInDemo={startInDemo} />
     </ConfirmProvider>
   </ToastProvider>
 );

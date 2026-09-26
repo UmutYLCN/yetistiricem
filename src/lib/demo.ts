@@ -1,8 +1,8 @@
 import type { StudyCamp } from '../types';
-import { DEMO_TEMPLATES, cloneTemplate } from '../data/demoTemplates';
+import { DEMO_TEMPLATES, cloneTemplate } from '../data/demoTemplates.ts';
 import type { PlannerData } from './persistence';
-import { addDays, buildCampSchedule } from './engine';
-import { defaultSchedule } from './studyCamp';
+import { addDays, buildCampSchedule } from './engine.ts';
+import { defaultSchedule } from './studyCamp.ts';
 
 const DEMO_TEMPLATE_IDS = ['demo-tyt-matematik', 'demo-tyt-fizik', 'demo-tyt-turkce'];
 

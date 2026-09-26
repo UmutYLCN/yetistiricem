@@ -21,7 +21,8 @@ flowchart LR
 
 ## Uygulama katmanları
 
-- **Arayüz:** `src/App.tsx` navigasyon ve kullanıcı işlemlerini düzenler. Sayfalar `src/components/` altında; plan durumu `src/hooks/usePlanner.ts` tarafından yüklenip güncellenir.
+- **Sayfalar:** Tek pakette iki sayfa var. `src/Root.tsx` adrese göre seçer: `/` tanıtım sayfası (`src/components/landing/`), `/app` planlayıcı (“Dashboard”, `src/App.tsx`); her sayfa kendi kod parçasını yükler. Aralarındaki bağlantılar tam sayfa yüklemesidir, istemci tarafı yönlendirme kullanılmaz: `loadPlannerOnce` depolamayı sayfa başına bir kez okur, aynı sayfada ikinci kez açılan planlayıcı eski veriyi gösterip kaydederdi. `/app?demo` planlayıcıyı demo önizlemeyle açar (`src/lib/routes.ts`). Tanıtım sayfasındaki ürün görselleri uygulamanın kendi bileşenleridir; `src/lib/landingPreview.ts` demo kampını gerçek motordan geçirir.
+- **Arayüz:** `src/App.tsx` navigasyon ve kullanıcı işlemlerini düzenler. Sayfalar `src/components/` altında; plan durumu `src/hooks/usePlanner.ts` tarafından yüklenip güncellenir. Tema yalnızca koyudur; renkler `src/index.css` içindeki rol adlı token’lardan gelir (`paper` sayfa zemini, `card`/`sunk` yüzeyler, `ink` metin, `on-fill` parlak dolgular üstündeki metin).
 - **Planlama:** Arayüzün motor, tarih ve depolama yardımcılarına giriş noktası `src/lib/engine.ts`’tir. Asıl takvim kuralları `src/utils/roadmapEngine.ts` içindedir.
 - **Kamp işlemleri:** Kamp/branş güncellemeleri `src/lib/plannerOps.ts` üzerinden yapılır; kamp sihirbazı taslağı `src/lib/campDraft.ts` içindedir.
 - **Birleşik görünüm:** `src/lib/allCamps.ts`, her kampı kendi ayarlarıyla ayrı ayrı planlar ve `mergeDailyPlans` ile sonuçları tarihe göre birleştirir. Birleştirme planları yeniden dağıtmaz. Kaydırma olayları görevin ait olduğu kampta tutulur.

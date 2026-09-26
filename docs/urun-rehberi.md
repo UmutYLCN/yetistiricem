@@ -25,6 +25,8 @@ Kamp sihirbazı sırayla kaynakları, kamp bilgilerini, çalışma ritmini ve pl
 
 ## Ekranlar
 
+Site ana sayfada (`/`) ürünü tanıtır. **Dashboard** düğmesi planlayıcıyı (`/app`) açar; **Demo ile göz at** aynı ekranı örnek bir kampla açar. Planlayıcıda sol üstteki logo ana sayfaya döner.
+
 - **Bugün:** Seçili günün görevleri, günün tahmini çalışma süresi ve haftanın kısa görünümü.
 - **Haftalık:** Hafta rotası ve gün kartları. Kartları yatay kaydırarak haftanın tamamını görebilir, görevleri buradan işaretleyebilirsin.
 - **İlerleme:** Tamamlanan videolar, kalan çalışma, tahmini bitiş, hedef tarih durumu ve kamp/branş bazında ilerleme.

@@ -87,42 +87,37 @@ export function WeekStrip({ days, selectedDate, today, onSelect }: Props) {
               onClick={() => onSelect(day.date)}
               onKeyDown={event => move(event, day.date)}
               className={`relative flex min-h-[78px] min-w-0 flex-col items-center justify-start gap-1 rounded-[11px] px-0.5 pt-2 pb-2 transition-colors ${
-                selected ? 'bg-ink text-white' : 'hover:bg-sunk'
+                selected ? 'bg-ink text-on-fill' : 'hover:bg-sunk'
               }`}
             >
               <span
                 className={`text-[11px] font-semibold tracking-wide uppercase ${
-                  selected ? 'text-white/75' : isToday ? 'text-accent' : 'text-ink-3'
+                  selected ? 'text-on-fill/65' : isToday ? 'text-accent' : 'text-ink-3'
                 }`}
               >
                 {SHORT_WEEKDAYS[dayOfWeek(day.date)]}
               </span>
-              <span className={`font-display tnum text-[21px] leading-none ${selected ? 'text-white' : 'text-ink'}`}>
+              <span className={`font-display tnum text-[21px] leading-none ${selected ? 'text-on-fill' : 'text-ink'}`}>
                 {Number(day.date.slice(8))}
               </span>
               <span className="flex h-3.5 items-center" aria-hidden="true">
                 {day.kind === 'rest' ? (
-                  <Moon className={`size-3 ${selected ? 'text-white/70' : 'text-ink-3'}`} />
+                  <Moon className={`size-3 ${selected ? 'text-on-fill/60' : 'text-ink-3'}`} />
                 ) : day.kind === 'mock' ? (
-                  <Flag className={`size-3 ${selected ? 'text-white/80' : 'text-accent'}`} />
+                  <Flag className={`size-3 ${selected ? 'text-on-fill/70' : 'text-accent'}`} />
                 ) : allDone ? (
-                  <Check className={`size-3.5 ${selected ? 'text-[#9fd3b6]' : 'text-forest'}`} strokeWidth={3} />
+                  <Check className={`size-3.5 ${selected ? 'text-on-fill' : 'text-forest'}`} strokeWidth={3} />
                 ) : day.total > 0 ? (
-                  <span className={`block h-1 w-6 overflow-hidden rounded-full ${selected ? 'bg-white/25' : 'bg-sunk'}`}>
+                  <span className={`block h-1 w-6 overflow-hidden rounded-full ${selected ? 'bg-on-fill/15' : 'bg-line-strong'}`}>
                     <span
-                      className={`block h-full rounded-full ${selected ? 'bg-white' : 'bg-forest'}`}
+                      className={`block h-full rounded-full ${selected ? 'bg-on-fill' : 'bg-forest'}`}
                       style={{ width: `${(day.done / day.total) * 100}%` }}
                     />
                   </span>
                 ) : null}
               </span>
               {isToday && !selected && <span className="absolute bottom-1 h-[3px] w-4 rounded-full bg-accent" aria-hidden="true" />}
-              {overdue && (
-                <span
-                  className={`absolute top-1.5 right-1.5 size-1.5 rounded-full ${selected ? 'bg-[#ffb07a]' : 'bg-accent'}`}
-                  aria-hidden="true"
-                />
-              )}
+              {overdue && <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-accent" aria-hidden="true" />}
             </button>
           );
         })}

@@ -1,6 +1,6 @@
 import type { SubjectPlaylist } from '../types';
-import { newId } from '../lib/camps';
-import { defaultColorKey } from '../lib/subjects';
+import { newId } from '../lib/camps.ts';
+import { defaultColorKey } from '../lib/subjects.ts';
 
 // Built-in demo templates: a sample order of TYT topics per subject.
 //

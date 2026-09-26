@@ -52,18 +52,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toast && (
           <div
             key={toast.id}
-            className="toast-enter pointer-events-auto flex w-full max-w-[420px] items-center gap-3 rounded-[14px] bg-ink py-2.5 pr-2 pl-4 text-[14px] text-white shadow-[var(--shadow-pop)]"
+            className="toast-enter pointer-events-auto flex w-full max-w-[420px] items-center gap-3 rounded-[14px] bg-sunk py-2.5 pr-2 pl-4 text-[14px] text-ink shadow-[var(--shadow-pop)]"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             onFocus={() => setPaused(true)}
             onBlur={() => setPaused(false)}
           >
-            <Icon className="size-4 shrink-0 text-[#9fd3b6]" aria-hidden="true" />
+            <Icon className="size-4 shrink-0 text-forest" aria-hidden="true" />
             <p className="min-w-0 flex-1 leading-snug">{toast.message}</p>
             {toast.actionLabel && toast.onAction && (
               <button
                 type="button"
-                className="rounded-lg px-3 py-2 text-[13px] font-semibold text-[#ffc59c] hover:bg-white/10"
+                className="rounded-lg px-3 py-2 text-[13px] font-semibold text-accent-strong hover:bg-ink/10"
                 onClick={() => {
                   toast.onAction?.();
                   setToast(null);
@@ -74,7 +74,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             )}
             <button
               type="button"
-              className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white"
+              className="rounded-lg p-2 text-ink-3 hover:bg-ink/10 hover:text-ink"
               onClick={() => setToast(null)}
               aria-label="Bildirimi kapat"
             >

@@ -10,6 +10,8 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Data truth: never invent videos, links, durations or channel names. Video data comes from the user or from the server-side playlist endpoint (`server/`, YouTube Data API v3; contract in `src/utils/youtubePlaylist.ts`, setup in README). Demo templates (`src/data/demoTemplates.ts`) are labelled and link-free; old fabricated camps are detected in `src/lib/camps.ts`.
 - `YOUTUBE_API_KEY` is server-only: never give it a `VITE_` prefix, read it in `src/`, or echo it or upstream error text in endpoint responses. `tests/keySecrecy.test.ts` builds the bundle to check. The endpoint accepts only a validated playlist id, never a URL.
 - Modals go through `src/components/ui/Dialog.tsx` (native `<dialog>`: focus trap, Escape, focus return) and confirmations through `useConfirm`.
+- Two pages, one bundle: `/` landing (`src/components/landing/`), `/app` planner; `src/Root.tsx` picks by path, `src/lib/routes.ts` has the paths and `/app?demo`. Links between them stay full page loads, never client-side routing: `loadPlannerOnce` caches storage per page load, so a remounted planner would show and save stale data. Never add `public/404.html`: Cloudflare Pages then drops the SPA fallback that serves `/app`.
+- Dark theme only. Colors come from the role tokens in `src/index.css` (`paper` page, `card`/`sunk` surfaces, `ink*` text, `on-fill` on bright fills), never raw hex in components. The landing's product shots are the app's own components fed by `buildLandingPreview` (demo camp through the real engine), rendered `inert`.
 
 ## Maintaining this file
 

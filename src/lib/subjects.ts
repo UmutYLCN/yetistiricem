@@ -1,6 +1,7 @@
 // Subject colours. Camps store a palette key in `colorTag`; camps saved by
 // older versions store a Tailwind class such as `bg-indigo-500`, which is
-// mapped to the closest palette entry here.
+// mapped to the closest palette entry here. The values suit the dark theme:
+// `solid` reads as text on cards (AA) and carries a dark check mark.
 
 export interface SubjectColor {
   key: string;
@@ -12,15 +13,15 @@ export interface SubjectColor {
 }
 
 export const PALETTE: SubjectColor[] = [
-  { key: 'ink', label: 'Mürekkep', solid: '#34496b', soft: '#e6ebf2' },
-  { key: 'forest', label: 'Orman', solid: '#2e6b4f', soft: '#e3eee7' },
-  { key: 'clay', label: 'Kil', solid: '#b35a35', soft: '#f5e5dc' },
-  { key: 'ochre', label: 'Hardal', solid: '#9c7414', soft: '#f3ead3' },
-  { key: 'plum', label: 'Mürdüm', solid: '#76507a', soft: '#efe6f0' },
-  { key: 'teal', label: 'Petrol', solid: '#2c7473', soft: '#dfeeed' },
-  { key: 'rose', label: 'Gül', solid: '#a14d5c', soft: '#f4e3e6' },
-  { key: 'olive', label: 'Zeytin', solid: '#687529', soft: '#ebeedb' },
-  { key: 'slate', label: 'Arduvaz', solid: '#5c6970', soft: '#e7ebed' },
+  { key: 'ink', label: 'Mürekkep', solid: '#8fa0f8', soft: '#212432' },
+  { key: 'forest', label: 'Orman', solid: '#6fcf8a', soft: '#1c2b23' },
+  { key: 'clay', label: 'Kil', solid: '#f2916c', soft: '#2f221f' },
+  { key: 'ochre', label: 'Hardal', solid: '#e3b341', soft: '#2d2719' },
+  { key: 'plum', label: 'Mürdüm', solid: '#cc9ae6', soft: '#292330' },
+  { key: 'teal', label: 'Petrol', solid: '#3cc6c0', soft: '#15292a' },
+  { key: 'rose', label: 'Gül', solid: '#f58ea7', soft: '#2f2227' },
+  { key: 'olive', label: 'Zeytin', solid: '#b3c46a', soft: '#26291e' },
+  { key: 'slate', label: 'Arduvaz', solid: '#9aa5b1', soft: '#222528' },
 ];
 
 const BY_KEY = new Map(PALETTE.map(c => [c.key, c]));

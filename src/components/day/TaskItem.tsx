@@ -22,7 +22,7 @@ interface Props {
 export function TaskItem({ item, camp, oversized, onToggle, onEditLink, compact = false, showCamp = true, campName }: Props) {
   const checkId = useId();
   const metaId = useId();
-  const color = camp?.color.solid ?? '#5c6970';
+  const color = camp?.color.solid ?? 'var(--color-ink-3)';
   const linkState = linkStateOf(item.videoUrl, camp?.kind ?? 'manual');
   const study = item.effectiveMinutes;
   const differs = Math.abs(study - item.durationMinutes) >= 1;
