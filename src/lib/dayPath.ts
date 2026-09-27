@@ -1,4 +1,4 @@
-import type { DailyPlanItem } from '../types';
+import type { DailyPlanItem } from '../types/index.ts';
 import type { DaySummary } from './planView.ts';
 import { groupByBranch } from './planView.ts';
 

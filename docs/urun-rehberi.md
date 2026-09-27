@@ -1,8 +1,8 @@
 # Ürün ve kullanım rehberi
 
-## Yetiştiricem ne işe yarar?
+## Yetişir ne işe yarar?
 
-Yetiştiricem, video derslerden oluşan bir çalışma hedefini günlük bir programa dönüştürür. Derslerin süresini, izleme hızını ve kullanıcının belirlediği çalışma temposunu hesaba katar; neyin bugün yapılacağını ve hedefe ne kadar kaldığını gösterir.
+*Panik yok, yetişir.* Yetişir, video derslerden oluşan bir çalışma hedefini günlük bir programa dönüştürür. Derslerin süresini, izleme hızını ve kullanıcının belirlediği çalışma temposunu hesaba katar; neyin bugün yapılacağını ve hedefe ne kadar kaldığını gösterir.
 
 Uygulama; üniversite sınavına hazırlık gibi büyük hedeflerin yanı sıra İngilizce veya başka bir konuda sürdürülen çalışma kamplarını da destekler.
 
@@ -44,12 +44,12 @@ Bir kamp için pazar deneme günü iken diğeri çalışıyorsa, çalışan kamp
 
 ## Görevleri tamamlama ve ileri taşıma
 
-Bir videoyu tamamlandı diye işaretlemek görevi başka güne taşımaz; işaretini geri alabilirsin. Geride kalanları ileri taşımayı seçtiğinde, yalnızca tamamlanmamış görevler sonraki uygun çalışma günlerine gider. Birleşik görünümde taşıma her görevin ait olduğu kampın planına kaydedilir.
+Bir videoyu tamamlandı diye işaretlemek görevi başka güne taşımaz; işaretini geri alabilirsin. Geride kalanlar için “Ritmi güncelle”yi seçtiğinde, yalnızca tamamlanmamış görevler sonraki uygun çalışma günlerine gider. Birleşik görünümde taşıma her görevin ait olduğu kampın planına kaydedilir.
 
 Hedef bitiş tarihi programı sıkıştırmaz. Program bu tarihe yetişmiyorsa uygulama durumu gösterir ve günlük çalışma süresini artırmaya yönelik bir öneri sunabilir.
 
 ## Veriler ve sınırlar
 
-Hesap oluşturmak gerekmez. Kamplar ve ilerleme kullandığın tarayıcıda saklanır; farklı tarayıcılar veya cihazlar arasında kendiliğinden eşitlenmez. Ayarlar’dan yedek alıp başka bir tarayıcıya aktarabilirsin.
+Planı kullanmak için e-posta ve şifreyle hesap açarsın; demoya hesapsız göz atabilirsin. Kamplar, ilerleme ve notlar hesabına kaydedilir ve giriş yaptığın her cihazda açılır. Ayarlar’dan yedek dosyası da indirebilirsin. Keşfet’ten ya da bir paylaşım linkinden eklediğin kamplar başkasının emeğidir; bunları kendi adınla yayınlayamazsın.
 
 Oynatma listesi içe aktarma herkese açık ve liste dışı listeleri destekler. Özel listeler için YouTube hesabıyla OAuth girişi bu sürümde bulunmaz. Elle eklenen konular bağlantısız başlar; video bağlantısını sonra plandaki “Bağlantı ekle” ile ekleyebilirsin. Demo kampının konuları da bağlantısız örneklerdir.

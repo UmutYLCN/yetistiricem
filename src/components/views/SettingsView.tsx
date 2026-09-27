@@ -138,7 +138,7 @@ export function SettingsView({ account, onRename, onSignOut, isDemo, campCount, 
             <div className="min-w-0 flex-1">
               <p className="font-medium text-danger">Tüm verileri sıfırla</p>
               <p className="text-[13px] text-ink-2">
-                {campCount > 0 ? `${campCount} kamp, ilerlemen ve notların silinir.` : 'Bu tarayıcıdaki tüm kayıtlar silinir.'} Geri
+                {campCount > 0 ? `${campCount} kamp, ilerlemen ve notların silinir.` : 'Hesabındaki tüm kayıtlar silinir.'} Geri
                 alınamaz.
               </p>
             </div>
@@ -161,7 +161,7 @@ export function SettingsView({ account, onRename, onSignOut, isDemo, campCount, 
           Bir oynatma listesi ya da video bağlantısı yapıştırdığında videoların adları ve süreleri sunucu üzerinden YouTube Data API
           ile okunur; YouTube dışındaki dersleri konu ve süreyle elle ekleyebilirsin. Hiçbir video, bağlantı ya da süre uydurulmaz. Her liste kampında bir branş
           olur. Plan, kampın temposuna göre (otomatik ya da senin gün gün seçtiğin branşlarla) videoları liste sırasıyla günlere
-          böler. Bir görevi işaretlemek planı kaydırmaz; geride kalanları yalnızca sen “ileri taşı” dediğinde yeniden dağıtır.
+          böler. Bir görevi işaretlemek planı kaydırmaz; geride kalanları yalnızca sen “Ritmi güncelle” dediğinde yeniden dağıtır.
         </p>
       </section>
     </div>

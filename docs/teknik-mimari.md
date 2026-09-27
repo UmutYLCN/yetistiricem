@@ -2,7 +2,7 @@
 
 ## Genel görünüm
 
-Arayüz ile YouTube hizmeti aynı uygulamada çalışır. Kamp planı ve ilerleme tarayıcıda saklanır; sunucu yalnızca oynatma listesi ve video bağlantısı içe aktarım isteklerini ve YouTube API çağrılarını işler.
+Arayüz ile YouTube hizmeti aynı uygulamada çalışır. Kamp planı ve ilerleme hesaba (Supabase `planner_states`, bkz. [kesfet.md](kesfet.md)) kaydedilir; tarayıcı `localStorage` içinde çalışan bir kopya tutar. Sunucu oynatma listesi ve video içe aktarım isteklerini, YouTube API çağrılarını ve yapay zekâ araçları için MCP uç noktasını ([mcp.md](mcp.md)) işler.
 
 ~~~mermaid
 flowchart LR

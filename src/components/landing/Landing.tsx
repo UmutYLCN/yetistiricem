@@ -18,7 +18,7 @@ import type { LandingPreview } from '../../lib/landingPreview';
 import { buildLandingPreview } from '../../lib/landingPreview';
 import { hasSavedSignIn } from '../../lib/authKey';
 import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
-import { BrandMark } from '../ui/BrandMark';
+import { BrandMark, Wordmark } from '../ui/BrandMark';
 import { Features } from './Features';
 import { ProductPreview } from './ProductPreview';
 
@@ -63,7 +63,7 @@ const FAQ = [
   },
   {
     q: 'Verilerim başka cihazla eşitlenir mi?',
-    a: 'Kendiliğinden eşitlenmez. Ayarlar’dan yedek indirip başka bir tarayıcıda geri yükleyebilirsin.',
+    a: 'Evet. Kampların, ilerlemen ve notların hesabına kaydedilir; hangi cihazdan giriş yaparsan yap planın seninle. İstersen Ayarlar’dan yedeğini dosya olarak da indirebilirsin.',
   },
   {
     q: 'Hangi oynatma listelerini içe aktarabilirim?',
@@ -75,7 +75,7 @@ const FAQ = [
   },
   {
     q: 'Hedef tarihime yetişemezsem?',
-    a: 'Hedef bitiş tarihi programı sıkıştırmaz. Program bu tarihe yetişmiyorsa Yetiştiricem durumu gösterir ve günlük çalışma süreni artırmayı önerebilir.',
+    a: 'Hedef bitiş tarihi programı sıkıştırmaz. Program bu tarihe yetişmiyorsa Yetişir durumu gösterir ve günlük çalışma süreni artırmayı önerebilir.',
   },
   {
     q: 'Sadece sınav hazırlığı için mi?',
@@ -97,9 +97,9 @@ function SiteHeader({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-8 px-4 sm:px-6">
-        <a href={LANDING_PATH} className="flex shrink-0 items-center gap-2.5 rounded-[10px]" aria-label="Yetiştiricem ana sayfası">
+        <a href={LANDING_PATH} className="flex shrink-0 items-center gap-2.5 rounded-[10px]" aria-label="Yetişir ana sayfası">
           <BrandMark size={28} />
-          <span className="text-[15.5px] font-semibold tracking-[-0.015em] text-ink">Yetiştiricem</span>
+          <Wordmark className="text-[16px]" />
         </a>
         <nav aria-label="Sayfa bölümleri" className="hidden md:block">
           <ul className="flex items-center gap-1">
@@ -138,13 +138,13 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
           <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
         </a>
         <h1 id="hero-title" className="hero-title text-gradient mx-auto mt-7">
-          Planını kur,
+          Panik yok,
           <br />
-          her gün biraz yetiştir.
+          yetişir.
         </h1>
         <p className="mx-auto mt-6 max-w-[640px] text-[17px] leading-relaxed text-ink-2 sm:text-[19px]">
-          Yetiştiricem, YouTube oynatma listelerindeki ders videolarını günlük çalışma süreni aşmayacak şekilde günlere böler. Bugün ne
-          çalışacağını ve hedefe ne kadar kaldığını tek ekranda görürsün.
+          YouTube ders videolarını günlük ritmine göre dağıt; bugün ne izleyeceğini düşünme, hedefine tam vaktinde ulaş. Günlük süreni ve
+          izleme hızını gir, Yetişir ne zaman biteceğini gün gün hesaplasın.
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={APP_PATH} className="btn btn-primary btn-lg group">
@@ -303,9 +303,9 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
         <div className="max-w-[320px]">
           <div className="flex items-center gap-2.5">
             <BrandMark size={26} />
-            <span className="text-[15px] font-semibold tracking-[-0.015em] text-ink">Yetiştiricem</span>
+            <Wordmark className="text-[15.5px]" />
           </div>
-          <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">Ders videolarını günlük plana dönüştüren çalışma planlayıcı.</p>
+          <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">Panik yok, yetişir. Ders videolarını günlük ritmine göre dağıtan çalışma planlayıcı.</p>
         </div>
         <nav aria-label="Alt menü">
           <ul className="flex flex-wrap gap-x-8 gap-y-3 text-[13.5px] text-ink-2">
@@ -330,7 +330,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
         </nav>
       </div>
       <div className="mx-auto max-w-[1200px] border-t border-line/70 px-4 py-6 text-[12.5px] text-ink-3 sm:px-6">
-        © {new Date().getFullYear()} Yetiştiricem · Kampların ve ilerlemen yalnızca tarayıcında saklanır.
+        © {new Date().getFullYear()} Yetişir · Bugünün adımını at, gerisi yetişir.
       </div>
     </footer>
   );

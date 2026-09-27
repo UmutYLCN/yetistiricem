@@ -1,4 +1,4 @@
-import type { SubjectPlaylist, Video } from '../types';
+import type { SubjectPlaylist, Video } from '../types/index.ts';
 import type { DraftVideo } from '../utils/youtubeParser.ts';
 import { isWatchableVideoUrl, parseYoutubeVideoId, youtubeThumbnailUrl } from '../utils/youtubeParser.ts';
 import { defaultColorKey } from './subjects.ts';

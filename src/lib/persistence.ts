@@ -1,4 +1,4 @@
-import type { StudyCamp, UserPreferences } from '../types';
+import type { StudyCamp, UserPreferences } from '../types/index.ts';
 import type { FocusSession } from './focus.ts';
 import { normalizeFocusSessions } from './focus.ts';
 import type { PlaylistSync } from './playlistSync.ts';
@@ -617,7 +617,7 @@ export function parseBackup(text: string, today: string = todayKey()): BackupPar
   } catch {
     return { ok: false, error: 'Dosya okunamadı: geçerli bir JSON değil.' };
   }
-  if (!isRecord(raw)) return { ok: false, error: 'Bu dosya bir Yetiştiricem yedeği değil.' };
+  if (!isRecord(raw)) return { ok: false, error: 'Bu dosya bir Yetişir yedeği değil.' };
   if (raw.app !== undefined && raw.app !== BACKUP_APP) {
     return { ok: false, error: 'Bu dosya başka bir uygulamaya ait.' };
   }

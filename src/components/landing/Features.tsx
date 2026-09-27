@@ -227,7 +227,7 @@ function BackupVisual({ today }: { today: string }) {
       </div>
       <p className="mt-4 flex items-center gap-1.5 text-[12.5px] text-ink-3">
         <Lock className="size-3.5" />
-        Planın bu tarayıcıda; sunucuya gönderilmez.
+        Planın hesabında; yalnızca sen görürsün.
       </p>
     </div>
   );
@@ -242,7 +242,7 @@ export function Features({ preview }: { preview: LandingPreview }) {
           Özellikler
         </p>
         <h2 id="ozellikler-baslik" className="section-title text-gradient mt-4">
-          Planı Yetiştiricem kurar, sen çalışırsın.
+          Planı Yetişir kurar, sen çalışırsın.
         </h2>
         <p className="mt-5 text-[17px] leading-relaxed text-ink-2">
           Videoların süresini, izleme hızını ve temponu hesaba katar; her güne sığacak kadarını koyar. Sen sadece bugünün listesine
@@ -280,8 +280,8 @@ export function Features({ preview }: { preview: LandingPreview }) {
         <Bento id="tum-kamplar" className="lg:col-span-3" title="Tüm Kamplar, tek akış" visual={<AllCampsVisual />}>
           Sınav hazırlığını ve İngilizceyi ayrı tempolarla sürdür. Bugün ekranında hepsi birlikte görünür, günlük hedefler toplanır.
         </Bento>
-        <Bento id="veriler" className="lg:col-span-3" title="Veriler senin, tarayıcında" visual={<BackupVisual today={preview.today} />}>
-          Kampların ve ilerlemen yalnızca kullandığın tarayıcıda saklanır. Yedeğini indir, başka bir tarayıcıda geri yükle.
+        <Bento id="veriler" className="lg:col-span-3" title="Planın hesabında, her cihazda" visual={<BackupVisual today={preview.today} />}>
+          Kampların ve ilerlemen hesabına kaydedilir; telefondan da bilgisayardan da aynı planı açarsın. İstersen yedeğini dosya olarak indir.
         </Bento>
       </div>
     </section>

@@ -1,5 +1,11 @@
 {
   "version": 1,
-  "include": ["/api/youtube/playlist", "/api/youtube/videos"],
+  "include": [
+    "/api/youtube/playlist",
+    "/api/youtube/videos",
+    "/mcp",
+    "/.well-known/oauth-protected-resource",
+    "/.well-known/oauth-protected-resource/*"
+  ],
   "exclude": []
 }

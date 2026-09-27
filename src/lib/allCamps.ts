@@ -1,4 +1,4 @@
-import type { DailyPlan, DailyPlanItem, RoadmapStats, ShiftEvent, StudyCamp, UserPreferences } from '../types';
+import type { DailyPlan, DailyPlanItem, RoadmapStats, ShiftEvent, StudyCamp, UserPreferences } from '../types/index.ts';
 import type { DeadlineStatus, ScheduleResult } from './engine.ts';
 import { assessDeadline, buildCampSchedule, calculateStats, countCompletedVideos, createShiftEvent } from './engine.ts';
 import type { DayKind, DaySummary, PlanIndex } from './planView.ts';
@@ -262,7 +262,7 @@ export interface CampShift {
 }
 
 /**
- * "Kalanları ileri taşı" for `date` across camps: one stored event per camp
+ * "Ritmi güncelle" (carry the rest forward) for `date` across camps: one stored event per camp
  * that still has unfinished tasks on or before `date`, made from that camp's
  * own plan. So an event only ever names its own camp's tasks, and a camp with
  * nothing to carry gets no event and keeps its plan.

@@ -1,4 +1,4 @@
-import type { StudyCamp, SubjectPlaylist } from '../types';
+import type { StudyCamp, SubjectPlaylist } from '../types/index.ts';
 import type { DraftVideo } from '../utils/youtubeParser.ts';
 import { inspectPlaylistLink, youtubeThumbnailUrl, youtubeWatchUrl } from '../utils/youtubeParser.ts';
 import type { PlaylistEntry } from '../utils/youtubePlaylist.ts';

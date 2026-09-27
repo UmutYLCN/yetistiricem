@@ -1,4 +1,4 @@
-import type { CampOrigin, CampSchedule, StudyCamp } from '../types';
+import type { CampOrigin, CampSchedule, StudyCamp } from '../types/index.ts';
 import type { DraftVideo } from '../utils/youtubeParser.ts';
 import {
   MAX_VIDEO_MINUTES,
@@ -293,7 +293,7 @@ export function shareDocument(shared: SharedCamp) {
 /** Checks a parsed share document; any broken part refuses it. */
 export function readShareDocument(raw: unknown): ShareDecode {
   if (!isRecord(raw) || raw.app !== SHARE_APP || raw.type !== SHARE_TYPE) {
-    return { ok: false, error: 'Bu bağlantı bir Yetiştiricem kampı içermiyor.' };
+    return { ok: false, error: 'Bu bağlantı bir Yetişir kampı içermiyor.' };
   }
   if (typeof raw.version !== 'number' || raw.version > SHARE_VERSION) {
     return { ok: false, error: 'Bu kamp daha yeni bir sürümle paylaşılmış; bu sürüm açamıyor.' };

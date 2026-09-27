@@ -1,4 +1,4 @@
-import type { CampSchedule, ShiftEvent, StudyCamp, SubjectPlaylist } from '../types';
+import type { CampSchedule, ShiftEvent, StudyCamp, SubjectPlaylist } from '../types/index.ts';
 import type { DraftVideo } from '../utils/youtubeParser.ts';
 import type { PlaylistEntry } from '../utils/youtubePlaylist.ts';
 import { videoFromDraft, withVideos } from './camps.ts';

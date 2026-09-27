@@ -49,7 +49,7 @@ export function StreakCard({ streak, chain }: { streak: Streak; chain: ChainDay[
   return (
     <section className="card streak-glow flex min-w-0 flex-col p-5" aria-labelledby="progress-streak">
       <h2 id="progress-streak" className="eyebrow">
-        Zinciri kırma
+        Yetişir serisi
       </h2>
       <div className="mt-3 flex items-center gap-3">
         <span
@@ -64,7 +64,7 @@ export function StreakCard({ streak, chain }: { streak: Streak; chain: ChainDay[
           <span className="font-display tnum block text-[34px] leading-none text-ink">
             {current} <span className="text-[17px] text-ink-2">gün</span>
           </span>
-          <span className="mt-1 block text-[13px] text-ink-2">{current > 0 ? `${current} günlük seri!` : 'Seri henüz başlamadı'}</span>
+          <span className="mt-1 block text-[13px] text-ink-2">{current > 0 ? `${current} günlük Yetişir serisi` : 'Yetişir serin henüz başlamadı'}</span>
         </p>
       </div>
       {best > 0 && (

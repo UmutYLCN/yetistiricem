@@ -1,4 +1,4 @@
-import type { PostponeReason, UserPreferences } from '../types';
+import type { PostponeReason, UserPreferences } from '../types/index.ts';
 import type { ShiftEvent } from './roadmapEngine.ts';
 import { isDateKey, normalizeDateKey, todayKey } from './date.ts';
 

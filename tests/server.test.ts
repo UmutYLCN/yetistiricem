@@ -34,7 +34,7 @@ test('the production server serves the built app and the YouTube endpoints on on
   const base = await mkdtemp(join(tmpdir(), 'yetistiricem-server-'));
   const dist = join(base, 'dist');
   await mkdir(join(dist, 'assets'), { recursive: true });
-  await writeFile(join(dist, 'index.html'), '<!doctype html><title>Yetiştiricem</title>');
+  await writeFile(join(dist, 'index.html'), '<!doctype html><title>Yetişir</title>');
   await writeFile(join(dist, 'assets', 'index-abc123.js'), 'console.log("app")');
   await writeFile(join(base, 'secret.txt'), 'do not serve');
 
@@ -55,7 +55,7 @@ test('the production server serves the built app and the YouTube endpoints on on
     assert.equal(home.status, 200);
     assert.match(String(home.headers['content-type']), /text\/html/);
     assert.equal(home.headers['cache-control'], 'no-cache');
-    assert.match(home.body, /Yetiştiricem/);
+    assert.match(home.body, /Yetişir/);
 
     const asset = await raw(port, '/assets/index-abc123.js');
     assert.equal(asset.status, 200);

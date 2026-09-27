@@ -40,7 +40,7 @@ export function PostponeInsights({ analysis, camps }: { analysis: PostponeAnalys
           </span>
           <p className="mt-3 font-semibold text-ink">Henüz erteleme yok.</p>
           <p className="mt-1 max-w-[18rem] text-[13px] text-ink-2">
-            Kalanları ileri taşırken nedenini seçersen, seni en çok neyin zorladığını burada görürsün.
+            Ritmini güncellerken nedenini seçersen, seni en çok neyin zorladığını burada görürsün.
           </p>
         </div>
       ) : (

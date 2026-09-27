@@ -1,4 +1,4 @@
-import type { DailyPlanItem, PostponeReason } from '../types';
+import type { DailyPlanItem, PostponeReason } from '../types/index.ts';
 
 // What the app says about postponing: the reasons offered when tasks are
 // carried forward, and the small, concrete step suggested for each one

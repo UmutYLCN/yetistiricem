@@ -129,7 +129,7 @@ test('broken, foreign, newer or oversized links are refused instead of imported 
     const result = await decodeCampShare(payload);
     assert.equal(result.ok, false, `refused: ${payload}`);
   }
-  assert.match((await decodeCampShare(plain({ app: 'other', type: 'camp', version: 1, camp: shared })) as { error: string }).error, /Yetiştiricem kampı içermiyor/);
+  assert.match((await decodeCampShare(plain({ app: 'other', type: 'camp', version: 1, camp: shared })) as { error: string }).error, /Yetişir kampı içermiyor/);
   assert.match((await decodeCampShare(wrap(shared, { version: 2 })) as { error: string }).error, /daha yeni bir sürümle/);
 
   const withVideo = (video: object): SharedCamp => ({ ...shared, branches: [{ ...shared.branches[0], videos: [video as never] }] });

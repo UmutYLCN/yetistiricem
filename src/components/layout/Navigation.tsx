@@ -5,7 +5,7 @@ import type { CampScope } from '../../lib/allCamps';
 import { offersAllCamps } from '../../lib/allCamps';
 import { LANDING_PATH } from '../../lib/routes';
 import { Avatar } from '../discover/AuthorBadge';
-import { BrandMark } from '../ui/BrandMark';
+import { BrandMark, Wordmark } from '../ui/BrandMark';
 
 export type View = 'today' | 'path' | 'week' | 'progress' | 'camps' | 'discover' | 'settings';
 
@@ -142,12 +142,14 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
         <a
           href={LANDING_PATH}
           className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-[10px] px-2 py-1 transition-colors hover:bg-sunk/60"
-          aria-label="Yetiştiricem ana sayfası"
+          aria-label="Yetişir ana sayfası"
         >
           <BrandMark />
           <div className="min-w-0">
-            <p className="font-display text-[15.5px] leading-none text-ink">Yetiştiricem</p>
-            <p className="mt-1 text-[12px] text-ink-3">Çalışma planlayıcı</p>
+            <p className="text-[16px] leading-none">
+              <Wordmark />
+            </p>
+            <p className="mt-1 text-[12px] text-ink-3">Panik yok, yetişir</p>
           </div>
         </a>
         {bell}
@@ -204,7 +206,7 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
 export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell, profile }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/80 px-4 backdrop-blur-md lg:hidden">
-      <a href={LANDING_PATH} className="-m-1 shrink-0 rounded-[9px] p-1" aria-label="Yetiştiricem ana sayfası">
+      <a href={LANDING_PATH} className="-m-1 shrink-0 rounded-[9px] p-1" aria-label="Yetişir ana sayfası">
         <BrandMark size={28} />
       </a>
       <div className="min-w-0 flex-1">
@@ -218,7 +220,7 @@ export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId,
             compact
           />
         ) : (
-          <p className="font-display text-[15.5px] text-ink">Yetiştiricem</p>
+          <Wordmark className="text-[16px]" />
         )}
       </div>
       {bell}

@@ -1,4 +1,4 @@
-import type { CampOrigin, CampSchedule, PlanMode, RhythmPreset, ShiftEvent, StudyCamp, SubjectPlaylist, UserPreferences, Video } from '../types';
+import type { CampOrigin, CampSchedule, PlanMode, RhythmPreset, ShiftEvent, StudyCamp, SubjectPlaylist, UserPreferences, Video } from '../types/index.ts';
 import {
   defaultPreferences,
   inspectPreferences,

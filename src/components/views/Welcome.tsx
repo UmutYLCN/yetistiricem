@@ -22,7 +22,7 @@ const STEPS = [
   {
     icon: CircleCheck,
     title: 'Her gün işaretle',
-    body: 'İzlediğini işaretle; görev yerinde kalır. Geride kalırsan kalanları tek dokunuşla ileri taşı.',
+    body: 'İzlediğini işaretle; görev yerinde kalır. Geride kalırsan ritmini tek dokunuşla güncelle, yine yetişir.',
   },
 ];
 
@@ -37,7 +37,7 @@ export function Welcome({ onAddCamp, onStartDemo }: Props) {
           <div className="min-w-0">
             <span className="chip chip-forest">Başlangıç</span>
             <h1 id="welcome-title" className="font-display mt-4 text-[30px] leading-[1.12] text-ink sm:text-[38px]">
-              İlk kampını kur, gerisini Yetiştiricem planlasın.
+              İlk kampını kur; ne zaman yetişeceğini Yetişir gün gün hesaplasın.
             </h1>
             <p className="mt-4 max-w-[500px] text-[15.5px] leading-relaxed text-ink-2">
               Oynatma listelerini ekle, günlük çalışma süreni seç. Ders videoları bu süreyi aşmayacak şekilde günlere bölünür; her gün ne

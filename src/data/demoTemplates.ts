@@ -1,4 +1,4 @@
-import type { SubjectPlaylist } from '../types';
+import type { SubjectPlaylist } from '../types/index.ts';
 import { newId } from '../lib/camps.ts';
 import { defaultColorKey } from '../lib/subjects.ts';
 

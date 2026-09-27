@@ -1,4 +1,4 @@
-import type { DailyPlanItem, PostponeReason, StudyCamp } from '../types';
+import type { DailyPlanItem, PostponeReason, StudyCamp } from '../types/index.ts';
 import type { ScheduleResult } from './engine.ts';
 import { POSTPONE_REASONS, addDays, maxDateKey } from './engine.ts';
 import { startOfWeek } from './format.ts';

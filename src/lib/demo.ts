@@ -1,4 +1,4 @@
-import type { StudyCamp } from '../types';
+import type { StudyCamp } from '../types/index.ts';
 import { DEMO_TEMPLATES, cloneTemplate } from '../data/demoTemplates.ts';
 import type { PlannerData } from './persistence';
 import { addDays, buildCampSchedule } from './engine.ts';

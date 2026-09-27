@@ -1,4 +1,4 @@
-import type { CampSchedule, DailyPlan, DailyPlanItem, SubjectPlaylist, UserPreferences } from '../types';
+import type { CampSchedule, DailyPlan, DailyPlanItem, SubjectPlaylist, UserPreferences } from '../types/index.ts';
 import type { CampDaySummary } from './allCamps.ts';
 import type { CampKind } from './camps.ts';
 import { classifyCamp, displayChannel } from './camps.ts';

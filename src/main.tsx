@@ -3,12 +3,13 @@ import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/inter/opsz.css'
 import './index.css'
 import { hasAuthCallback } from './lib/authKey.ts'
-import { APP_PATH, isAppPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest } from './lib/routes.ts'
+import { APP_PATH, isAppPath, isConsentPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest } from './lib/routes.ts'
 import { Root } from './Root.tsx'
 
 const inApp = isAppPath(window.location.pathname)
+const inConsent = isConsentPath(window.location.pathname)
 
-if (!inApp && hasAuthCallback()) {
+if (!inApp && !inConsent && hasAuthCallback()) {
   // A sign-in answer that fell back to the site root (its return address was
   // not allow-listed in Supabase) goes on to the planner, which reads it.
   window.location.replace(`${APP_PATH}${window.location.hash}`)
@@ -16,11 +17,12 @@ if (!inApp && hasAuthCallback()) {
   const startInDemo = inApp && takeDemoRequest()
   const importPayload = inApp ? takeImportRequest() : null
   const openDiscover = inApp && takeDiscoverRequest()
-  if (inApp) document.title = 'Dashboard · Yetiştiricem'
+  if (inApp) document.title = 'Dashboard · Yetişir'
+  if (inConsent) document.title = 'Bağlantı onayı · Yetişir'
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <Root inApp={inApp} startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
+      <Root inApp={inApp} inConsent={inConsent} startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
     </StrictMode>,
   )
 }

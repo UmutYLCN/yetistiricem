@@ -227,3 +227,65 @@ export async function watchSession(onChange: (session: Session | null) => void):
   onChange(current.session);
   return () => data.subscription.unsubscribe();
 }
+
+// ---------------------------------------------------------------------------
+// AI connections (docs/mcp.md): Supabase Auth's OAuth server sends the student
+// to `/oauth/consent` to approve or deny an AI client such as Claude.
+
+export type ConsentRequest =
+  | { kind: 'ask'; clientName: string; clientSite: string; returnsTo: string; email: string }
+  /** Approved before: go straight back to the client. */
+  | { kind: 'done'; redirectUrl: string };
+
+const CONSENT_FAILED = 'Bağlantı isteği okunamadı. Yapay zekâ uygulamasından bağlanmayı yeniden başlat.';
+
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).host;
+  } catch {
+    return '';
+  }
+};
+
+/** A redirect back to the client only when it is a web address. */
+function safeRedirect(url: string | undefined): string | null {
+  try {
+    const parsed = new URL(url ?? '');
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getConsentRequest(authorizationId: string): Promise<ApiResult<ConsentRequest>> {
+  return runAuth<ConsentRequest>(async client => {
+    const { data, error } = await client.auth.oauth.getAuthorizationDetails(authorizationId);
+    if (error || !data) return { ok: false, error: CONSENT_FAILED };
+    if (!('authorization_id' in data)) {
+      const redirectUrl = safeRedirect(data.redirect_url);
+      return redirectUrl ? { ok: true, data: { kind: 'done', redirectUrl } } : { ok: false, error: CONSENT_FAILED };
+    }
+    return {
+      ok: true,
+      data: {
+        kind: 'ask',
+        clientName: data.client.name?.trim() || 'Bir yapay zekâ uygulaması',
+        clientSite: hostOf(data.client.uri ?? ''),
+        returnsTo: hostOf(data.redirect_uri),
+        email: data.user.email,
+      },
+    };
+  });
+}
+
+/** Approves or denies; the answer is the address to send the browser back to the client. */
+export function answerConsent(authorizationId: string, approve: boolean): Promise<ApiResult<string>> {
+  return runAuth(async client => {
+    const options = { skipBrowserRedirect: true };
+    const { data, error } = approve
+      ? await client.auth.oauth.approveAuthorization(authorizationId, options)
+      : await client.auth.oauth.denyAuthorization(authorizationId, options);
+    const redirectUrl = safeRedirect(data?.redirect_url);
+    return error || !redirectUrl ? { ok: false, error: CONSENT_FAILED } : { ok: true, data: redirectUrl };
+  });
+}

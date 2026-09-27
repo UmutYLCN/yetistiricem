@@ -1,4 +1,4 @@
-import type { StudyCamp } from '../types';
+import type { StudyCamp } from '../types/index.ts';
 import type { SharedCamp } from './campShare.ts';
 import { MAX_SHARED_BRANCHES, MAX_SHARED_VIDEOS, readShareDocument, shareDocument, shareSummary } from './campShare.ts';
 import { diffDays, isDateKey, toDateKey } from './engine.ts';

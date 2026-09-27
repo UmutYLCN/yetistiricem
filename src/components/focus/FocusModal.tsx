@@ -347,7 +347,7 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
       eyebrow={
         item && (
           <span className="flex min-w-0 items-center gap-1.5">
-            <span className="text-accent-strong">Odak modu</span>
+            <span className="text-accent-strong">Yetişir Focus</span>
             <span aria-hidden="true">·</span>
             <SubjectDot color={color} />
             <span className="truncate" style={{ color }}>

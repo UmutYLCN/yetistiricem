@@ -7,7 +7,7 @@ import type {
   SubjectPlaylist,
   UserPreferences,
   Video,
-} from '../types';
+} from '../types/index.ts';
 import { addDays, dayOfWeek, diffDays, maxDateKey, todayKey, weekdayName } from './date.ts';
 import { defaultPreferences, inspectPreferences, normalizeShiftEvents } from './storage.ts';
 

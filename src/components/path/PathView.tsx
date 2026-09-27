@@ -135,11 +135,11 @@ export function PathView({
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-ink">Bu günden {open} görev yetişmedi.</p>
                 <p className="mt-0.5 text-[13px] text-ink-2">
-                  İleri taşırsan kalanlar {formatLongDate(addDays(today, 1))} gününden itibaren yeniden dağıtılır.
+                  Ritmini güncellersen kalanlar {formatLongDate(addDays(today, 1))} gününden itibaren yeniden dağıtılır.
                 </p>
                 <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={() => onShift(date)}>
                   <Forward aria-hidden="true" />
-                  Kalanları ileri taşı
+                  Ritmi güncelle
                 </button>
               </div>
             </div>

@@ -646,8 +646,8 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         <>
           <p>
             {data.camps.length} kamp, {countCompletedVideos(allBranches(data.camps), data.completedMap)} tamamlanan video,{' '}
-            {data.camps.reduce((acc, c) => acc + c.shiftEvents.length, 0)} ileri taşıma ve {Object.keys(data.dayNotes).length} gün notu bu
-            tarayıcıdan silinir.
+            {data.camps.reduce((acc, c) => acc + c.shiftEvents.length, 0)} ileri taşıma ve {Object.keys(data.dayNotes).length} gün notu
+            hesabından ve giriş yaptığın her cihazdan silinir.
           </p>
           <p className="font-semibold text-ink">Bu işlem geri alınamaz. Gerekirse önce yedek indir.</p>
         </>

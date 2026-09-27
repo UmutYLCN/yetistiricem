@@ -6,7 +6,7 @@ import { useAccount } from '../../hooks/useAccount';
 import { hydrateAccount } from '../../lib/cloudSync';
 import { todayKey } from '../../lib/engine';
 import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
-import { BrandMark } from '../ui/BrandMark';
+import { BrandMark, Wordmark } from '../ui/BrandMark';
 import { SignInForm } from './SignInForm';
 
 /** The planner's sign-in page. */
@@ -15,9 +15,9 @@ function SignInScreen({ account }: { account: Account }) {
     <div className="signin-page">
       <div className="signin-backdrop" aria-hidden="true" />
       <main id="main" className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col justify-center px-4 py-12">
-        <a href={LANDING_PATH} className="mx-auto flex items-center gap-2.5 rounded-[10px]" aria-label="Yetiştiricem ana sayfası">
+        <a href={LANDING_PATH} className="mx-auto flex items-center gap-2.5 rounded-[10px]" aria-label="Yetişir ana sayfası">
           <BrandMark size={34} />
-          <span className="text-[17px] font-semibold tracking-[-0.015em] text-ink">Yetiştiricem</span>
+          <Wordmark className="text-[18px]" />
         </a>
         <h1 className="font-display mt-8 text-center text-[28px] leading-tight text-ink">Planına giriş yap</h1>
         <p className="mt-2 text-center text-[14.5px] text-ink-2">Kampların, bugünün görevleri ve ilerlemen seni bekliyor.</p>

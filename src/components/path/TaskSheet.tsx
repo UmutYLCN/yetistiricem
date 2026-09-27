@@ -92,7 +92,7 @@ function TaskDetails({
         {linkState === 'video' && onFocus && (
           <button type="button" className="btn btn-secondary flex-1" onClick={() => onFocus(item)} aria-haspopup="dialog">
             <Play aria-hidden="true" />
-            Odak modunda izle
+            Yetişir Focus’ta izle
           </button>
         )}
         {linkState === 'video' && (

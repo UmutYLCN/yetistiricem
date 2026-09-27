@@ -148,7 +148,7 @@ function CampRows({ overviews, today, onEditTempo }: { overviews: CampOverview[]
                     {deadline.kind === 'late'
                       ? `Hedefin ${deadline.lateDays} gün gerisinde (hedef ${formatShortDate(deadline.targetEndDate)})`
                       : deadline.kind === 'on-track'
-                        ? `Hedefe yetişiyor (hedef ${formatShortDate(deadline.targetEndDate)})`
+                        ? `Yetişir: hedef ${formatShortDate(deadline.targetEndDate)}`
                         : `${deadline.unscheduledCount} video planda yok; hedef ${formatShortDate(deadline.targetEndDate)}`}
                   </p>
                   {deadline.kind !== 'on-track' && (
@@ -263,7 +263,7 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, insight
               </>
             ) : (
               <>
-                <span className="font-semibold text-ink">Hedefe yetişiyorsun.</span> Plan {formatLongDate(deadline.finishDate)} tarihinde
+                <span className="font-semibold text-ink">Panik yok, yetişir.</span> Plan {formatLongDate(deadline.finishDate)} tarihinde
                 bitiyor{deadline.spareDays > 0 ? `, hedeften ${deadline.spareDays} gün önce` : ''}.
               </>
             )}

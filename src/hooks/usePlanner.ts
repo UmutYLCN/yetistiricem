@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CampSchedule, StudyCamp, SubjectPlaylist } from '../types';
+import type { CampSchedule, StudyCamp, SubjectPlaylist } from '../types/index.ts';
 import type { CampScope, CampShift } from '../lib/allCamps';
 import { STORAGE_KEYS } from '../lib/engine';
 import { buildDemoData } from '../lib/demo';

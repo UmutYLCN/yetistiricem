@@ -1,4 +1,4 @@
-import type { DailyPlanItem } from '../types';
+import type { DailyPlanItem } from '../types/index.ts';
 import { parseYoutubeVideoId } from '../utils/youtubeParser.ts';
 import type { CampKind } from './camps.ts';
 import { linkStateOf } from './camps.ts';

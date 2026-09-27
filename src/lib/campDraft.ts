@@ -1,4 +1,4 @@
-import type { CampSchedule, PlanMode, StudyCamp, SubjectPlaylist, UserPreferences } from '../types';
+import type { CampSchedule, PlanMode, StudyCamp, SubjectPlaylist, UserPreferences } from '../types/index.ts';
 import { isDateKey, sanitizeWeekPlan } from './engine.ts';
 import { PALETTE, defaultColorKey } from './subjects.ts';
 import type { AutoRhythm, ManualRhythm, ScheduleBase } from './studyCamp.ts';

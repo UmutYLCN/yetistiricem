@@ -256,7 +256,7 @@ export function DeadlineSignal({
       <div className="callout callout-info" role="status">
         <CircleCheck className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
         <p className="text-[13.5px] text-ink-2">
-          <span className="font-semibold text-ink">Hedefe yetişiyor.</span> Plan {formatLongDate(deadline.finishDate)} tarihinde bitiyor
+          <span className="font-semibold text-ink">Panik yok, yetişir.</span> Plan {formatLongDate(deadline.finishDate)} tarihinde bitiyor
           {deadline.spareDays > 0 ? `; hedef tarihten ${deadline.spareDays} gün önce.` : '; tam hedef gününde.'}
         </p>
       </div>

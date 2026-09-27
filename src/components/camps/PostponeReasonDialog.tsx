@@ -40,7 +40,7 @@ interface Props {
 }
 
 /**
- * "Kalanları ileri taşı" as a short coaching moment: the student names why
+ * "Ritmi güncelle" (carrying the rest forward) as a short coaching moment: the student names why
  * the tasks were left (or skips the question), the shift is stored with that
  * reason, and a small, concrete next step for that reason is suggested.
  */
@@ -84,7 +84,7 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
             {REASON_COPY[savedReason].label}
           </span>
         }
-        title="Görevler ileri taşındı"
+        title="Sorun değil, ritmin güncellendi"
         description={`${count} görev ${when} gününden itibaren yeniden planlandı.${perCamp}`}
         width={520}
         footer={
@@ -112,7 +112,7 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
             {savedReason === 'distraction' && onStartFocus && (
               <button type="button" className="btn btn-primary btn-sm mt-3" onClick={onStartFocus}>
                 <Play aria-hidden="true" />
-                Odak modunu aç
+                Yetişir Focus’u aç
               </button>
             )}
             {savedReason === 'exhausted' && request?.shortest && (
@@ -131,7 +131,7 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
     <Dialog
       open={request !== null}
       onClose={onClose}
-      eyebrow="Kalanları ileri taşı"
+      eyebrow="Ritmi güncelle"
       title="Neden yetişmedi?"
       description={`${count} görev ${when} gününden itibaren yeniden planlanacak.${perCamp} Nedenini seçmek, seni en çok neyin zorladığını görmene yardım eder.`}
       width={520}
@@ -139,14 +139,14 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
       footer={
         <>
           <button type="button" className="btn btn-ghost mr-auto max-sm:px-2.5" onClick={() => onConfirm({})}>
-            Belirtmeden taşı
+            Belirtmeden güncelle
           </button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             Vazgeç
           </button>
           <button type="button" className="btn btn-primary" disabled={reason === null} onClick={confirm}>
             <Forward aria-hidden="true" />
-            İleri taşı
+            Ritmi güncelle
           </button>
         </>
       }

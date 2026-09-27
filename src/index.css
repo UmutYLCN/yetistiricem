@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------------
-   Yetiştiricem design tokens (dark only)
+   Yetişir design tokens (dark only)
    Near-black surfaces in steps (paper → card → sunk), hairline borders and
    white text in three strengths. Primary actions are white; green marks
    progress and done states, orange "today" and heads-ups (mock days, target

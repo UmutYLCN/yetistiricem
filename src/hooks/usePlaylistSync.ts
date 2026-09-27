@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { StudyCamp } from '../types';
+import type { StudyCamp } from '../types/index.ts';
 import type { PlaylistFailure } from '../lib/playlistImport';
 import { requestPlaylist } from '../lib/playlistImport';
 import type { PlaylistSync } from '../lib/playlistSync';
