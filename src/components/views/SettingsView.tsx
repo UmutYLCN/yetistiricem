@@ -1,14 +1,25 @@
-import { useId, useRef } from 'react';
-import { Download, Eye, Gauge, LogOut, RotateCcw, Upload } from 'lucide-react';
+import { useId, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { BookOpen, Briefcase, Download, Eye, GraduationCap, Layers, LogOut, Pencil, RotateCcw, Target, Upload } from 'lucide-react';
 import type { AccountState } from '../../hooks/useAccount';
-import { AuthorBadge } from '../discover/AuthorBadge';
+import type { ApiResult } from '../../lib/catalogApi';
+import { MAX_DISPLAY_NAME, displayNameProblem } from '../../lib/catalog';
+import type { ProfileFact, StudentProfile } from '../../lib/studentProfile';
+import { EMPTY_PROFILE, isAvatarShape, profileFacts } from '../../lib/studentProfile';
 import { PageHeader } from '../layout/PageHeader';
+import { ProfileAvatar } from '../profile/ProfileAvatar';
+import { SHAPE_ART } from '../profile/shapeArt';
+import { AvatarPicker, BioField, StageChip, StageFields, StagePicker } from '../profile/ProfileForm';
 import { AiConnections } from '../settings/AiConnections';
+
+type SignedIn = Extract<AccountState, { status: 'signed-in' }>;
 
 interface Props {
   account: AccountState;
   today: string;
-  onRename: () => void;
+  onRename: (name: string) => Promise<ApiResult<string>>;
+  onSaveProfile: (profile: StudentProfile) => Promise<ApiResult<StudentProfile>>;
   onSignOut: () => void;
   isDemo: boolean;
   campCount: number;
@@ -17,61 +28,191 @@ interface Props {
   onReset: () => void;
   onStartDemo: () => void;
   onExitDemo: () => void;
-  onOpenCamps: () => void;
 }
 
-/** App-level options. Each camp's tempo is edited from the camp itself. */
-export function SettingsView({ account, today, onRename, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo, onOpenCamps }: Props) {
+const FACT_ICONS: Record<ProfileFact['kind'], LucideIcon> = {
+  school: GraduationCap,
+  department: BookOpen,
+  grade: Layers,
+  profession: Briefcase,
+  target: Target,
+};
+
+/** The profile card: picture, name and school details, edited in place. */
+function ProfileCard({ account, onRename, onSaveProfile }: { account: SignedIn } & Pick<Props, 'onRename' | 'onSaveProfile'>) {
+  const uid = useId();
+  const profile = account.profile ?? EMPTY_PROFILE;
+  const name = account.displayName ?? account.email?.split('@')[0] ?? 'Sen';
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(name);
+  const [draft, setDraft] = useState<StudentProfile>(profile);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const startEditing = () => {
+    setDraftName(account.displayName ?? '');
+    setDraft(profile);
+    setNameError(null);
+    setError(null);
+    setEditing(true);
+  };
+
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    const problem = displayNameProblem(draftName);
+    if (problem) {
+      setNameError(problem);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    if (draftName.trim() !== (account.displayName ?? '')) {
+      const renamed = await onRename(draftName);
+      if (!renamed.ok) {
+        setBusy(false);
+        setNameError(renamed.error);
+        return;
+      }
+    }
+    const result = await onSaveProfile({ ...draft, onboardedAt: profile.onboardedAt ?? new Date().toISOString() });
+    setBusy(false);
+    if (result.ok) setEditing(false);
+    else setError(result.error);
+  };
+
+  const shown = editing ? draft.avatar : profile.avatar;
+  const tint = isAvatarShape(shown) ? SHAPE_ART[shown].color : 'var(--color-forest)';
+  const facts = profileFacts(profile);
+
+  return (
+    <section className="card overflow-hidden" aria-labelledby={`${uid}-title`}>
+      <div
+        className="profile-cover h-24 sm:h-28"
+        style={{ ['--profile-tint' as string]: tint }}
+        aria-hidden="true"
+      />
+      <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+        <div className="-mt-11 flex items-end justify-between gap-3">
+          <span className="rounded-full bg-card p-1">
+            <ProfileAvatar avatar={shown} name={editing ? draftName || name : name} size={88} />
+          </span>
+          {!editing && (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={startEditing}>
+              <Pencil aria-hidden="true" />
+              Profili düzenle
+            </button>
+          )}
+        </div>
+
+        {editing ? (
+          <form onSubmit={event => void save(event)} noValidate className="mt-5 space-y-6">
+            <h2 id={`${uid}-title`} className="text-[18px] font-semibold text-ink">
+              Profili düzenle
+            </h2>
+            <div>
+              <p className="field-label">Profil resmi</p>
+              <AvatarPicker preview={false} value={draft.avatar} name={draftName || name} onChange={avatar => setDraft(d => ({ ...d, avatar }))} />
+            </div>
+            <div>
+              <label htmlFor={`${uid}-name`} className="field-label">
+                Görünen ad
+              </label>
+              <input
+                id={`${uid}-name`}
+                className="input"
+                value={draftName}
+                maxLength={MAX_DISPLAY_NAME}
+                onChange={event => {
+                  setDraftName(event.target.value);
+                  setNameError(null);
+                }}
+                aria-invalid={nameError ? true : undefined}
+                aria-describedby={`${uid}-name-note`}
+              />
+              {nameError ? (
+                <p id={`${uid}-name-note`} className="field-error" role="alert">
+                  {nameError}
+                </p>
+              ) : (
+                <p id={`${uid}-name-note`} className="field-hint">
+                  Keşfet’te yayınladığın kamplarda bu ad görünür; e-postan ve okul bilgilerin gösterilmez.
+                </p>
+              )}
+            </div>
+            <StagePicker value={draft.stage} onChange={stage => setDraft(d => ({ ...d, stage }))} />
+            <StageFields profile={draft} onChange={(field, value) => setDraft(d => ({ ...d, [field]: value }))} />
+            <BioField value={draft.bio} onChange={bio => setDraft(d => ({ ...d, bio }))} />
+            {error && (
+              <p className="field-error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-4">
+              <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)} disabled={busy}>
+                Vazgeç
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={busy}>
+                {busy ? 'Kaydediliyor…' : 'Kaydet'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-3">
+            <h2 id={`${uid}-title`} className="font-display truncate text-[24px] leading-tight text-ink">
+              {account.displayName ?? '…'}
+            </h2>
+            {account.email && <p className="mt-0.5 truncate text-[13.5px] text-ink-3">{account.email}</p>}
+            {profile.bio && <p className="mt-3 max-w-[60ch] text-[14.5px] leading-relaxed break-words whitespace-pre-line text-ink-2">{profile.bio}</p>}
+            {profile.stage ? (
+              <>
+                <StageChip stage={profile.stage} className="mt-3" />
+                {facts.length > 0 && (
+                  <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[14px] text-ink-2">
+                    {facts.map(fact => {
+                      const Icon = FACT_ICONS[fact.kind];
+                      return (
+                        <li key={`${fact.kind}-${fact.text}`} className="flex min-w-0 items-center gap-1.5">
+                          <Icon className="size-4 shrink-0 text-ink-3" aria-hidden="true" />
+                          <span className="min-w-0 truncate">{fact.text}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={startEditing}
+                className="mt-4 flex w-full items-center gap-3 rounded-[12px] border border-dashed border-line-strong px-4 py-3 text-left transition-colors hover:border-ink-3 hover:bg-sunk/50"
+              >
+                <GraduationCap className="size-5 shrink-0 text-ink-3" aria-hidden="true" />
+                <span className="min-w-0 flex-1 text-[13.5px] text-ink-2">
+                  <span className="block font-semibold text-ink">Okulunu ve bölümünü ekle</span>
+                  Lise, üniversite ya da meslek: seni tanımamıza yardım eder.
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** Profile, AI connections and data. Each camp's tempo is edited from the camp itself. */
+export function SettingsView({ account, today, onRename, onSaveProfile, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
   return (
     <div className="mx-auto max-w-[760px] space-y-5">
-      <PageHeader title="Profil ve ayarlar" subtitle={isDemo ? 'Demo açık: buradaki değişiklikler kaydedilmez.' : 'Hesabın, yapay zekâ bağlantıların ve verilerin.'} />
+      <PageHeader title="Profil ve ayarlar" subtitle={isDemo ? 'Demo açık: buradaki değişiklikler kaydedilmez.' : 'Sen, yapay zekâ bağlantıların ve verilerin.'} />
 
-      {account.status === 'signed-in' && (
-        <section className="card flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 sm:px-6" aria-labelledby={`${uid}-account`}>
-          <div className="min-w-0 flex-1">
-            <h2 id={`${uid}-account`} className="eyebrow">
-              Hesap
-            </h2>
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <AuthorBadge name={account.displayName ?? '…'} />
-              {account.email && <span className="min-w-0 truncate text-[13px] text-ink-3">{account.email}</span>}
-            </div>
-            <p className="mt-1.5 text-[12.5px] text-ink-3">Görünen adın Keşfet’te yayınladığın kamplarda yer alır; e-postan gösterilmez.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={onRename}>
-              Adını değiştir
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={onSignOut}>
-              <LogOut aria-hidden="true" />
-              Çıkış yap
-            </button>
-          </div>
-        </section>
-      )}
+      {account.status === 'signed-in' && <ProfileCard key={account.userId} account={account} onRename={onRename} onSaveProfile={onSaveProfile} />}
 
       {account.status === 'signed-in' && <AiConnections today={today} />}
-
-      <section className="callout callout-info items-start" aria-labelledby={`${uid}-tempo`}>
-        <Gauge className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
-        <div className="min-w-0 flex-1 text-[13.5px] text-ink-2">
-          <h2 id={`${uid}-tempo`} className="font-semibold text-ink">
-            Tempo her kampın kendisine ait
-          </h2>
-          <p className="mt-0.5">
-            Günlük süre, çalışma günleri ve branş yerleşimi kamp kamp ayarlanır; bir kampı değiştirmek diğerlerini etkilemez. Açık
-            kampın başlığındaki “Tempoyu düzenle” ile değiştirebilirsin.
-          </p>
-          {campCount > 0 && (
-            <button type="button" className="btn btn-secondary btn-sm mt-2.5" onClick={onOpenCamps}>
-              Kamplara git
-            </button>
-          )}
-        </div>
-      </section>
 
       <section className="card" aria-labelledby={`${uid}-data`}>
         <div className="border-b border-line px-5 py-4 sm:px-6">
@@ -159,15 +300,18 @@ export function SettingsView({ account, today, onRename, onSignOut, isDemo, camp
         )}
       </section>
 
-      <section className="rounded-[14px] border border-dashed border-line-strong px-5 py-4 text-[13px] text-ink-2 sm:px-6">
-        <h2 className="font-semibold text-ink">Nasıl çalışır?</h2>
-        <p className="mt-1">
-          Bir oynatma listesi ya da video bağlantısı yapıştırdığında videoların adları ve süreleri sunucu üzerinden YouTube Data API
-          ile okunur; YouTube dışındaki dersleri konu ve süreyle elle ekleyebilirsin. Hiçbir video, bağlantı ya da süre uydurulmaz. Her liste kampında bir branş
-          olur. Plan, kampın temposuna göre (otomatik ya da senin gün gün seçtiğin branşlarla) videoları liste sırasıyla günlere
-          böler. Bir görevi işaretlemek planı kaydırmaz; geride kalanları yalnızca sen “Ritmi güncelle” dediğinde yeniden dağıtır.
-        </p>
-      </section>
+      {account.status === 'signed-in' && (
+        <section className="card flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6" aria-label="Oturum">
+          <p className="min-w-0 flex-1 text-[13px] text-ink-2">
+            <span className="text-ink-3">Giriş yapılan hesap: </span>
+            <span className="break-all text-ink">{account.email ?? account.displayName ?? '…'}</span>
+          </p>
+          <button type="button" className="btn btn-secondary hover:text-danger" onClick={onSignOut}>
+            <LogOut aria-hidden="true" />
+            Çıkış yap
+          </button>
+        </section>
+      )}
     </div>
   );
 }

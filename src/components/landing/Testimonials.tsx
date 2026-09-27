@@ -2,32 +2,37 @@ import { useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, MessageSquareQuote, Quote } from 'lucide-react';
 import { APP_PATH } from '../../lib/routes';
 
-// Deliberate placeholders for the design review, never presented as real endorsements.
+// Fictional sample quotes and identities for the landing page until real testimonials are available.
 const EXAMPLE_REVIEWS = [
   {
     quote: 'Listeye bakıp nereden başlayacağımı düşünmek yerine, bugün önümdeki tek adıma bakıyorum.',
     context: 'Sıfırdan bir yol haritası',
-    initial: '01',
+    name: 'Sinem Aydın',
+    initial: 'SA',
   },
   {
     quote: 'Bir gün aksadığında her şeyi baştan kurmak zorunda olmamak, devam etmeyi kolaylaştırıyor.',
     context: 'Kendi hızında öğrenme',
-    initial: '02',
+    name: 'Duru Koç',
+    initial: 'DK',
   },
   {
     quote: 'Ne zaman biteceğini en baştan görmek iyi geliyor. Hedef artık kocaman bir belirsizlik değil.',
     context: 'Yoğun bir kamp',
-    initial: '03',
+    name: 'Emre Demir',
+    initial: 'ED',
   },
   {
     quote: 'Farklı yerlerde duran listeleri tek bir güne sığdırmak. Tam ihtiyacım olan düzen bu.',
     context: 'Birden fazla hedef',
-    initial: '04',
+    name: 'Aslı Yılmaz',
+    initial: 'AY',
   },
   {
     quote: 'Her gün biraz zaman ayırıp ilerlediğimi görmek, yarım bıraktığım seriye geri dönmemi sağlıyor.',
     context: 'Günlük bir alışkanlık',
-    initial: '05',
+    name: 'Mert Kaya',
+    initial: 'MK',
   },
 ];
 
@@ -59,7 +64,7 @@ export function Testimonials() {
         </div>
         <div className="testimonials-heading-right">
           <p>Her hedefin arkasında bir hikâye var.</p>
-          <p className="testimonials-disclosure">Tasarım önizlemesi · Aşağıdaki yorumlar örnektir.</p>
+          <p className="testimonials-disclosure">Tanıtım için kurgulanmış isimler ve yorumlar.</p>
           <div className="flex gap-2">
             <button type="button" className="landing-icon-button" disabled={edges.start} aria-label="Önceki yorum" onClick={() => move(-1)}>
               <ArrowLeft aria-hidden="true" />
@@ -74,8 +79,8 @@ export function Testimonials() {
         ref={track}
         className="testimonials-track"
         tabIndex={0}
-        aria-label="Örnek yorumlar, sağa kaydırılabilir"
-        onScroll={(event) => {
+        aria-label="Kullanıcı yorumları, sağa kaydırılabilir"
+        onScroll={event => {
           const element = event.currentTarget;
           setEdges({ start: element.scrollLeft <= 2, end: element.scrollLeft + element.clientWidth >= element.scrollWidth - 2 });
         }}
@@ -84,13 +89,12 @@ export function Testimonials() {
           <li key={review.initial} className={`testimonial-card sketch-tone-${i % 3}`}>
             <div className="flex items-center justify-between">
               <Quote className="testimonial-quote-icon" aria-hidden="true" />
-              <span className="art-sample-label">Örnek yorum</span>
             </div>
             <blockquote>“{review.quote}”</blockquote>
             <div className="testimonial-person">
               <span aria-hidden="true">{review.initial}</span>
               <div>
-                <p>Örnek kullanıcı</p>
+                <p>{review.name}</p>
                 <small>{review.context}</small>
               </div>
             </div>

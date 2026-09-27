@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Yetisir simgesi</title>
+  <desc id="desc">Yeşil basamakların ulaştığı, içinden sıcak ışık yayılan bir kapı.</desc>
+  <defs>
+    <clipPath id="icon-clip">
+      <rect x="1.5" y="1.5" width="61" height="61" rx="16" />
+    </clipPath>
+    <linearGradient id="door-light" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff1c4" />
+      <stop offset="1" stop-color="#ff9b50" />
+    </linearGradient>
+    <linearGradient id="light-beam" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#ffdc9f" stop-opacity="0" />
+      <stop offset="1" stop-color="#ffdc9f" stop-opacity="0.45" />
+    </linearGradient>
+    <radialGradient id="door-glow">
+      <stop stop-color="#ffd99c" stop-opacity="0.22" />
+      <stop offset="1" stop-color="#ffd99c" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="17" fill="#0f1012" stroke="#2c2d31" stroke-width="1.5" />
+  <ellipse cx="50" cy="19" rx="17" ry="18" fill="url(#door-glow)" clip-path="url(#icon-clip)" />
+  <path d="M44 27h13L30 48H13Z" fill="url(#light-beam)" />
+  <path d="M13 45h12v-9h10v-9h6" fill="none" stroke="#3ecf8e" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M44 27V12a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v15Z" fill="url(#door-light)" stroke="#ffab70" stroke-width="1.7" />
+</svg>

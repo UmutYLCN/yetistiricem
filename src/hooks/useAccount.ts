@@ -4,6 +4,8 @@ import type { ApiResult } from '../lib/catalogApi';
 import {
   catalogConfigured,
   getDisplayName,
+  getStudentProfile,
+  saveStudentProfile,
   signInWithPassword as authenticateWithPassword,
   signUpWithPassword as createPasswordAccount,
   setDisplayName,
@@ -12,6 +14,7 @@ import {
   watchSession,
 } from '../lib/catalogApi';
 import { appReturnUrl } from '../lib/routes';
+import type { StudentProfile } from '../lib/studentProfile';
 
 export type AccountState =
   /** Sign-in is not set up on this server (no Supabase config): the planner opens without it. */
@@ -20,7 +23,16 @@ export type AccountState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'signed-out' }
-  | { status: 'signed-in'; userId: string; email: string | null; displayName: string | null };
+  | {
+      status: 'signed-in';
+      userId: string;
+      email: string | null;
+      displayName: string | null;
+      /** The private profile (picture, school details); null until one is saved. */
+      profile: StudentProfile | null;
+      /** `ready` once the profile was read, so the welcome questions are not asked by mistake. */
+      profileStatus: 'loading' | 'ready' | 'error';
+    };
 
 /**
  * The student's account (the planner needs one; Keşfet shows its name). The
@@ -51,11 +63,23 @@ export function useAccount(wanted: boolean) {
       }
       const { id, email } = session.user;
       setState(current =>
-        current.status === 'signed-in' && current.userId === id ? current : { status: 'signed-in', userId: id, email: email ?? null, displayName: null }
+        current.status === 'signed-in' && current.userId === id
+          ? current
+          : { status: 'signed-in', userId: id, email: email ?? null, displayName: null, profile: null, profileStatus: 'loading' }
       );
       void getDisplayName(id).then(result => {
         if (cancelled || !result.ok) return;
         setState(current => (current.status === 'signed-in' && current.userId === id ? { ...current, displayName: result.data } : current));
+      });
+      void getStudentProfile(id).then(result => {
+        if (cancelled) return;
+        setState(current =>
+          current.status === 'signed-in' && current.userId === id
+            ? result.ok
+              ? { ...current, profile: result.data, profileStatus: 'ready' }
+              : { ...current, profileStatus: current.profileStatus === 'ready' ? 'ready' : 'error' }
+            : current
+        );
       });
     }).then(stop => {
       if (cancelled) stop();
@@ -88,7 +112,19 @@ export function useAccount(wanted: boolean) {
     [state]
   );
 
-  return { state, callbackError, signInWithPassword, signUpWithPassword, continueWithGoogle, signOut: leave, rename };
+  const saveProfile = useCallback(
+    async (profile: StudentProfile): Promise<ApiResult<StudentProfile>> => {
+      if (state.status !== 'signed-in') return { ok: false, error: 'Bu işlem için giriş yapman gerekiyor.' };
+      const result = await saveStudentProfile(state.userId, profile);
+      if (result.ok) {
+        setState(current => (current.status === 'signed-in' ? { ...current, profile: result.data, profileStatus: 'ready' } : current));
+      }
+      return result;
+    },
+    [state]
+  );
+
+  return { state, callbackError, signInWithPassword, signUpWithPassword, continueWithGoogle, signOut: leave, rename, saveProfile };
 }
 
 export type Account = ReturnType<typeof useAccount>;

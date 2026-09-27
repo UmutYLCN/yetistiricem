@@ -78,6 +78,8 @@ export function AiConnections({ today }: { today: string }) {
           const connected = grants.length > 0;
           const since = grants.map(g => g.grantedAt).sort()[0];
           const tileBase = 'relative flex h-full flex-col items-center gap-2 rounded-[14px] border px-4 pt-5 pb-4 text-center transition-colors';
+          // An unconnected tile has no "Kaldır" row: its content sits in the middle of the row's height.
+          const idleTile = 'relative flex h-full min-h-[148px] flex-col items-center justify-center gap-2 rounded-[14px] border px-4 py-5 text-center transition-colors';
           return (
             <li key={client}>
               {connected ? (
@@ -96,7 +98,7 @@ export function AiConnections({ today }: { today: string }) {
               ) : (
                 <a
                   href={docsHref(client)}
-                  className={`${tileBase} group border-line bg-field hover:border-line-strong hover:bg-sunk/60`}
+                  className={`${idleTile} group border-line bg-field hover:border-line-strong hover:bg-sunk/60`}
                   aria-label={`${name} bağlı değil; nasıl bağlanacağını belgelerde gör`}
                 >
                   <AiLogo client={client} size={30} className="text-ink opacity-80 transition-opacity group-hover:opacity-100" />

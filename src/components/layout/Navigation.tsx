@@ -4,7 +4,7 @@ import { CalendarCheck, CalendarRange, ChartColumn, Compass, Library, Plus, Rout
 import type { CampScope } from '../../lib/allCamps';
 import { offersAllCamps } from '../../lib/allCamps';
 import { LANDING_PATH } from '../../lib/routes';
-import { Avatar } from '../discover/AuthorBadge';
+import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
 
 export type View = 'today' | 'path' | 'week' | 'progress' | 'camps' | 'discover' | 'settings';
@@ -48,8 +48,10 @@ interface NavProps {
 
 export interface Profile {
   name: string;
-  /** The line under the name (the email, or what the entry opens). */
+  /** The line under the name (school details, the email, or what the entry opens). */
   detail: string;
+  /** A drawn shape id or an uploaded picture (`ProfileAvatar`); null shows the initial. */
+  avatar: string | null;
 }
 
 export const ALL_CAMPS_LABEL = 'Tüm Kamplar';
@@ -188,7 +190,7 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
             view === 'settings' ? 'bg-sunk ring-1 ring-line-strong' : 'hover:bg-sunk/60'
           }`}
         >
-          <Avatar name={profile.name} size="lg" />
+          <ProfileAvatar avatar={profile.avatar} name={profile.name} size={32} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[14px] font-semibold text-ink">{profile.name}</span>
             <span className="block truncate text-[12px] text-ink-3">{profile.detail}</span>
@@ -239,7 +241,7 @@ export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId,
         aria-label={`${profile.name}: profil ve ayarlar`}
         aria-current={view === 'settings' ? 'page' : undefined}
       >
-        <Avatar name={profile.name} />
+        <ProfileAvatar avatar={profile.avatar} name={profile.name} size={28} />
       </button>
     </header>
   );

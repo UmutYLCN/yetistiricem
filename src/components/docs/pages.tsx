@@ -562,8 +562,13 @@ export function Account() {
       </p>
       <H2 id="profil">Profil ve ayarlar</H2>
       <p>
-        Kenar çubuğunun altındaki profil satırı <strong>Profil ve ayarlar</strong> sayfasını açar: görünen adın (Keşfet’te yayınladığın
-        kamplarda görünür), çıkış, yapay zekâ bağlantıların ve verilerin.
+        Kenar çubuğunun altındaki profil satırı <strong>Profil ve ayarlar</strong> sayfasını açar: profil resmin, görünen adın (Keşfet’te
+        yayınladığın kamplarda görünür), okul ve bölüm bilgilerin, Hakkında yazın, yapay zekâ bağlantıların, verilerin ve en altta çıkış.
+      </p>
+      <p>
+        İlk girişte birkaç kısa soru sorulur: sekiz çizim arasından bir profil resmi (ya da kendi fotoğrafın), şu an ne yaptığın (lise,
+        sınava hazırlık, üniversite, mezun ya da çalışıyor) buna göre okulun, bölümün, sınıfın ya da mesleğin ve istersen hedeflerini anlatan kısa bir “Hakkında” yazısı. Hepsi isteğe bağlı;
+        sonra <strong>Profili düzenle</strong> ile değiştirebilirsin. Profil resmin, okul bilgilerin ve Hakkında yazın yalnızca sana görünür.
       </p>
       <H2 id="yedek">Yedek</H2>
       <p>

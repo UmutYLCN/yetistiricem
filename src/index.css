@@ -548,6 +548,15 @@
     outline-offset: 2px;
   }
 
+  /* Profile cover: a soft wash of the avatar's colour ---------------------- */
+  .profile-cover {
+    background:
+      radial-gradient(120% 140% at 12% 0%, color-mix(in srgb, var(--profile-tint) 34%, transparent), transparent 60%),
+      radial-gradient(90% 120% at 100% 100%, color-mix(in srgb, var(--profile-tint) 14%, transparent), transparent 70%),
+      var(--color-sunk);
+    border-bottom: 1px solid var(--color-line);
+  }
+
   /* Choice cards (radio groups with a description) ------------------------ */
   .choice-card {
     position: relative;

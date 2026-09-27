@@ -3,6 +3,8 @@ import type { SharedCamp } from './campShare';
 import type { CatalogEntry, PublishRow } from './catalog';
 import { CATALOG_COLUMNS, readCatalogCamp, readCatalogRow } from './catalog';
 import { AUTH_KEY } from './authKey';
+import type { StudentProfile } from './studentProfile';
+import { profileRow, readProfileRow } from './studentProfile';
 
 // The app's connection to Supabase: sign-in (the planner needs an account)
 // and Keşfet (docs/kesfet.md). The URL and the
@@ -143,6 +145,37 @@ export function setDisplayName(userId: string, name: string): Promise<ApiResult<
   return run(async client => {
     const { error } = await client.from('profiles').upsert({ id: userId, display_name: name.trim() });
     return error ? failure(error) : { ok: true, data: name.trim() };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// The student's private profile (picture, school details)
+
+const PROFILE_COLUMNS = 'avatar, stage, school, department, grade, profession, bio, onboarded_at';
+
+function profileFailure(error: { message?: string; code?: string } | null | undefined): { ok: false; error: string } {
+  const message = error?.message ?? '';
+  if (error?.code === '42501' || message.includes('row-level security')) return { ok: false, error: 'Bu işlem için giriş yapman gerekiyor.' };
+  if (error?.code === '23514') return { ok: false, error: 'Profil bilgilerinden biri kabul edilmedi. Fotoğrafı ya da yazdıklarını kontrol edip tekrar dene.' };
+  if (/fetch|network/i.test(message)) return { ok: false, error: AUTH_OFFLINE };
+  return { ok: false, error: 'Profilin şu an kaydedilemedi. Biraz sonra tekrar dene.' };
+}
+
+/** The signed-in student's profile; null when they have none yet (the welcome questions are due). */
+export function getStudentProfile(userId: string): Promise<ApiResult<StudentProfile | null>> {
+  return runAuth(async client => {
+    const { data, error } = await client.from('student_profiles').select(PROFILE_COLUMNS).eq('user_id', userId).maybeSingle();
+    if (error) return profileFailure(error);
+    return { ok: true, data: data ? readProfileRow(data) : null };
+  });
+}
+
+export function saveStudentProfile(userId: string, profile: StudentProfile): Promise<ApiResult<StudentProfile>> {
+  return runAuth(async client => {
+    const row = { user_id: userId, ...profileRow(profile), updated_at: new Date().toISOString() };
+    const { data, error } = await client.from('student_profiles').upsert(row).select(PROFILE_COLUMNS).single();
+    if (error) return profileFailure(error);
+    return { ok: true, data: readProfileRow(data) };
   });
 }
 

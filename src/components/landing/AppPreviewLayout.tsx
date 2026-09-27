@@ -19,7 +19,7 @@ export function AppPreviewLayout({ camp, view, children }: { camp: LandingPrevie
         onSelectCamp={noop}
         onSelectAll={noop}
         isDemo
-        profile={{ name: 'Demo', detail: 'Ayarlar' }}
+        profile={{ name: 'Demo', detail: 'Ayarlar', avatar: null }}
       />
       <div className="min-w-0 flex-1 px-4 pt-5 pb-10 sm:px-6 lg:px-8 lg:pt-8">{children}</div>
     </div>

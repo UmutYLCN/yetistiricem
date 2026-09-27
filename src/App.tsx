@@ -28,6 +28,7 @@ import { withAddedBranches, withAppendedVideos } from './lib/plannerOps';
 import type { SyncNotification } from './lib/playlistSync';
 import { draftFromPending, syncNotifications, syncTargets } from './lib/playlistSync';
 import { allBranches, defaultSchedule } from './lib/studyCamp';
+import { profileSummary } from './lib/studentProfile';
 import { DayPanel } from './components/day/DayPanel';
 import { WeekStrip } from './components/day/WeekStrip';
 import { AddVideosDialog, EditBranchDialog, EditVideoDialog } from './components/camps/CampDialogs';
@@ -61,6 +62,7 @@ import { ToastProvider, useToast } from './components/ui/Toast';
 import { CampsView } from './components/views/CampsView';
 import { ProgressView } from './components/views/ProgressView';
 import { SettingsView } from './components/views/SettingsView';
+import { OnboardingDialog } from './components/profile/OnboardingDialog';
 import { WeekView } from './components/views/WeekView';
 import type { NoCampsView } from './components/views/Welcome';
 import { NoBranchesYet, NoCampVideos, NoCampsYet, Welcome } from './components/views/Welcome';
@@ -392,8 +394,12 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
 
   const me = account.state.status === 'signed-in' ? account.state : null;
   const profile: Profile = me
-    ? { name: me.displayName ?? me.email?.split('@')[0] ?? 'Hesabın', detail: me.email ?? 'Profil ve ayarlar' }
-    : { name: isDemo ? 'Demo' : 'Misafir', detail: 'Ayarlar' };
+    ? {
+        name: me.displayName ?? me.email?.split('@')[0] ?? 'Hesabın',
+        detail: (me.profile && profileSummary(me.profile)) ?? me.email ?? 'Profil',
+        avatar: me.profile?.avatar ?? null,
+      }
+    : { name: isDemo ? 'Demo' : 'Misafir', detail: 'Ayarlar', avatar: null };
 
   const handleEditLink = (item: DailyPlanItem) => {
     const campId = campIdOf(item) ?? camp?.id;
@@ -885,7 +891,8 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
       <SettingsView
         account={account.state}
         today={today}
-        onRename={() => setRenameOpen(true)}
+        onRename={account.rename}
+        onSaveProfile={account.saveProfile}
         onSignOut={() => void handleSignOut()}
         isDemo={isDemo}
         campCount={data.camps.length}
@@ -894,7 +901,6 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         onReset={handleReset}
         onStartDemo={startDemo}
         onExitDemo={exitDemo}
-        onOpenCamps={() => setView('camps')}
       />
     );
   }
@@ -1094,6 +1100,16 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         onClose={() => setRenameOpen(false)}
         onSave={account.rename}
       />
+      {me && !isDemo && me.profileStatus === 'ready' && !me.profile?.onboardedAt && me.displayName !== null && !importOffer && (
+        <OnboardingDialog
+          key={me.userId}
+          open
+          displayName={me.displayName}
+          profile={me.profile}
+          onRename={account.rename}
+          onSave={account.saveProfile}
+        />
+      )}
       <ImportCampDialog
         offer={importOffer}
         today={today}
