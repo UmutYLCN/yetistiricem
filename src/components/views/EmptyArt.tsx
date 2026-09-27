@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Check, Flag, Link2, Moon, Play, Plus, Timer, Trophy } from 'lucide-react';
+import { Check, Flag, Link2, Play, Plus, Timer, Trophy } from 'lucide-react';
 import { SHORT_WEEKDAYS, WEEK_ORDER } from '../../lib/format';
 import { resolveColor } from '../../lib/subjects';
 
@@ -111,53 +111,6 @@ export function WelcomeArt() {
         <Flag />
         Tahmini bitiş
       </span>
-    </Stage>
-  );
-}
-
-// Which columns of the sketched week carry tasks (Sunday rests).
-const WEEK_LOAD = [3, 2, 3, 2, 3, 2, 0];
-
-/** Haftalık: a week of columns, one of them today's. */
-export function WeekArt() {
-  return (
-    <Stage className="h-[200px] max-w-[400px]">
-      <Sheet className="inset-x-[3%] top-[6%] p-3.5">
-        <div className="flex items-center justify-between">
-          <Bar width={28} />
-          <span className="flex gap-1.5">
-            <span className="size-2 rounded-full bg-line-strong" />
-            <span className="size-2 rounded-full bg-line-strong" />
-          </span>
-        </div>
-        <div className="mt-3 grid grid-cols-7 gap-1.5">
-          {WEEKDAYS.map((day, i) => {
-            const today = i === 2;
-            return (
-              <div key={day} className="flex flex-col items-center gap-1.5">
-                <div
-                  className={`flex h-[104px] w-full flex-col justify-end gap-1 rounded-[8px] border p-1 ${
-                    today ? 'border-accent/50 bg-accent-soft/50' : 'border-line bg-field'
-                  }`}
-                >
-                  {WEEK_LOAD[i] === 0 ? (
-                    <Moon className="m-auto size-3.5 text-ink-3" />
-                  ) : (
-                    Array.from({ length: WEEK_LOAD[i] }, (_, j) => (
-                      <span
-                        key={j}
-                        className={`block h-3.5 rounded-[3px] ${today ? '' : 'bg-line-strong'}`}
-                        style={today ? { background: [PLUM, CLAY, INK][j] } : undefined}
-                      />
-                    ))
-                  )}
-                </div>
-                <span className={`text-[10px] font-semibold ${today ? 'text-accent' : 'text-ink-3'}`}>{day}</span>
-              </div>
-            );
-          })}
-        </div>
-      </Sheet>
     </Stage>
   );
 }

@@ -27,16 +27,15 @@ Kamp sihirbazı sırayla kaynakları, kamp bilgilerini, çalışma ritmini ve pl
 
 Site ana sayfada (`/`) ürünü tanıtır. **Dashboard** düğmesi planlayıcıyı (`/app`) açar; **Demo ile göz at** aynı ekranı örnek bir kampla açar. Planlayıcıda sol üstteki logo ana sayfaya döner.
 
-- **Bugün:** Seçili günün görevleri, günün tahmini çalışma süresi ve haftanın kısa görünümü.
-- **Yol:** Seçili günün görevleri, Duolingo tarzı kıvrılan bir yol üzerinde durak durak. Bir durağa dokununca video sağdan açılan panelde görünür; en alttaki “İzledim” görevi tamamlar ve yol sıradaki durağa ilerler.
-- **Haftalık:** Hafta rotası ve gün kartları. Kartları yatay kaydırarak haftanın tamamını görebilir, görevleri buradan işaretleyebilirsin.
+- **Rotam:** Seçili günün görevleri; sağ üstteki **Liste / Yol** düğmesiyle iki görünüm arasında geçersin. **Liste:** görevler ve günün tahmini çalışma süresi. Üstteki haftanın rotası her günü bir tamamlanma halkasıyla gösterir; bir güne dokunarak ona geçer, oklarla haftalar arasında gezersin.
+  **Yol:** aynı görevler Duolingo tarzı kıvrılan bir yol üzerinde durak durak. Bir durağa dokununca video sağdan açılan panelde görünür; en alttaki “İzledim” görevi tamamlar ve yol sıradaki durağa ilerler.
 - **İlerleme:** Tamamlanan videolar, kalan çalışma, tahmini bitiş, hedef tarih durumu ve kamp/branş bazında ilerleme.
 - **Kamplar:** Kamp seçimi ve yönetimi; branş ekleme, video düzenleme ve o kampa özgü tempoyu değiştirme.
 - **Ayarlar:** Veriyi yedekleme ve geri yükleme, demo ve uygulama sıfırlama gibi uygulama düzeyindeki işlemler.
 
 ## Birden fazla kamp
 
-İki veya daha fazla kamp olduğunda Bugün, Haftalık ve İlerleme ekranları varsayılan olarak **Tüm Kamplar** görünümünü açar. İstediğinde seçiciden tek bir kampa geçebilirsin.
+İki veya daha fazla kamp olduğunda Rotam ve İlerleme ekranları varsayılan olarak **Tüm Kamplar** görünümünü açar. İstediğinde seçiciden tek bir kampa geçebilirsin.
 
 Birleşik görünüm görevleri tek akışta gösterir; her görevde kamp ve branş adı bulunur. Günlük görev sayısı ve süreleri birlikte özetlenir. Kampın günlük hedefleri de ayrı ayrı ve toplam olarak görünür. Planlar birleştirilirken kamp temposu, çalışma kapasitesi ve takvimi bağımsız kalır.
 

@@ -1,13 +1,13 @@
 import { useId } from 'react';
 import type { ComponentType, ReactNode, SVGProps } from 'react';
-import { CalendarCheck, CalendarRange, ChartColumn, Compass, Library, Plus, Route, Settings } from 'lucide-react';
+import { ChartColumn, Compass, Library, Plus, Route, Settings } from 'lucide-react';
 import type { CampScope } from '../../lib/allCamps';
 import { offersAllCamps } from '../../lib/allCamps';
 import { LANDING_PATH } from '../../lib/routes';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
 
-export type View = 'today' | 'path' | 'week' | 'progress' | 'camps' | 'discover' | 'settings';
+export type View = 'today' | 'path' | 'progress' | 'camps' | 'discover' | 'settings';
 
 interface NavItem {
   view: View;
@@ -16,9 +16,8 @@ interface NavItem {
 }
 
 const PRIMARY_NAV: NavItem[] = [
-  { view: 'today', label: 'Bugün', icon: CalendarCheck },
-  { view: 'path', label: 'Yol', icon: Route },
-  { view: 'week', label: 'Haftalık', icon: CalendarRange },
+  // Rotam holds the day twice over: as a list ('today') or as the path ('path').
+  { view: 'today', label: 'Rotam', icon: Route },
   { view: 'progress', label: 'İlerleme', icon: ChartColumn },
   { view: 'camps', label: 'Kamplar', icon: Library },
   { view: 'discover', label: 'Keşfet', icon: Compass },
@@ -117,7 +116,7 @@ export function CampSwitcher({
 export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell, profile }: NavProps) {
   const campCount = camps.length;
   const item = ({ view: target, label, icon: Icon }: NavItem) => {
-    const active = view === target;
+    const active = view === target || (target === 'today' && view === 'path');
     return (
       <li key={target}>
         <button
@@ -253,9 +252,9 @@ export function MobileTabBar({ view, onNavigate }: Pick<NavProps, 'view' | 'onNa
       aria-label="Ana menü"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-6">
+      <ul className="mx-auto grid max-w-lg grid-cols-4">
         {PRIMARY_NAV.map(({ view: target, label, icon: Icon }) => {
-          const active = view === target;
+          const active = view === target || (target === 'today' && view === 'path');
           return (
             <li key={target}>
               <button

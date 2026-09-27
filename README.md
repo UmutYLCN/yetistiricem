@@ -6,14 +6,10 @@
 
 Sınava, mülakata ya da yeni bir hedefe hazırlanan herkesin aklındaki soru aynı: *“Bu kadar video, bu saatten sonra yetişir mi?”* Yetişir bu soruya motivasyon cümlesiyle değil, takvimle cevap verir. YouTube oynatma listeni ekle, izleme hızını ve günlük süreni seç; motor her güne sığacak kadarını koyar ve hedefine hangi gün yetişeceğini gösterir. Bir gün aksarsan suçluluk yok: ritmini güncelle, kalanlar yeniden dağılır.
 
-Yetişir, video listeleriyle çalıştığın öğrenme hedeflerini esnek çalışma kamplarına dönüştürür. TYT ve AYT hazırlığı bunun yalnızca iki örneği; dil öğrenimi, sertifika hazırlığı, mesleki gelişim veya kendi belirlediğin başka bir konu için de kamp oluşturabilirsin. Kampını branşlara ayırabilir, çalışma ritmini seçebilir ve ilerlemeni Bugün, Haftalık ve İlerleme ekranlarında takip edebilirsin.
+Yetişir, video listeleriyle çalıştığın öğrenme hedeflerini esnek çalışma kamplarına dönüştürür. TYT ve AYT hazırlığı bunun yalnızca iki örneği; dil öğrenimi, sertifika hazırlığı, mesleki gelişim veya kendi belirlediğin başka bir konu için de kamp oluşturabilirsin. Kampını branşlara ayırabilir, çalışma ritmini seçebilir ve ilerlemeni Rotam ve İlerleme ekranlarında takip edebilirsin.
 
 <p align="center">
   <img src="docs/screenshots/bugun-masaustu.png" width="100%" alt="Bugün ekranında tüm kampların görevleri ve günlük çalışma hedefi">
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/haftalik-masaustu.png" width="100%" alt="Haftalık planın kaydırılabilir gün kartları ve hafta rotası">
 </p>
 
 <p align="center">
@@ -27,7 +23,7 @@ Yetişir, video listeleriyle çalıştığın öğrenme hedeflerini esnek çalı
 - **Bir kamp oluştur:** Kampına ad ver, başlangıç ve istersen hedef bitiş tarihini seç.
 - **Branşlarını ekle:** YouTube oynatma listesi ya da video bağlantıları ekleyebilirsin; başlık ve süreler YouTube’dan gelir. YouTube dışındaki dersleri konu ve süreyle elle yazabilirsin. Her oynatma listesi kendi branşı olur.
 - **Kendi ritmini belirle:** Videoları çalışma günlerine otomatik dağıt veya hangi gün hangi branşı çalışacağını kendin seç. Dinlenme ve deneme günlerini de plana kat.
-- **Birden fazla hedefi birlikte takip et:** Farklı konulardaki kampları ayrı tempolarda sürdür; Bugün ve Haftalık ekranlarında görevlerini birleşik gör ya da tek kampa odaklan.
+- **Birden fazla hedefi birlikte takip et:** Farklı konulardaki kampları ayrı tempolarda sürdür; Rotam ekranında görevlerini birleşik gör ya da tek kampa odaklan.
 - **Günlük ilerlemene bak:** Tamamladığın videoları işaretle; kalan süreyi, haftalık yükü ve tahmini bitiş tarihini izle.
 - **Suçluluksuz yeniden planla:** Bir görevi tamamlamak planını değiştirmez. Geride kaldığında “Ritmi güncelle” ile kalanları yalnızca sen istediğinde yeniden dağıt; neden aksadığını seçersen İlerleme ekranı alışkanlıklarını gösterir.
 - **Planın hesabında:** Kampların, ilerlemen ve notların hesabına kaydedilir; giriş yaptığın her cihazda aynı plan açılır. Ayarlar’dan yedek indirip geri de yükleyebilirsin.

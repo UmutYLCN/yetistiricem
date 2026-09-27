@@ -1,17 +1,15 @@
 import { useMemo, useState } from 'react';
-import { CalendarCheck, ChevronLeft, ChevronRight, Forward, TriangleAlert } from 'lucide-react';
+import { Forward, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import type { CampLabel } from '../../lib/allCamps';
 import { campIdOf } from '../../lib/allCamps';
 import { linkStateOf } from '../../lib/camps';
 import { dayStops } from '../../lib/dayPath';
 import { addDays } from '../../lib/engine';
-import { formatDayTitle, formatLongDate, formatMinutes, relativeDayLabel } from '../../lib/format';
+import { formatDayTitle, formatLongDate } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
 import { DayEmpty } from '../day/DayEmpty';
-import { PageHeader } from '../layout/PageHeader';
 import { OverdueCard } from '../rail/RightRail';
-import { Meter } from '../ui/Bits';
 import type { StopLook } from './DayPath';
 import { DayPath } from './DayPath';
 import { TaskSheet } from './TaskSheet';
@@ -26,7 +24,6 @@ interface Props {
   firstDate: string | null;
   lastDate: string | null;
   startDate: string;
-  onSelectDate: (date: string) => void;
   onToggle: (item: DailyPlanItem, done: boolean) => void;
   /** Carries the open tasks of this day (and the days before it) forward. */
   onShift: (date: string) => void;
@@ -41,7 +38,8 @@ interface Props {
 
 /**
  * "Yol": the selected day's tasks as a path to walk, one stop per video.
- * A stop opens its task in a sheet, where "İzledim" ticks it off.
+ * A stop opens its task in a sheet, where "İzledim" ticks it off. The day's
+ * title, day arrows and the list / path switch are Rotam's shared header.
  */
 export function PathView({
   summary,
@@ -52,7 +50,6 @@ export function PathView({
   firstDate,
   lastDate,
   startDate,
-  onSelectDate,
   onToggle,
   onShift,
   onShiftOverdue,
@@ -86,51 +83,12 @@ export function PathView({
 
   return (
     <div className="mx-auto max-w-[720px]">
-      <PageHeader
-        eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(date, today)}</span>}
-        title="Günün yolu"
-        subtitle={
-          <>
-            {formatDayTitle(date)}
-            {campLabels && <> · Tüm kamplar</>}
-          </>
-        }
-        actions={
-          <div className="flex items-center gap-1">
-            <button type="button" className="icon-btn" onClick={() => onSelectDate(addDays(date, -1))} aria-label="Önceki gün">
-              <ChevronLeft aria-hidden="true" />
-            </button>
-            {!isToday && (
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => onSelectDate(today)}>
-                <CalendarCheck aria-hidden="true" />
-                Bugüne dön
-              </button>
-            )}
-            <button type="button" className="icon-btn" onClick={() => onSelectDate(addDays(date, 1))} aria-label="Sonraki gün">
-              <ChevronRight aria-hidden="true" />
-            </button>
-          </div>
-        }
-      />
-
       <OverdueCard className="mb-4" count={overdueCount} today={today} onShift={onShiftOverdue} />
 
       {total > 0 ? (
         <>
-          <div className="card sticky top-[64px] z-20 flex items-center gap-4 bg-card/85 px-4 py-3 backdrop-blur-md sm:px-5 lg:top-4">
-            <p className="tnum shrink-0 text-[13.5px] text-ink-2">
-              <span className="font-display text-[20px] text-ink">{done}</span> / {total} görev
-            </p>
-            <div className="min-w-0 flex-1">
-              <Meter value={doneMinutes} max={minutes} label="Günün ilerlemesi (süreye göre)" />
-            </div>
-            <p className="tnum shrink-0 text-[13px] font-semibold text-ink-2">
-              {open > 0 ? `~${formatMinutes(minutes - doneMinutes)} kaldı` : <span className="text-forest">Tamam</span>}
-            </p>
-          </div>
-
           {date < today && open > 0 && (
-            <div className="callout callout-danger mt-4">
+            <div className="callout callout-danger mb-2">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-ink">Bu günden {open} görev yetişmedi.</p>

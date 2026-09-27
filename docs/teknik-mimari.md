@@ -12,7 +12,7 @@ flowchart LR
   H --> E["buildCampSchedule"]
   E --> A["Kamp başına plan"]
   A --> M["mergeDailyPlans"]
-  M --> V["Bugün / Haftalık / İlerleme"]
+  M --> V["Rotam (Liste / Yol) / İlerleme"]
   H -->|liste ya da video kimlikleri| R["GET /api/youtube/playlist · /videos"]
   R --> Y["YouTube Data API v3"]
   Y --> R

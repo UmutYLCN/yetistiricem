@@ -1565,6 +1565,32 @@
     border-radius: 14px;
   }
 
+  /* A notice that comes in, stays a few seconds and fades away (removed at 4.5 s). */
+  .notice-fade {
+    animation: notice-fade 4.5s ease both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    /* Without motion it simply shows until it is removed. */
+    .notice-fade {
+      animation: none !important;
+    }
+  }
+  @keyframes notice-fade {
+    0% {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    8%,
+    82% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
   /* Landing page ------------------------------------------------------------------ */
   html:has(.landing) {
     scroll-behavior: smooth;

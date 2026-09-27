@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CircleCheck, Forward, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
@@ -234,15 +235,7 @@ export function DayPanel({
               </p>
             </div>
           )}
-          {total > 0 && open === 0 && (
-            <div className="callout callout-info">
-              <CircleCheck className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
-              <p className="text-[13.5px] text-ink-2">
-                <span className="font-semibold text-ink">{isToday ? 'Bugünün' : 'Bu günün'} tüm görevleri tamam.</span>{' '}
-                {isToday ? 'Güzel iş, yarın görüşürüz.' : ''}
-              </p>
-            </div>
-          )}
+          {total > 0 && open === 0 && <DoneNotice key={date} isToday={isToday} />}
         </div>
       ) : null}
 
@@ -258,5 +251,24 @@ export function DayPanel({
         </div>
       )}
     </section>
+  );
+}
+
+/** "Tüm görevler tamam": shown when the day is finished, then fades away on its own. */
+function DoneNotice({ isToday }: { isToday: boolean }) {
+  const [shown, setShown] = useState(true);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShown(false), 4500);
+    return () => window.clearTimeout(timer);
+  }, []);
+  if (!shown) return null;
+  return (
+    <div className="callout callout-info notice-fade" role="status">
+      <CircleCheck className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
+      <p className="text-[13.5px] text-ink-2">
+        <span className="font-semibold text-ink">{isToday ? 'Bugünün' : 'Bu günün'} tüm görevleri tamam.</span>{' '}
+        {isToday ? 'Güzel iş, yarın görüşürüz.' : ''}
+      </p>
+    </div>
   );
 }

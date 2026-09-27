@@ -97,7 +97,7 @@ export function CampsView({
         subtitle={
           allCamps.length > 0
             ? showsAllCamps
-              ? `${allCamps.length} kamp · her birinin kendi branşları ve temposu var · Bugün ve Haftalık hepsini birlikte gösteriyor`
+              ? `${allCamps.length} kamp · her birinin kendi branşları ve temposu var · Rotam ve İlerleme hepsini birlikte gösteriyor`
               : `${allCamps.length} kamp · her birinin kendi branşları ve temposu var`
             : undefined
         }

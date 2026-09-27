@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import confetti from 'canvas-confetti';
-import { CalendarCheck, Eye, Info, LogOut, TriangleAlert, X } from 'lucide-react';
+import { CalendarCheck, ChevronLeft, ChevronRight, Eye, Info, LogOut, TriangleAlert, X } from 'lucide-react';
 import type { CampSchedule, DailyPlanItem, PostponeReason, StudyCamp, SubjectPlaylist } from './types';
 import { usePlanner } from './hooks/usePlanner';
 import { usePlaylistSync } from './hooks/usePlaylistSync';
@@ -31,6 +31,8 @@ import { allBranches, defaultSchedule } from './lib/studyCamp';
 import { profileSummary } from './lib/studentProfile';
 import { DayPanel } from './components/day/DayPanel';
 import { WeekStrip } from './components/day/WeekStrip';
+import type { DayLayout } from './components/day/DayLayoutToggle';
+import { DayLayoutToggle } from './components/day/DayLayoutToggle';
 import { AddVideosDialog, EditBranchDialog, EditVideoDialog } from './components/camps/CampDialogs';
 import { CampTempoDialog, RenameCampDialog } from './components/camps/CampProgramDialogs';
 import type { PostponeChoice, PostponeRequest } from './components/camps/PostponeReasonDialog';
@@ -64,7 +66,6 @@ import { CampsView } from './components/views/CampsView';
 import { ProgressView } from './components/views/ProgressView';
 import { SettingsView } from './components/views/SettingsView';
 import { OnboardingDialog } from './components/profile/OnboardingDialog';
-import { WeekView } from './components/views/WeekView';
 import type { NoCampsView } from './components/views/Welcome';
 import { NoBranchesYet, NoCampVideos, NoCampsYet, Welcome } from './components/views/Welcome';
 import { AddBranchWizard } from './components/wizard/AddBranchWizard';
@@ -230,16 +231,18 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
 
   const selectDate = actions.setSelectedDate;
 
+  // Rotam shows the day as a list or as the path; the menu brings back the last one used.
+  const [dayLayout, setDayLayout] = useState<DayLayout>('today');
   const navigate = (next: View) => {
     if (next === 'today' || next === 'path') selectDate(today);
     if (next === 'discover') setDiscoverId(null);
-    setView(next);
+    setView(next === 'today' ? dayLayout : next);
   };
-
-  const openDay = (date: string) => {
-    selectDate(date);
-    setView('today');
+  const switchLayout = (layout: DayLayout) => {
+    setDayLayout(layout);
+    setView(layout);
   };
+  const layoutToggle = <DayLayoutToggle value={view === 'path' ? 'path' : 'today'} onChange={switchLayout} />;
 
   const openTempo = (campId: string | undefined = camp?.id) => {
     if (campId) setDialog({ kind: 'tempo', campId });
@@ -703,6 +706,33 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
     : summarizeDay(selectedDate, index, prefs);
   const isToday = selectedDate === today;
   const hasOverdue = index.overdue.length > 0;
+  // Rotam's header, the same above the list and the path, so switching moves nothing but the content below.
+  const rotamHeader = (
+    <PageHeader
+      eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(selectedDate, today)}</span>}
+      title={formatDayTitle(selectedDate)}
+      subtitle={campLabels && `Tüm kamplar · ${campLabels.size} kamp birlikte`}
+      actions={
+        <div className="flex items-center justify-between gap-x-3 max-sm:w-full sm:justify-end">
+          <div className="flex items-center gap-1">
+            <button type="button" className="icon-btn" onClick={() => selectDate(addDays(selectedDate, -1))} aria-label="Önceki gün">
+              <ChevronLeft aria-hidden="true" />
+            </button>
+            {!isToday && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectDate(today)}>
+                <CalendarCheck aria-hidden="true" />
+                Bugüne dön
+              </button>
+            )}
+            <button type="button" className="icon-btn" onClick={() => selectDate(addDays(selectedDate, 1))} aria-label="Sonraki gün">
+              <ChevronRight aria-hidden="true" />
+            </button>
+          </div>
+          {layoutToggle}
+        </div>
+      }
+    />
+  );
   const firstStart = allPlan ? (shownCamps.map(s => s.result.preferences.startDate).sort()[0] ?? prefs.startDate) : prefs.startDate;
   // "Tüm Kamplar" before any camp has a video: nothing to combine yet.
   const noPlansInCamps = (title: string) => (
@@ -729,31 +759,18 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
     ) : noCampPlans ? (
       noPlansInCamps('Bugün')
     ) : (
-      <div className={`grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_320px] ${hasOverdue ? 'xl:grid-rows-[auto_auto_1fr]' : ''}`}>
-        <div className="min-w-0">
-          <PageHeader
-            eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(selectedDate, today)}</span>}
-            title={formatDayTitle(selectedDate)}
-            subtitle={campLabels && `Tüm kamplar · ${campLabels.size} kamp birlikte`}
-            actions={
-              !isToday && (
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectDate(today)}>
-                  <CalendarCheck aria-hidden="true" />
-                  Bugüne dön
-                </button>
-              )
-            }
-          />
-        </div>
+      <div>
+      {rotamHeader}
+      <div className={`grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_320px] ${hasOverdue ? 'xl:grid-rows-[auto_1fr]' : ''}`}>
         {/* After the title below xl; from xl the first card of the summary column, level with the week strip. */}
         <OverdueCard
-          className="min-w-0 xl:col-start-2 xl:row-start-2 xl:self-start"
+          className="min-w-0 xl:col-start-2 xl:row-start-1 xl:self-start"
           count={index.overdue.length}
           today={today}
           onShift={() => handleShift(addDays(today, -1))}
         />
         {/* Spans the overdue card's row too, so the card never pushes the week strip down. */}
-        <div className={`min-w-0 space-y-4 xl:col-start-1 xl:row-start-2 ${hasOverdue ? 'xl:row-span-2' : ''}`}>
+        <div className={`min-w-0 space-y-4 xl:col-start-1 xl:row-start-1 ${hasOverdue ? 'xl:row-span-2' : ''}`}>
           <WeekStrip days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
           <DayPanel
             summary={summary}
@@ -774,7 +791,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         {/* Side by side under the day below xl; from xl a column level with the week strip, under the overdue card if any. */}
         <aside
           aria-label="Özet"
-          className={`mt-2 grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:col-start-2 xl:mt-0 xl:grid-cols-1 ${hasOverdue ? 'xl:row-start-3' : 'xl:row-start-2'}`}
+          className={`mt-2 grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:col-start-2 xl:mt-0 xl:grid-cols-1 ${hasOverdue ? 'xl:row-start-2' : 'xl:row-start-1'}`}
         >
           <ProgressCard
             stats={stats}
@@ -786,11 +803,14 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
           <WeekCard days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
         </aside>
       </div>
+      </div>
     );
   } else if (view === 'path') {
     content = noCampPlans ? (
       noPlansInCamps('Günün yolu')
     ) : allPlan || hasBranches ? (
+      <div>
+      {rotamHeader}
       <PathView
         summary={summary}
         today={today}
@@ -800,7 +820,6 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         firstDate={index.firstDate}
         lastDate={index.lastDate}
         startDate={firstStart}
-        onSelectDate={selectDate}
         onToggle={handleToggle}
         onShift={handleShift}
         onShiftOverdue={() => handleShift(addDays(today, -1))}
@@ -809,30 +828,9 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         onAddBranches={openAddBranches}
         campLabels={campLabels}
       />
-    ) : (
-      noPlanYet('Günün yolu', 'path')
-    );
-  } else if (view === 'week') {
-    content = noCampPlans ? (
-      noPlansInCamps('Haftalık plan')
-    ) : allPlan || hasBranches ? (
-      <div className="mx-auto max-w-[920px]">
-        <WeekView
-          days={weekDays}
-          today={today}
-          selectedDate={selectedDate}
-          camps={camps}
-          oversizedIds={oversizedIds}
-          onSelectDate={selectDate}
-          onOpenDay={openDay}
-          onToggle={handleToggle}
-          onEditLink={handleEditLink}
-          onFocus={openFocus}
-          campLabels={campLabels}
-        />
       </div>
     ) : (
-      noPlanYet('Haftalık plan', 'week')
+      noPlanYet('Günün yolu', 'path')
     );
   } else if (view === 'progress') {
     content = noCampPlans ? (
@@ -854,7 +852,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
           onShiftOverdue={() => handleShift(addDays(today, -1))}
           onOpenWeek={monday => {
             selectDate(monday <= today && today <= addDays(monday, 6) ? today : monday);
-            setView('week');
+            setView('today');
           }}
           onEditTempo={openTempo}
         />
@@ -944,7 +942,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
       : view === 'today'
         ? ''
         : view === 'path' && (allPlan || hasBranches)
-          ? 'max-w-[720px]'
+          ? ''
           : 'max-w-[920px]';
 
   const dialogCamp = dialog ? data.camps.find(c => c.id === dialog.campId) : undefined;

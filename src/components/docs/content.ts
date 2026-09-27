@@ -19,7 +19,7 @@ export const DOC_PAGES: DocPage[] = [
   { slug: 'kamp-olusturma', group: 'Kamplar', title: 'Kamp oluşturma', description: 'Sihirbazın dört adımı, branş eklemek ve birden fazla kamp.', keywords: 'sihirbaz yeni kamp tüm kamplar branş ekle', Body: CampWizard },
   { slug: 'kaynaklar', group: 'Kamplar', title: 'Branşlar ve kaynaklar', description: 'Oynatma listesi, video bağlantıları ve elle eklenen konular.', keywords: 'youtube playlist oynatma listesi video konu zil bildirim', Body: Sources },
   { slug: 'tempo', group: 'Kamplar', title: 'Tempo ve ritim', description: 'Günlük süre, hız, tekrar payı, otomatik ya da elle dağıtım, hedef tarih.', keywords: 'hız süre hedef tarih yetişir mi deneme dinlenme', Body: Tempo },
-  { slug: 'bugun', group: 'Her gün', title: 'Bugün, Yol ve Haftalık', description: 'Günlük görevlerin üç görünümü.', keywords: 'görev işaretle yol haftalık', Body: Daily },
+  { slug: 'bugun', group: 'Her gün', title: 'Rotam', description: 'Günün görevleri: liste ya da yol, ve haftanın rotası.', keywords: 'rotam bugün görev işaretle yol liste hafta rotası haftalık', Body: Daily },
   { slug: 'ritmi-guncelle', group: 'Her gün', title: 'Ritmi güncelle', description: 'Geride kaldığında görevleri suçluluk duymadan yeniden dağıt.', keywords: 'erteleme ileri taşı geciken neden öneri kritik', Body: Reschedule },
   { slug: 'focus', group: 'Her gün', title: 'Yetişir Focus', description: 'Videoları önerisiz, dikkat dağıtmayan bir oynatıcıda izle.', keywords: 'odak oynatıcı video izle', Body: Focus },
   { slug: 'ilerleme', group: 'İlerleme', title: 'İlerleme ekranı', description: 'Seri, sorumluluk skoru, ısı haritası ve erteleme analizi.', keywords: 'seri streak skor ısı haritası istatistik', Body: Progress },

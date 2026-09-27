@@ -40,7 +40,7 @@ export function Overview() {
           Sihirbazın dört adımı ve her adımda neyi seçtiğin.
         </PageCard>
         <PageCard to="bugun" title="Her gün" icon={<CalendarCheck className="size-4 text-forest" />}>
-          Bugün, Yol ve Haftalık ekranlarıyla günlük kullanım.
+          Rotam ekranıyla günlük kullanım.
         </PageCard>
         <PageCard to="yapay-zeka" title="Yapay zekâ" icon={<Bot className="size-4 text-forest" />}>
           Claude, ChatGPT ya da Gemini’yi bağla; seni değerlendirsin, kampını kursun.
@@ -119,7 +119,7 @@ export function CampWizard() {
       </p>
       <H2 id="birden-fazla-kamp">Birden fazla kamp</H2>
       <p>
-        İki ya da daha fazla kampın olduğunda Bugün, Haftalık ve İlerleme ekranları <strong>Tüm Kamplar</strong> görünümünü açar: görevler
+        İki ya da daha fazla kampın olduğunda Rotam ve İlerleme ekranları <strong>Tüm Kamplar</strong> görünümünü açar: görevler
         tek akışta, her biri kamp ve branş adıyla. Her kamp kendi temposuyla planlanır; bir kampı değiştirmek diğerini etkilemez.
       </p>
     </>
@@ -219,18 +219,22 @@ export function Daily() {
   return (
     <>
       <p>Her gün yalnızca bugünün görevlerine bakarsın. Bir görevi işaretlemek planı değiştirmez; işareti geri alabilirsin.</p>
-      <H2 id="bugun">Bugün</H2>
+      <H2 id="bugun">Rotam</H2>
       <p>
-        Seçili günün görevleri, tahmini çalışma süresi ve haftanın kısa görünümü. Hafta şeridinden başka bir güne geçebilirsin. Sağ
-        tarafta genel ilerleme, tahmini bitiş ve hedef tarihin durur.
+        Menüdeki <strong>Rotam</strong> seçili günü iki şekilde gösterir; sağ üstteki <strong>Liste / Yol</strong> düğmesiyle geçersin ve
+        menü son kullandığını açar.
       </p>
-      <H2 id="yol">Yol</H2>
+      <H3 id="liste">Liste</H3>
+      <p>
+        Seçili günün görevleri ve tahmini çalışma süresi. Üstteki <strong>haftanın rotası</strong> her günü bir halkayla gösterir: halka
+        o günün görevleri bittikçe dolar, tamamlanan gün tik alır, geciken günde kırmızı nokta belirir. Bir güne dokunarak ona geçer, oklarla
+        haftalar arasında gezersin. Sağ tarafta genel ilerleme, tahmini bitiş ve hedef tarihin durur.
+      </p>
+      <H3 id="yol">Yol</H3>
       <p>
         Günün görevleri kıvrılan bir yol üzerinde durak durak. Bir durağa dokununca video yandaki panelde açılır; <strong>İzledim</strong>{' '}
         görevi tamamlar ve yol sıradaki durağa ilerler.
       </p>
-      <H2 id="haftalik">Haftalık</H2>
-      <p>Hafta rotası ve kaydırılabilir gün kartları. Görevleri buradan da işaretleyebilirsin.</p>
       <Callout tone="tip">
         Geride kaldıysan görevler kırmızıyla öne çıkar. Ne yapacağın: <DocLink to="ritmi-guncelle">Ritmi güncelle</DocLink>.
       </Callout>
