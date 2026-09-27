@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeft, Eye, LoaderCircle, RefreshCw, TriangleAlert } from 'lucide-react';
 import type { Account } from '../../hooks/useAccount';
 import { useAccount } from '../../hooks/useAccount';
-import { hydrateAccount } from '../../lib/cloudSync';
+import { hydrateAccount, isolateSignedOutPlanner } from '../../lib/cloudSync';
 import { todayKey } from '../../lib/engine';
 import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
@@ -83,8 +83,8 @@ type Hydration = { userId: string; status: 'loading' } | { userId: string; statu
 /**
  * The planner needs an account, and it opens only on that account's plan:
  * signed-out visitors see the sign-in page; after sign-in the account's plan
- * is brought into this browser first (`hydrateAccount`: a plan from before
- * accounts joins the first account, another account's plan is never shown).
+ * is brought into this browser first (`hydrateAccount`: ownerless data is
+ * backed up; another account's plan is never shown).
  * The demo (nothing is saved there) opens without an account, and so does a
  * development build without Supabase config. The planner reads storage once
  * per page load, so it never mounts twice in one page: if the session ends
@@ -99,32 +99,41 @@ export function AuthGate({ startInDemo, children }: {
   const userId = state.status === 'signed-in' ? state.userId : null;
   const [hydration, setHydration] = useState<Hydration | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const needsHydration = !startInDemo && userId !== null;
+  const [shown, setShown] = useState(false);
+  const [shownOwner, setShownOwner] = useState<string | null>(null);
+  const needsHydration = !startInDemo && !shown && userId !== null;
 
   useEffect(() => {
     if (!needsHydration || !userId) return;
-    let cancelled = false;
-    void hydrateAccount(userId, todayKey()).then(result => {
-      if (cancelled) return;
+    const controller = new AbortController();
+    void hydrateAccount(userId, todayKey(), controller.signal).then(result => {
+      if (controller.signal.aborted) return;
       setHydration(result.ok ? { userId, status: 'ready' } : { userId, status: 'error', message: result.error });
     });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [needsHydration, userId, attempt]);
+
+  useEffect(() => {
+    if (!startInDemo && !shown && state.status === 'signed-out') isolateSignedOutPlanner();
+  }, [startInDemo, shown, state.status]);
 
   const ready = hydration?.status === 'ready' && hydration.userId === userId;
   const localOnly = state.status === 'off' && import.meta.env.DEV;
   const open = startInDemo || localOnly || (userId !== null && ready);
-  const [shown, setShown] = useState(false);
-  if (open && !shown) setShown(true);
+  if (open && !shown) {
+    setShownOwner(userId);
+    setShown(true);
+  }
+  const ownerChanged = shown && !startInDemo && !localOnly && shownOwner !== userId;
 
   useEffect(() => {
-    if (!shown || startInDemo || localOnly || state.status !== 'signed-out') return;
+    if (!shown || startInDemo || localOnly || (state.status !== 'signed-out' && !ownerChanged)) return;
     window.location.replace(APP_PATH);
-  }, [shown, startInDemo, localOnly, state.status]);
+  }, [shown, startInDemo, localOnly, state.status, ownerChanged]);
 
-  if (shown) return <>{children(account, userId)}</>;
+  if (shown) return <>{children(account, ownerChanged ? null : userId)}</>;
   if (state.status === 'off') {
     return <GateMessage title="Giriş bu sunucuda kurulmamış" body="Uygulamanın Supabase bağlantısı tanımlı değil (kurulum: docs/kesfet.md)." />;
   }

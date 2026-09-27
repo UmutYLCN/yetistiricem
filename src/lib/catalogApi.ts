@@ -37,6 +37,28 @@ export function getSupabase(): Promise<SupabaseClient | null> {
   return clientPromise;
 }
 
+/** A planner request holds the token of its expected owner even if the active session changes mid-request. */
+export async function getSupabaseForAccount(userId: string): Promise<
+  { status: 'ready'; client: SupabaseClient } | { status: 'offline' | 'owner-changed' }
+> {
+  if (!URL_ENV || !KEY_ENV) return { status: 'offline' };
+  try {
+    const active = await getSupabase();
+    if (!active) return { status: 'offline' };
+    const { data, error } = await active.auth.getSession();
+    if (error || !data.session) return { status: 'offline' };
+    if (data.session.user.id !== userId) return { status: 'owner-changed' };
+    const token = data.session.access_token;
+    const { createClient } = await import('@supabase/supabase-js');
+    return {
+      status: 'ready',
+      client: createClient(URL_ENV, KEY_ENV, { accessToken: async () => token }),
+    };
+  } catch {
+    return { status: 'offline' };
+  }
+}
+
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 const OFFLINE = 'Keşfet’e ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.';

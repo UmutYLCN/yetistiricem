@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { StudyCamp } from '../src/types/index.ts';
 import {
-  CAMP_KEYS, UI_KEYS, activeCampOf, campStore, clearAllStorage, createBackup, loadPlanner, parseBackup, pruneCompletion,
+  CAMP_KEYS, LEGACY_MIGRATION_KEY, UI_KEYS, activeCampOf, campStore, clearAllStorage, createBackup, loadPlanner, parseBackup, pruneCompletion,
 } from '../src/lib/persistence.ts';
 import { MIGRATED_CAMP_ID, DEFAULT_CAMP_NAME, migrateLegacyData, normalizeCamps } from '../src/lib/studyCamp.ts';
 import { STORAGE_KEYS } from '../src/utils/storage.ts';
@@ -116,6 +116,11 @@ test('after migration the saved camps are authoritative and nothing is migrated 
     // Deleting every camp is respected too: the old snapshot is not revived.
     store.set(CAMP_KEYS.camps, JSON.stringify(campStore([])));
     assert.deepEqual(loadPlanner().data.camps, []);
+
+    // Even if the current key disappears later, the old flat snapshot is not a new camp.
+    store.delete(CAMP_KEYS.camps);
+    assert.equal(store.get(LEGACY_MIGRATION_KEY), 'true');
+    assert.deepEqual(loadPlanner().data.camps, []);
   });
 });
 
@@ -168,12 +173,12 @@ test('settings saved without any camp seed the wizard, and nothing is created', 
   });
 });
 
-test('a corrupt camp store is copied aside and rebuilt from the older keys', () => {
+test('a corrupt camp store is copied aside without replaying an older snapshot', () => {
   withStorage({ ...legacyStorage(), [CAMP_KEYS.camps]: '{broken' }, store => {
     const { data, notices } = loadPlanner();
     assert.equal(store.get(`${CAMP_KEYS.camps}__okunamadi`), '{broken');
-    assert.equal(data.camps.length, 1);
-    assert.deepEqual(data.camps[0].branches.map(b => b.id), ['mat', 'fiz', 'kim']);
+    assert.deepEqual(data.camps, []);
+    assert.equal(store.get(STORAGE_KEYS.playlists), legacyStorage()[STORAGE_KEYS.playlists]);
     assert.ok(notices.some(n => n.id === `unreadable-${CAMP_KEYS.camps}`));
   });
   // A store from a newer version is kept aside, not overwritten blindly.
@@ -181,6 +186,14 @@ test('a corrupt camp store is copied aside and rebuilt from the older keys', () 
   withStorage({ [CAMP_KEYS.camps]: newer }, store => {
     loadPlanner();
     assert.equal(store.get(`${CAMP_KEYS.camps}__okunamadi`), newer);
+  });
+});
+
+test('an account copy never migrates stale flat keys after its camp store goes missing', () => {
+  withStorage({ ...legacyStorage(), yt_sync: JSON.stringify({ owner: 'account-a', revision: 2, dirty: false }) }, store => {
+    assert.deepEqual(loadPlanner().data.camps, []);
+    assert.equal(store.has(CAMP_KEYS.camps), false);
+    assert.equal(store.get(STORAGE_KEYS.playlists), legacyStorage()[STORAGE_KEYS.playlists]);
   });
 });
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { readSyncMeta, savePlannerState, writeSyncMeta } from '../lib/cloudSync';
+import { leaveAccountLocally, readSyncMeta, savePlannerState, writeSyncMeta } from '../lib/cloudSync';
 import type { PlannerData } from '../lib/persistence';
 
 export type SyncStatus = 'saved' | 'saving' | 'pending' | 'offline' | 'error';
@@ -9,7 +9,7 @@ const RETRY_MS = 20_000;
 
 /**
  * Saves the signed-in account's plan to the cloud a moment after each change
- * (and at once when the page is hidden). A save builds on the revision the
+ * (immediately after removals and when the page is hidden). A save builds on the revision the
  * copy started from; when another device saved first, the page reloads, and
  * the sign-in step opens the newer plan and keeps this copy's changes aside.
  * `userId` null (demo without an account, or no sign-in set up): nothing is saved.
@@ -19,6 +19,8 @@ export function useCloudSync(data: PlannerData, userId: string | null) {
   const [savedData, setSavedData] = useState<PlannerData | null>(() => (readSyncMeta()?.dirty ? null : data));
   const [phase, setPhase] = useState<'idle' | 'saving' | 'offline' | 'error'>('idle');
   const dataRef = useRef(data);
+  const savedDataRef = useRef(savedData);
+  const previousUserRef = useRef(userId);
   const firstRef = useRef(true);
   const timerRef = useRef<number | null>(null);
   const savingRef = useRef<Promise<boolean> | null>(null);
@@ -26,20 +28,33 @@ export function useCloudSync(data: PlannerData, userId: string | null) {
   const save = useCallback(async (): Promise<boolean> => {
     if (!userId) return true;
     if (savingRef.current) await savingRef.current;
-    const meta = readSyncMeta();
-    if (!meta || meta.owner !== userId || !meta.dirty) return true;
+    let meta = readSyncMeta();
+    if (!meta || meta.owner !== userId) return false;
+    if (dataRef.current !== savedDataRef.current && !meta.dirty) {
+      meta = { ...meta, dirty: true };
+      if (!writeSyncMeta(meta)) {
+        setPhase('error');
+        return false;
+      }
+    }
+    if (!meta.dirty) return true;
     const snapshot = dataRef.current;
     const run = (async () => {
       setPhase('saving');
-      const result = await savePlannerState(snapshot, meta.revision);
+      const result = await savePlannerState(snapshot, meta.revision, userId);
+      if (readSyncMeta()?.owner !== userId) return false;
       if (result.ok) {
         const clean = dataRef.current === snapshot;
-        writeSyncMeta({ owner: userId, revision: result.revision, dirty: !clean });
+        if (!writeSyncMeta({ owner: userId, revision: result.revision, dirty: !clean })) {
+          setPhase('error');
+          return false;
+        }
+        savedDataRef.current = snapshot;
         setSavedData(snapshot);
         setPhase('idle');
         return clean;
       }
-      if (result.reason === 'conflict') {
+      if (result.reason === 'conflict' || result.reason === 'owner-changed') {
         window.location.reload();
         return false;
       }
@@ -67,6 +82,7 @@ export function useCloudSync(data: PlannerData, userId: string | null) {
 
   // Every change marks the copy unsaved at once (a closed tab keeps that), then saves shortly after.
   useEffect(() => {
+    const previous = dataRef.current;
     dataRef.current = data;
     if (!userId) return;
     if (firstRef.current) {
@@ -76,8 +92,19 @@ export function useCloudSync(data: PlannerData, userId: string | null) {
     }
     const meta = readSyncMeta();
     if (meta?.owner === userId && !meta.dirty) writeSyncMeta({ ...meta, dirty: true });
-    schedule(SAVE_DELAY_MS);
+    const removed = previous.camps.some(camp => {
+      const next = data.camps.find(candidate => candidate.id === camp.id);
+      return !next || camp.branches.some(branch => !next.branches.some(candidate => candidate.id === branch.id));
+    });
+    schedule(removed ? 0 : SAVE_DELAY_MS);
   }, [data, userId, schedule]);
+
+  // The mounted planner still has its latest in-memory data when a live session expires.
+  useEffect(() => {
+    const previousUser = previousUserRef.current;
+    previousUserRef.current = userId;
+    if (previousUser && !userId) leaveAccountLocally(data, data !== savedData);
+  }, [data, userId, savedData]);
 
   // Retry while unsaved: when the connection returns, on a timer, and when the page is hidden.
   useEffect(() => {
@@ -90,10 +117,12 @@ export function useCloudSync(data: PlannerData, userId: string | null) {
     };
     const timer = window.setInterval(retry, RETRY_MS);
     window.addEventListener('online', retry);
+    window.addEventListener('pagehide', retry);
     document.addEventListener('visibilitychange', onHide);
     return () => {
       window.clearInterval(timer);
       window.removeEventListener('online', retry);
+      window.removeEventListener('pagehide', retry);
       document.removeEventListener('visibilitychange', onHide);
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     };
@@ -101,12 +130,13 @@ export function useCloudSync(data: PlannerData, userId: string | null) {
 
   /** Saves now; true when the cloud has everything. */
   const flush = useCallback(async () => {
+    dataRef.current = data;
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
     return save();
-  }, [save]);
+  }, [data, save]);
 
   const status: SyncStatus = phase !== 'idle' ? phase : data === savedData ? 'saved' : 'pending';
   return { status, flush };

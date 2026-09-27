@@ -1,5 +1,5 @@
 import type { PlannerData } from './persistence.ts';
-import { createBackup, datesOfCompleted, parseBackup } from './persistence.ts';
+import { createBackup, parseBackup } from './persistence.ts';
 
 // Each account's plan lives in Supabase (`planner_states`, one row per user:
 // the backup document plus a revision), and this browser keeps a working copy
@@ -8,6 +8,9 @@ import { createBackup, datesOfCompleted, parseBackup } from './persistence.ts';
 // only; the network side is `src/lib/cloudSync.ts`. See docs/kesfet.md.
 
 export const SYNC_KEY = 'yt_sync';
+/** Ownerless data is retained for manual recovery, never uploaded on sign-in. */
+export const UNCLAIMED_KEY = 'yt_sync__sahipsiz';
+export const UNCLAIMED_NOTICE_KEY = 'yt_sync__sahipsiz_bildirim';
 
 export interface SyncMeta {
   /** The account this browser's copy belongs to. */
@@ -47,80 +50,50 @@ export function fromCloudDocument(raw: unknown, today: string): PlannerData | nu
   return parsed.ok ? parsed.data : null;
 }
 
-/**
- * `extra` joined into `base` (the account's plan): camps `base` does not have
- * are added, progress, dates and notes are combined, and `base` wins wherever
- * both have a value. Nothing of either is dropped.
- */
-export function mergePlannerData(base: PlannerData, extra: PlannerData): PlannerData {
-  const campIds = new Set(base.camps.map(c => c.id));
-  const completedMap = { ...extra.completedMap, ...base.completedMap };
-  return {
-    camps: [...base.camps, ...extra.camps.filter(c => !campIds.has(c.id))],
-    activeCampId: base.activeCampId ?? extra.activeCampId,
-    completedMap,
-    completionDates: datesOfCompleted(
-      {
-        since: base.completionDates.since < extra.completionDates.since ? base.completionDates.since : extra.completionDates.since,
-        dates: { ...extra.completionDates.dates, ...base.completionDates.dates },
-      },
-      completedMap
-    ),
-    focusSessions: [...base.focusSessions, ...extra.focusSessions],
-    playlistSync: {
-      ...base.playlistSync,
-      branches: { ...extra.playlistSync.branches, ...base.playlistSync.branches },
-    },
-    dayNotes: { ...extra.dayNotes, ...base.dayNotes },
-  };
-}
-
 export type HydrationPlan =
   /** The cloud copy replaces this browser's. */
   | { kind: 'use-remote' }
   /** This browser's copy is the account's newest: keep it and save its changes. */
   | { kind: 'keep-local' }
-  /** This browser's copy (from before accounts, or never saved) joins the cloud copy. */
-  | { kind: 'merge-local' }
   /** Unsaved changes here lost to newer cloud data: keep them aside, use the cloud copy. */
   | { kind: 'conflict' }
   /** The account has no cloud copy yet: this browser's copy becomes it. */
   | { kind: 'upload-local' }
   /** No cloud copy and nothing of this account here: start empty. */
   | { kind: 'start-empty' }
-  /** Offline, and the copy here is this account's (or from before accounts): use it, save later. */
+  /** Offline, and the copy here is this account's: use it, save later. */
   | { kind: 'offline-local' }
   /** Offline, and nothing of this account here to show. */
   | { kind: 'offline-blocked' };
 
 /**
- * What to do with this browser's copy when `userId` signs in. A copy from
- * before accounts (no owner) goes to the first account that signs in here;
- * another account's copy is never shown.
+ * What to do with this browser's copy when `userId` signs in. Only a copy
+ * explicitly owned by that account can be uploaded. An ownerless copy may
+ * contain deleted or another account's data and must be kept aside.
  */
 export function planHydration(input: {
   userId: string;
   meta: SyncMeta | null;
   /** This browser holds planner data. */
   hasLocal: boolean;
+  /** The authoritative `yt_camps` store exists, even if its camp list is empty. */
+  hasWorkingCopy: boolean;
   /** The account's cloud copy, none yet, or the cloud could not be reached. */
   remote: { revision: number } | null | 'offline';
 }): HydrationPlan {
-  const { userId, meta, hasLocal, remote } = input;
-  const anonymous = meta === null && hasLocal;
+  const { userId, meta, hasLocal, hasWorkingCopy, remote } = input;
   const mine = meta?.owner === userId;
 
-  if (remote === 'offline') return mine || anonymous ? { kind: 'offline-local' } : { kind: 'offline-blocked' };
+  if (remote === 'offline') return mine && hasWorkingCopy ? { kind: 'offline-local' } : { kind: 'offline-blocked' };
 
   if (remote === null) {
-    if ((mine || anonymous) && hasLocal) return { kind: 'upload-local' };
+    if (mine && hasLocal && hasWorkingCopy && meta.revision === 0) return { kind: 'upload-local' };
     return { kind: 'start-empty' };
   }
 
   if (mine && meta) {
-    if (!meta.dirty) return { kind: 'use-remote' };
-    if (meta.revision === 0) return { kind: 'merge-local' };
+    if (!meta.dirty || !hasWorkingCopy) return { kind: 'use-remote' };
     return meta.revision === remote.revision ? { kind: 'keep-local' } : { kind: 'conflict' };
   }
-  return anonymous ? { kind: 'merge-local' } : { kind: 'use-remote' };
+  return { kind: 'use-remote' };
 }

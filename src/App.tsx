@@ -571,7 +571,10 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         });
         if (!ok) return;
       }
-      leaveAccountLocally(realData);
+      if (!leaveAccountLocally(realData, !saved)) {
+        notify({ message: 'Bu cihazdaki kaydedilmemiş plan yedeklenemedi. Depolama alanını kontrol edip tekrar dene.', tone: 'info' });
+        return;
+      }
     }
     await account.signOut();
     if (startInDemo) notify({ message: 'Çıkış yaptın.', tone: 'info' });

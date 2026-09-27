@@ -41,8 +41,9 @@ import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } fr
 //   the new videos waiting in the bell (see `src/lib/playlistSync.ts`).
 // - The older flat keys (`yt_playlists`, `yt_prefs`, `yt_shift_events`,
 //   `yt_shifted_date`) are only read, once, to build the first camp when
-//   `yt_camps` does not exist yet. They are never written or removed here, so
-//   they stay as a snapshot of the pre-camp data (Reset clears them).
+//   `yt_camps` does not exist yet and migration has never completed. They are
+//   never written here; `yt_camps_migrated` prevents an old snapshot from
+//   becoming a new camp if the current store later goes missing.
 //
 // Loading never throws away data silently: unreadable values are copied
 // aside and reported as notices.
@@ -65,6 +66,7 @@ export const PROGRESS_KEYS = {
 } as const;
 
 export const CAMPS_VERSION = 1;
+export const LEGACY_MIGRATION_KEY = 'yt_camps_migrated';
 export const COMPLETION_DATES_VERSION = 1;
 export const FOCUS_SESSIONS_VERSION = 1;
 
@@ -78,7 +80,7 @@ export const DATA_KEYS = [
 ];
 
 /** Everything "Tüm verileri sil" removes: the data and the view choices. The account stays signed in. */
-export const ALL_KEYS = [...DATA_KEYS, UI_KEYS.selectedDate, UI_KEYS.campScope];
+export const ALL_KEYS = [...DATA_KEYS, UI_KEYS.selectedDate, UI_KEYS.campScope, LEGACY_MIGRATION_KEY];
 
 export const MAX_NOTE_LENGTH = 2000;
 
@@ -398,6 +400,7 @@ function loadFromStorage(): LoadResult {
   const storedCamps = stored.status === 'ok' ? readCampStore(stored.value) : null;
 
   if (storedCamps) {
+    if (localStorage.getItem(LEGACY_MIGRATION_KEY) === null) writeKey(LEGACY_MIGRATION_KEY, true);
     const normalized = normalizeCamps(storedCamps, today);
     data.camps = normalized.camps;
     if (normalized.droppedCamps > 0 || normalized.droppedBranches > 0 || normalized.droppedVideos > 0) {
@@ -419,18 +422,19 @@ function loadFromStorage(): LoadResult {
     }
   } else {
     if (stored.status !== 'missing') {
-      // Corrupt, or written by a newer version: keep it aside and rebuild from
-      // the older flat keys if they are still there.
+      // Corrupt, or written by a newer version: keep it aside. Older flat keys
+      // could be a snapshot of camps that were later deleted.
       const raw = stored.status === 'unreadable' ? stored.raw : JSON.stringify(stored.value);
       notices.push(unreadableNotice(CAMP_KEYS.camps, keepUnreadable(CAMP_KEYS.camps, raw), 'kamplar'));
     }
-    const legacy = readLegacy(notices, data.completedMap, today);
-    if (legacy.playlists.length > 0) {
+    const mayMigrate = stored.status === 'missing' && localStorage.getItem(LEGACY_MIGRATION_KEY) === null && localStorage.getItem('yt_sync') === null;
+    const legacy = mayMigrate ? readLegacy(notices, data.completedMap, today) : null;
+    if (legacy && legacy.playlists.length > 0) {
       const camp = migrateLegacyData(legacy, today);
       data.camps = [camp];
       data.activeCampId = camp.id;
       // Save the new layout first; the older keys stay untouched either way.
-      const saved = writeKey(CAMP_KEYS.camps, campStore(data.camps)) && writeKey(CAMP_KEYS.activeCamp, camp.id);
+      const saved = writeKey(CAMP_KEYS.camps, campStore(data.camps)) && writeKey(CAMP_KEYS.activeCamp, camp.id) && writeKey(LEGACY_MIGRATION_KEY, true);
       notices.push(
         saved
           ? {
@@ -446,7 +450,7 @@ function loadFromStorage(): LoadResult {
               body: 'Verilerin eski kayıtlarından okundu ve yerinde duruyor, ancak tarayıcı depolaması yeni düzeni kaydetmedi. Ayarlar’dan yedek indirmeni öneririz.',
             }
       );
-    } else if (legacy.hasPreferences) {
+    } else if (legacy?.hasPreferences) {
       seedPreferences = legacy.preferences;
     }
   }
@@ -487,7 +491,7 @@ export function loadPlannerOnce(): LoadResult {
  */
 export function writePlannerData(data: PlannerData): boolean {
   clearPlannerData();
-  return [
+  const saved = [
     writeKey(CAMP_KEYS.camps, campStore(data.camps)),
     data.activeCampId === null || writeKey(CAMP_KEYS.activeCamp, data.activeCampId),
     writeKey(STORAGE_KEYS.completed, data.completedMap),
@@ -496,6 +500,7 @@ export function writePlannerData(data: PlannerData): boolean {
     writeKey(PROGRESS_KEYS.playlistSync, playlistSyncStore(data.playlistSync)),
     writeKey(UI_KEYS.dayNotes, data.dayNotes),
   ].every(Boolean);
+  return saved && writeKey(LEGACY_MIGRATION_KEY, true);
 }
 
 /** Removes the planner's data from this browser (after it is safe in the account, or before another account's plan). */
