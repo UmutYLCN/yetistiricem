@@ -13,13 +13,15 @@ interface Props {
   sharedName?: boolean;
   onChange: (branch: SubjectPlaylist) => void;
   onRemove: () => void;
+  /** Just added: drawn with a green ring. */
+  fresh?: boolean;
 }
 
 /**
  * One source list as an editable branch: rename it, pick its colour, check or
  * trim its videos. Compact when closed; everything stays touch-sized.
  */
-export function BranchCard({ branch, error, sharedName, onChange, onRemove }: Props) {
+export function BranchCard({ branch, error, sharedName, onChange, onRemove, fresh = false }: Props) {
   const uid = useId();
   const [open, setOpen] = useState(false);
   const color = resolveColor(branch.colorTag, branch.subject);
@@ -27,7 +29,7 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove }: Pr
   const isDemo = branch.source === 'demo-template';
 
   return (
-    <li className={`overflow-hidden rounded-[14px] border bg-card ${error ? 'border-danger/60' : 'border-line'}`}>
+    <li className={`overflow-hidden rounded-[14px] border bg-card ${error ? 'border-danger/60' : 'border-line'} ${fresh ? 'branch-fresh pop-in' : ''}`}>
       <div className="flex items-start gap-3 p-3 sm:p-3.5">
         <span className="mt-1 w-1.5 shrink-0 self-stretch rounded-full" style={{ background: color.solid }} aria-hidden="true" />
         <div className="min-w-0 flex-1">

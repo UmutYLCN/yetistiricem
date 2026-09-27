@@ -69,6 +69,7 @@ interface PlayerProps {
   /** The task was finished in this session: the player pauses and the result covers it. */
   done: boolean;
   doneOverlay: ReactNode;
+  actions: ReactNode;
   pastSeconds: number;
   onEnded: () => void;
   onSession: (session: FocusSession) => void;
@@ -76,11 +77,11 @@ interface PlayerProps {
 
 /**
  * One video in the YouTube IFrame player, with the metrics of this session:
- * real time spent playing, pauses and playback rate. Pausing and the end of
- * the video cover YouTube's suggestions with the app's own panel. The session
- * is handed to `onSession` when the player goes away.
+ * real time spent playing, pauses and playback rate. The paused frame stays
+ * visible for note taking; finishing the video shows the app's result panel.
+ * The session is handed to `onSession` when the player goes away.
  */
-function FocusPlayer({ videoId, taskVideoId, videoUrl, speed, today, done, doneOverlay, pastSeconds, onEnded, onSession }: PlayerProps) {
+function FocusPlayer({ videoId, taskVideoId, videoUrl, speed, today, done, doneOverlay, actions, pastSeconds, onEnded, onSession }: PlayerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
   const metrics = useRef({ watchedMs: 0, playingSince: null as number | null, pauses: 0, rate: 1, ended: false, lastState: -1, quietPause: false });
@@ -221,51 +222,40 @@ function FocusPlayer({ videoId, taskVideoId, videoUrl, speed, today, done, doneO
         )}
 
         {paused && (
-          // Leaves the control bar free and hides the suggestions YouTube shows on pause.
-          <div className="focus-cover focus-cover-paused">
-            <button type="button" className="focus-resume" onClick={() => playerRef.current?.playVideo()}>
+          // Keep the paused frame readable; the transparent button catches clicks on YouTube's overlays.
+          <button type="button" className="focus-cover-paused" onClick={() => playerRef.current?.playVideo()} aria-label="Videoyu sürdür">
+            <span className="focus-resume">
               <Play fill="currentColor" aria-hidden="true" />
-              <span className="visually-hidden">Devam et</span>
-            </button>
-            <p className="mt-3 text-[14px] font-semibold text-ink">Duraklatıldı</p>
-            <p className="mt-0.5 text-[13px] text-ink-2">Notunu al, hazır olunca devam et. Öneriler gizlendi.</p>
-          </div>
+              Duraklatıldı · devam et
+            </span>
+          </button>
         )}
 
         {done && <div className="focus-cover focus-cover-done">{doneOverlay}</div>}
       </div>
 
       {!failure && (
-        <>
-          <div className="focus-meter" aria-hidden="true">
-            <span style={{ width: `${progress * 100}%` }} />
-          </div>
-          <dl className="focus-stats tnum">
-            <div>
-              <dt>Odak süresi</dt>
-              <dd>{formatClock(view.watched)}</dd>
-            </div>
-            <div>
-              <dt>Hız</dt>
-              <dd>{formatSpeed(view.rate)}</dd>
-            </div>
-            <div>
-              <dt>Duraklatma</dt>
-              <dd>{view.pauses}</dd>
-            </div>
+        <div className="focus-meter" aria-hidden="true">
+          <span style={{ width: `${progress * 100}%` }} />
+        </div>
+      )}
+      <div className="focus-toolbar">
+        {!failure && (
+          <dl className="focus-meta tnum">
             <div>
               <dt>Video</dt>
-              <dd>
-                {formatClock(view.current)}
-                <span className="text-ink-3"> / {view.duration > 0 ? formatClock(view.duration) : '—'}</span>
-              </dd>
+              <dd>{formatClock(view.current)} <span className="text-ink-3">/ {view.duration > 0 ? formatClock(view.duration) : '—'}</span></dd>
             </div>
+            <div><dt>Odak</dt><dd>{formatClock(view.watched)}</dd></div>
+            <div><dt>Hız</dt><dd>{formatSpeed(view.rate)}</dd></div>
+            <div><dt>Duraklatma</dt><dd>{view.pauses}</dd></div>
           </dl>
-        </>
-      )}
+        )}
+        <div className="focus-actions">{actions}</div>
+      </div>
       {pastSeconds >= 60 && (
-        <p className="mt-2 text-center text-[12.5px] text-ink-3">
-          Bu videoya önceki odak oturumlarında {formatMinutes(pastSeconds / 60)} ayırdın.
+        <p className="focus-past text-ink-3">
+          Önceki odak: {formatMinutes(pastSeconds / 60)}
         </p>
       )}
     </div>
@@ -314,6 +304,35 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
   const alreadyDone = item?.completed && !done;
 
   const doneOverlay = item && <FocusCompletion completed={item.completed} next={next} onUndo={() => onUndoComplete(item)} />;
+  const actions = item && (
+    done ? (
+      next ? (
+        <button ref={nextRef} type="button" className="btn btn-primary focus-next" onClick={onNext}>
+          Harika iş! Sıradaki göreve geç
+          <ArrowRight aria-hidden="true" />
+        </button>
+      ) : (
+        <button ref={nextRef} type="button" className="btn btn-primary" onClick={onClose}>
+          Kapat
+        </button>
+      )
+    ) : alreadyDone ? (
+      <>
+        <p className="flex items-center gap-1.5 text-[14px] font-semibold text-forest">
+          <CircleCheck className="size-4" aria-hidden="true" />
+          Tamamlandı
+        </p>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>
+          Kapat
+        </button>
+      </>
+    ) : (
+      <button type="button" className="btn btn-secondary" onClick={finish}>
+        <Check strokeWidth={2.75} aria-hidden="true" />
+        İzledim
+      </button>
+    )
+  );
 
   return (
     <Dialog
@@ -333,44 +352,11 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
           </span>
         )
       }
-      footer={
-        item && (
-          <>
-            <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost mr-auto max-sm:px-2.5">
-              <ExternalLink aria-hidden="true" />
-              <span className="max-sm:hidden">YouTube’da aç</span>
-              <span className="visually-hidden sm:hidden">YouTube’da aç</span>
-            </a>
-            {done ? (
-              next ? (
-                <button ref={nextRef} type="button" className="btn btn-primary btn-lg focus-next" onClick={onNext}>
-                  Harika iş! Sıradaki göreve geç
-                  <ArrowRight aria-hidden="true" />
-                </button>
-              ) : (
-                <button ref={nextRef} type="button" className="btn btn-primary btn-lg" onClick={onClose}>
-                  Kapat
-                </button>
-              )
-            ) : alreadyDone ? (
-              <>
-                <p className="flex items-center gap-1.5 text-[14px] font-semibold text-forest">
-                  <CircleCheck className="size-4" aria-hidden="true" />
-                  Tamamlandı
-                </p>
-                <button type="button" className="btn btn-secondary" onClick={onClose}>
-                  Kapat
-                </button>
-              </>
-            ) : (
-              <button type="button" className="btn btn-secondary" onClick={finish}>
-                <Check strokeWidth={2.75} aria-hidden="true" />
-                İzledim
-              </button>
-            )}
-          </>
-        )
-      }
+      headerActions={item && (
+        <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" className="icon-btn -mt-1" aria-label="YouTube’da aç" title="YouTube’da aç">
+          <ExternalLink aria-hidden="true" />
+        </a>
+      )}
     >
       <canvas ref={canvasRef} className="focus-confetti" aria-hidden="true" />
       {target && (
@@ -383,6 +369,7 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
           today={today}
           done={done}
           doneOverlay={doneOverlay}
+          actions={actions}
           pastSeconds={pastSeconds}
           onEnded={finish}
           onSession={onSession}

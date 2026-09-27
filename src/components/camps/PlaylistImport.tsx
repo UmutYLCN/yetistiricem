@@ -27,12 +27,17 @@ interface Props {
   importLabel?: (count: number) => string;
   /** Empty the field after an import (for adding several lists in a row). */
   clearAfterImport?: boolean;
+  /**
+   * Show the loading state and the fetched list here. Off when the caller
+   * shows them as their own stage (the wizard's branch composer).
+   */
+  showResults?: boolean;
 }
 
 const defaultImportLabel = (count: number) => `Seçilen ${count} videoyu ekle`;
 
 /** Paste a playlist link → fetch → review and select → add to the draft list. */
-export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defaultImportLabel, clearAfterImport = false }: Props) {
+export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defaultImportLabel, clearAfterImport = false, showResults = true }: Props) {
   const { link, setLink, state, load, cancel, reset } = fetcher;
   const uid = useId();
   const loading = state.status === 'loading';
@@ -103,6 +108,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
         )}
       </form>
 
+      {showResults && (
       <div role="status" aria-live="polite">
         {imported && !loading && (
           <p className="pop-in mt-3 flex items-center gap-2 rounded-[10px] bg-forest-tint px-3.5 py-2.5 text-[13px] font-semibold text-forest-strong">
@@ -114,7 +120,8 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
         )}
         {loading && <ReviewSkeleton message="Liste YouTube’dan okunuyor… Uzun listelerde birkaç saniye sürebilir." />}
       </div>
-      {loading && (
+      )}
+      {showResults && loading && (
         <button type="button" className="btn btn-ghost btn-sm mt-2" onClick={cancel}>
           Getirmeyi durdur
         </button>
@@ -136,7 +143,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
         </div>
       )}
 
-      {state.status === 'loaded' && (
+      {showResults && state.status === 'loaded' && (
         <EntryReview
           key={state.version}
           heading={state.data.playlist.title || 'Adı olmayan liste'}
@@ -196,6 +203,7 @@ export function EntryReview({
   knownIds,
   onImport,
   importLabel,
+  stage = false,
 }: {
   heading: string;
   meta: ReactNode;
@@ -206,6 +214,8 @@ export function EntryReview({
   knownIds: string[];
   onImport: (drafts: DraftVideo[]) => void;
   importLabel: (count: number) => string;
+  /** Shown as a wizard stage of its own: a taller list and the add button as the main action. */
+  stage?: boolean;
 }) {
   const uid = useId();
   const rows = reviewPlaylist(entries, knownIds);
@@ -284,9 +294,19 @@ export function EntryReview({
                 Seçimi kaldır
               </button>
             </div>
+            {/* As a stage the add button leads, above the list, so it never hides below the fold. */}
+            {stage && (
+              <button type="button" className="btn btn-primary max-sm:w-full" onClick={importSelected} disabled={chosen.length === 0}>
+                <ListPlus aria-hidden="true" />
+                {chosen.length > 0 ? importLabel(chosen.length) : 'Eklemek için video seç'}
+              </button>
+            )}
           </div>
           {skipped && <p className="px-3.5 pb-2 text-[12.5px] text-ink-3">{skipped}</p>}
-          <ol className="max-h-[340px] overflow-y-auto overscroll-contain border-t border-line" aria-label={`${heading}: videolar`}>
+          <ol
+            className={`${stage ? 'max-h-[min(44vh,440px)]' : 'max-h-[340px]'} overflow-y-auto overscroll-contain border-t border-line`}
+            aria-label={`${heading}: videolar`}
+          >
             {rows.map(row => (
               <ReviewItem key={row.index} row={row} checked={selected.has(row.index)} onToggle={toggle} />
             ))}
@@ -294,6 +314,7 @@ export function EntryReview({
         </>
       )}
 
+      {!stage && (
       <footer className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line bg-paper/50 px-3.5 py-3">
         <button type="button" className="btn btn-secondary btn-sm" onClick={importSelected} disabled={chosen.length === 0}>
           <ListPlus aria-hidden="true" />
@@ -308,6 +329,7 @@ export function EntryReview({
           )}
         </p>
       </footer>
+      )}
     </section>
   );
 }

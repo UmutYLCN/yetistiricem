@@ -1398,6 +1398,173 @@
     animation-delay: calc(var(--row, 0) * 26ms);
   }
 
+  /* Wizard: reading YouTube (a playlist filling in) ----------------------------- */
+  .fetch-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 16px 28px;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    background:
+      radial-gradient(60% 70% at 50% 0%, color-mix(in srgb, var(--color-forest) 9%, transparent), transparent 70%),
+      var(--color-paper);
+    text-align: center;
+  }
+  .fetch-art {
+    position: relative;
+    width: min(360px, 100%);
+  }
+  .fetch-window {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 14px;
+    background: var(--color-card);
+    box-shadow: var(--shadow-pop);
+  }
+  .fetch-window-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .fetch-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--color-line-strong);
+  }
+  .fetch-bar-title {
+    width: 38%;
+    height: 7px;
+    margin-left: 8px;
+    border-radius: 999px;
+    background: var(--color-sunk);
+  }
+  .fetch-progress {
+    height: 2px;
+    overflow: hidden;
+    background: var(--color-sunk);
+  }
+  .fetch-progress span {
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--color-forest);
+    animation: fetch-progress 1.4s ease-in-out infinite;
+  }
+  .fetch-rows {
+    padding: 6px 0;
+  }
+  .fetch-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    text-align: left;
+    animation: fetch-row 2.8s cubic-bezier(0.2, 0.7, 0.2, 1) infinite both;
+    animation-delay: calc(var(--i) * 0.22s);
+  }
+  .fetch-thumb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 6px;
+  }
+  .fetch-play {
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 8px solid color-mix(in srgb, var(--color-ink) 85%, transparent);
+    margin-left: 2px;
+  }
+  .fetch-time {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink-3);
+  }
+  .fetch-orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(28px);
+    opacity: 0.5;
+  }
+  .fetch-orb-a {
+    top: -14px;
+    left: -24px;
+    width: 120px;
+    height: 120px;
+    background: color-mix(in srgb, var(--color-study-indigo) 40%, transparent);
+  }
+  .fetch-orb-b {
+    right: -20px;
+    bottom: -18px;
+    width: 110px;
+    height: 110px;
+    background: color-mix(in srgb, var(--color-forest) 35%, transparent);
+  }
+  @keyframes fetch-progress {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+  @keyframes fetch-row {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    14%,
+    78% {
+      opacity: 1;
+      transform: none;
+    }
+    92%,
+    100% {
+      opacity: 0.25;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fetch-row,
+    .fetch-progress span {
+      animation: none;
+    }
+  }
+
+  /* Wizard: the branch list's "add another" tile ---------------------------------- */
+  .add-branch-tile {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1.5px dashed var(--color-line-strong);
+    border-radius: 14px;
+    text-align: left;
+    transition: border-color 120ms ease, background-color 120ms ease;
+  }
+  .add-branch-tile:hover {
+    border-color: var(--color-forest);
+    background: var(--color-forest-tint);
+  }
+  .branch-fresh {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-forest) 70%, transparent);
+    border-radius: 14px;
+  }
+
   /* Landing page ------------------------------------------------------------------ */
   html:has(.landing) {
     scroll-behavior: smooth;
@@ -1731,12 +1898,13 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    padding: 8px 24px 24px;
   }
   .focus-stage {
     width: 100%;
-    /* The whole 16:9 frame fits under the header and above the footer. */
-    max-width: min(1100px, calc((100dvh - 290px) * 16 / 9));
-    min-width: min(100%, 320px);
+    /* The frame fits below the title with room for one compact control row. */
+    max-width: min(1360px, calc((100dvh - 210px) * 16 / 9));
+    min-width: 0;
     margin-inline: auto;
   }
   .focus-frame {
@@ -1768,9 +1936,20 @@
     background: var(--color-card);
   }
   .focus-cover-paused {
-    bottom: 52px;
-    background: color-mix(in srgb, var(--color-paper) 88%, transparent);
-    backdrop-filter: blur(6px);
+    position: absolute;
+    inset: 0 0 52px;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .focus-cover-paused:focus-visible {
+    outline: 2px solid var(--color-forest);
+    outline-offset: -4px;
   }
   .focus-cover-done {
     background:
@@ -1779,23 +1958,24 @@
     animation: pop-in 220ms ease-out both;
   }
   .focus-resume {
-    display: grid;
-    place-items: center;
-    width: 64px;
-    height: 64px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-line-strong);
     border-radius: 999px;
-    background: var(--color-ink);
-    color: var(--color-on-fill);
-    box-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
-    transition: transform 120ms ease;
+    background: var(--color-card);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-card);
+    font-size: 12px;
+    font-weight: 600;
   }
-  .focus-resume:hover {
-    transform: scale(1.06);
+  .focus-cover-paused:hover .focus-resume {
+    border-color: var(--color-ink-3);
   }
   .focus-resume svg {
-    width: 26px;
-    height: 26px;
-    translate: 2px 0;
+    width: 14px;
+    height: 14px;
   }
   .focus-done-mark {
     display: grid;
@@ -1811,8 +1991,7 @@
     width: 30px;
     height: 30px;
   }
-  .focus-done-mark,
-  .focus-resume {
+  .focus-done-mark {
     flex-shrink: 0;
   }
   @media (max-width: 639px) {
@@ -1842,35 +2021,67 @@
     background: var(--color-forest);
     transition: width 500ms linear;
   }
-  .focus-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 12px;
+  .focus-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    min-height: 48px;
+    margin-top: 8px;
   }
-  .focus-stats > div {
+  .focus-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 0;
     min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid var(--color-line);
-    border-radius: 12px;
-    background: var(--color-card);
   }
-  .focus-stats dt {
-    font-size: 11.5px;
+  .focus-meta > div {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .focus-meta dt {
+    font-size: 12px;
     color: var(--color-ink-3);
   }
-  .focus-stats dd {
-    margin-top: 2px;
-    font-size: 16px;
+  .focus-meta dd {
+    font-size: 13px;
     font-weight: 600;
     color: var(--color-ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  }
+  .focus-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .focus-actions .btn {
+    min-height: 36px;
+    padding-inline: 12px;
+  }
+  .focus-past {
+    margin-top: 2px;
+    font-size: 12px;
   }
   @media (max-width: 639px) {
-    .focus-stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .dialog-full .dialog-body {
+      justify-content: flex-start;
+      padding: 24px 16px 16px;
+    }
+    .focus-toolbar {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .focus-meta {
+      gap: 4px 12px;
+    }
+    .focus-actions {
+      align-self: flex-end;
     }
     .focus-frame {
       border-radius: 12px;

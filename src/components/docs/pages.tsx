@@ -95,8 +95,9 @@ export function CampWizard() {
       <Steps>
         {[
           <>
-            <strong>Kaynaklar.</strong> Oynatma listesi, video bağlantıları ya da elle yazılan konular. Her kaynak kendi branş kartı olur;
-            branşın adını, rengini ve videolarını düzenleyebilirsin. Devam etmek için en az bir branş gerekir.
+            <strong>Branşlar.</strong> Oynatma listesi, video bağlantıları ya da elle yazılan konular. Listeyi getirince videolar ayrı bir
+            ekranda gelir; seçip branş olarak eklersin. Sonra branşların listelenir; <strong>Başka branş ekle</strong> ile istediğin kadar
+            ekleyebilir, her branşın adını, rengini ve videolarını düzenleyebilirsin. Devam etmek için en az bir branş gerekir.
           </>,
           <>
             <strong>Kamp.</strong> Ad (en çok 80 karakter) ve başlangıç tarihi gerekir. Hedef bitiş tarihi isteğe bağlıdır; +1, +3 ve +6 ay

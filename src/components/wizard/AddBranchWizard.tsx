@@ -19,9 +19,9 @@ type StepId = 'sources' | 'days' | 'preview';
 
 const STEP_INFO: Record<StepId, { title: string; heading: string; intro: string }> = {
   sources: {
-    title: 'Kaynaklar',
-    heading: 'Eklenecek listeleri seç',
-    intro: 'Her YouTube oynatma listesi bu kampta ayrı bir branş olur. Adlarını sonra da değiştirebilirsin.',
+    title: 'Branşlar',
+    heading: 'Yeni branşlarını ekle',
+    intro: 'Bir oynatma listesi, video bağlantıları ya da elle konu ekle; her biri bu kampta ayrı bir branş olur. İstediğin kadar ekleyebilirsin.',
   },
   days: {
     title: 'Günler',

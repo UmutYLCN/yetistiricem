@@ -35,8 +35,12 @@ interface Props {
 }
 
 const STEPS = [
-  { title: 'Kaynaklar', heading: 'Videolarını ve listelerini ekle', intro: 'Her YouTube oynatma listesi ayrı bir branş olur. Adlarını sonra da değiştirebilirsin.' },
-  { title: 'Kamp', heading: 'Kampına bir ad ve tarih ver', intro: 'Kamp, bütün branşlarını kapsayan çalışma programın.' },
+  {
+    title: 'Branşlar',
+    heading: 'Branşlarını ekle',
+    intro: 'Bir oynatma listesi, video bağlantıları ya da elle konu ekle; her biri ayrı bir branş olur (Matematik, Fizik, Türkçe…). İstediğin kadar ekleyebilirsin.',
+  },
+  { title: 'Kamp', heading: 'Kampına bir ad ve başlangıç tarihi ver', intro: 'Kamp, eklediğin bütün branşları kapsayan çalışma programın.' },
   { title: 'Ritim', heading: 'Haftanı nasıl kuralım?', intro: 'Önce yöntemi seç; sonra yalnızca ona ait ayarlar açılır.' },
   { title: 'Önizleme', heading: 'Planına göz at', intro: 'Hiçbir şey kaydedilmedi. Beğenmediğin bir şey olursa geri dönüp değiştir.' },
 ] as const;

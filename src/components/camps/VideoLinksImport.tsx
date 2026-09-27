@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import type { ClipboardEvent, FormEvent } from 'react';
 import { CircleCheck, Download, ListVideo, LoaderCircle, RotateCcw, TriangleAlert } from 'lucide-react';
+import type { VideosFetch } from '../../hooks/useVideosFetch';
 import { useVideosFetch } from '../../hooks/useVideosFetch';
 import { VIDEO_FAILURE_TEXT } from '../../lib/playlistImport';
 import type { DraftVideo } from '../../utils/youtubeParser';
@@ -15,6 +16,9 @@ interface Props {
   importLabel?: (count: number) => string;
   /** A playlist link was pasted: offer to read it as a list instead. */
   onOpenPlaylist?: (link: string) => void;
+  /** The request, when the caller shows loading and review as its own stage (with `showResults` off). */
+  fetcher?: VideosFetch;
+  showResults?: boolean;
 }
 
 const defaultImportLabel = (count: number) => `${count} videoyu ekle`;
@@ -23,14 +27,15 @@ const defaultImportLabel = (count: number) => `${count} videoyu ekle`;
  * Paste video links → titles, channels and durations come from YouTube →
  * review and select → add. Nothing is typed by hand.
  */
-export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImportLabel, onOpenPlaylist }: Props) {
+export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImportLabel, onOpenPlaylist, fetcher, showResults = true }: Props) {
   const uid = useId();
   const [text, setText] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [unreadable, setUnreadable] = useState<string[]>([]);
   const [playlistLink, setPlaylistLink] = useState<string | null>(null);
   const [imported, setImported] = useState<number | null>(null);
-  const { state, load, reset } = useVideosFetch();
+  const own = useVideosFetch();
+  const { state, load, reset } = fetcher ?? own;
   const loading = state.status === 'loading';
 
   const read = (value: string) => {
@@ -124,6 +129,7 @@ export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImpo
         </div>
       </form>
 
+      {showResults && (
       <div role="status" aria-live="polite">
         {imported !== null && !loading && (
           <p className="pop-in mt-3 flex items-center gap-2 rounded-[10px] bg-forest-tint px-3.5 py-2.5 text-[13px] font-semibold text-forest-strong">
@@ -133,7 +139,8 @@ export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImpo
         )}
         {loading && <ReviewSkeleton message="Videolar YouTube’dan okunuyor…" />}
       </div>
-      {loading && (
+      )}
+      {showResults && loading && (
         <button type="button" className="btn btn-ghost btn-sm mt-2" onClick={reset}>
           Getirmeyi durdur
         </button>
@@ -162,7 +169,7 @@ export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImpo
         </div>
       )}
 
-      {state.status === 'loaded' && (
+      {showResults && state.status === 'loaded' && (
         <EntryReview
           key={state.version}
           heading={found === 1 ? '1 video bulundu' : `${found} video bulundu`}

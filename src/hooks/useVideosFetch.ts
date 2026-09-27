@@ -46,3 +46,5 @@ export function useVideosFetch() {
 
   return { state, load, reset };
 }
+
+export type VideosFetch = ReturnType<typeof useVideosFetch>;

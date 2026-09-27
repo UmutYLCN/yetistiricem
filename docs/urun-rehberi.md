@@ -18,7 +18,7 @@ Bir kampın başlangıç tarihi, hedef tarihi, günlük çalışma süresi, haft
 
 Kamp sihirbazı sırayla kaynakları, kamp bilgilerini, çalışma ritmini ve plan önizlemesini gösterir.
 
-1. **Kaynakları ekle:** Üç yol var. **Oynatma listesi:** listenin bağlantısını yapıştır, videolar adları ve gerçek süreleriyle gelir. **Videolar:** bir ya da birden çok video bağlantısını yapıştır; başlık ve süre yine YouTube’dan okunur. **Elle ekle:** YouTube dışındaki dersler için konu adını ve süresini yaz. Her oynatma listesi ve her elle eklenen liste ayrı bir branş olur; branşların, ilk kaynağı ekledikten sonra listelenir.
+1. **Kaynakları ekle:** Üç yol var. **Oynatma listesi:** listenin bağlantısını yapıştır, videolar adları ve gerçek süreleriyle gelir. **Videolar:** bir ya da birden çok video bağlantısını yapıştır; başlık ve süre yine YouTube’dan okunur. **Elle ekle:** YouTube dışındaki dersler için konu adını ve süresini yaz. Her oynatma listesi ve her elle eklenen liste ayrı bir branş olur. Liste okunurken bir yükleme ekranı, sonra videoları seçtiğin inceleme ekranı gelir; eklediğin branş, branş listende vurgulanır ve altındaki **Başka branş ekle** ile yenisine geçersin.
 2. **Kampı tanımla:** Kamp adı ve başlangıç tarihi gerekir. Hedef bitiş tarihi ekleyebilir veya boş bırakabilirsin.
 3. **Ritmi seç:** Otomatik dağıtımda çalışma günlerini ve günlük süreyi belirle. Elle yerleşimde haftanın günlerine branş, deneme veya dinlenme günü ata.
 4. **Önizlemeyi incele:** Video görevlerinin takvime dağılımını, tahmini bitişi ve hedef tarih durumunu gör. Kaydetmeden önce önceki adımlara dönüp değişiklik yapabilirsin.

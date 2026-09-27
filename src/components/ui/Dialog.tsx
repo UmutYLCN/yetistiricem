@@ -15,6 +15,8 @@ interface DialogProps {
   title: string;
   /** A small line above the title (what the dialog is about). */
   eyebrow?: ReactNode;
+  /** Controls next to the close button. */
+  headerActions?: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -49,6 +51,7 @@ export function Dialog({
   onClose,
   title,
   eyebrow,
+  headerActions,
   description,
   children,
   footer,
@@ -165,6 +168,7 @@ export function Dialog({
                 </div>
               )}
             </div>
+            {headerActions}
             <button type="button" className="icon-btn -mr-2 -mt-1" onClick={() => onCloseRef.current()} aria-label="Kapat">
               <X aria-hidden="true" />
             </button>
