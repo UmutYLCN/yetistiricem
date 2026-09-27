@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { Compass, Heart, LogIn, RefreshCw, Search, TriangleAlert, Upload, X } from 'lucide-react';
+import { Compass, Heart, LogIn, RefreshCw, Search, Share2, TriangleAlert, Upload, X } from 'lucide-react';
 import type { CatalogEntry, CatalogSort } from '../../lib/catalog';
 import { popularTags, searchCatalog, sortCatalog, withTag } from '../../lib/catalog';
 import { listPublishedCamps } from '../../lib/catalogApi';
@@ -118,6 +118,7 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
     <div className="mx-auto max-w-[920px]">
       <PageHeader
         title="Keşfet"
+        subtitle={scope === 'saved' ? 'Favorilerin: sonra dönmek için kaydettiğin kamplar.' : scope === 'mine' ? 'Keşfet’te paylaştığın kamplar.' : undefined}
         actions={
           <>
             {account.status === 'signed-out' && (
@@ -126,10 +127,27 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
                 Giriş yap
               </button>
             )}
-            <button type="button" className="btn btn-secondary btn-sm" onClick={onOpenCamps}>
-              <Upload aria-hidden="true" />
-              Kampını yayınla
+            <button
+              type="button"
+              className={`btn btn-sm ${scope === 'saved' ? 'btn-primary' : 'btn-secondary'}`}
+              aria-pressed={scope === 'saved'}
+              onClick={() => (userId ? setScope(scope === 'saved' ? 'all' : 'saved') : onSignIn())}
+            >
+              <Heart className={scope === 'saved' ? 'fill-current text-danger' : ''} aria-hidden="true" />
+              Favoriler
+              {saved && saved.size > 0 && <span className="tnum opacity-70">{saved.size}</span>}
             </button>
+            {userId && (
+              <button
+                type="button"
+                className={`btn btn-sm ${scope === 'mine' ? 'btn-primary' : 'btn-secondary'}`}
+                aria-pressed={scope === 'mine'}
+                onClick={() => setScope(scope === 'mine' ? 'all' : 'mine')}
+              >
+                <Share2 aria-hidden="true" />
+                Paylaştıklarım
+              </button>
+            )}
           </>
         }
       />
@@ -161,20 +179,6 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
           ))}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {userId && (
-            <div className="segmented" role="group" aria-label="Gösterilen kamplar">
-              <button type="button" aria-pressed={scope === 'all'} onClick={() => setScope('all')}>
-                Hepsi
-              </button>
-              <button type="button" aria-pressed={scope === 'saved'} onClick={() => setScope('saved')}>
-                <Heart className="mr-1 inline size-3.5 align-[-2px]" aria-hidden="true" />
-                Kaydettiklerim
-              </button>
-              <button type="button" aria-pressed={scope === 'mine'} onClick={() => setScope('mine')}>
-                Benim
-              </button>
-            </div>
-          )}
           <label htmlFor={`${uid}-sort`} className="visually-hidden">
             Sırala
           </label>
@@ -226,17 +230,23 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
           <div className="flex flex-col items-center rounded-[16px] border border-dashed border-line-strong px-6 py-12 text-center">
             <p className="font-semibold text-ink">
               {scope === 'saved' && !query.trim() && !tag
-                ? 'Henüz kaydettiğin kamp yok.'
+                ? 'Favorilerinde kamp yok.'
                 : scope === 'mine' && !query.trim() && !tag
-                  ? 'Henüz kamp yayınlamadın.'
+                  ? 'Henüz kamp paylaşmadın.'
                   : 'Eşleşen kamp yok.'}
             </p>
             <p className="mt-1 text-[13.5px] text-ink-2">
               {scope === 'saved' && !query.trim() && !tag
                 ? 'Sonra dönmek istediğin bir kampın kalbine bas; burada toplanır.'
-                : 'Aramayı ya da süzgeçleri değiştirip tekrar dene.'}
+                : scope === 'mine' && !query.trim() && !tag
+                  ? 'Kamplar’da bir kampının ⋯ menüsünden “Keşfet’te yayınla”yı seç.'
+                  : 'Aramayı ya da süzgeçleri değiştirip tekrar dene.'}
             </p>
-            {filtered && (
+            {scope === 'mine' && !query.trim() && !tag ? (
+              <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={onOpenCamps}>
+                Kamplar’a git
+              </button>
+            ) : filtered && (
               <button
                 type="button"
                 className="btn btn-secondary btn-sm mt-4"

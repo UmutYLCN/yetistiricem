@@ -336,7 +336,7 @@ export function Kesfet() {
       <p>Yayınlanan: kampın adı, kapağı, etiketleri, temposu, branşları ve videoları. Yayınlanmayan: ilerlemen, notların, ritim güncellemelerin ve e-postan.</p>
       <H2 id="kaydetmek">Kaydetmek</H2>
       <p>
-        Hemen eklemek istemediğin bir kampı kartındaki kalple <strong>kaydet</strong>; Keşfet’te <strong>Kaydettiklerim</strong>’de toplanır.
+        Hemen eklemek istemediğin bir kampı kartındaki kalple <strong>kaydet</strong>; Keşfet’in üstündeki <strong>Favoriler</strong>’de toplanır. Kendi yayınladıkların <strong>Paylaştıklarım</strong>’da.
         Kalbin yanındaki sayı kampı kaç kişinin kaydettiğini gösterir; kimin kaydettiği görünmez.
       </p>
       <Callout tone="warn" title="Yalnızca kendi kampın">

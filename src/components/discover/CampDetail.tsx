@@ -175,7 +175,7 @@ export function CampDetail({ id, today, userId, onBack, onImport, onUnpublish, s
             <div className="mt-2">
               <SaveButton variant="button" saved={saved === true} count={entry.saveCount} name={entry.name} onToggle={() => void toggleSave()} />
             </div>
-            <p className="mt-2 text-center text-[12px] text-ink-3">Eklersen kendi kopyan olur; kaydedersen Keşfet’te “Kaydettiklerim”de durur.</p>
+            <p className="mt-2 text-center text-[12px] text-ink-3">Eklersen kendi kopyan olur; kaydedersen Keşfet’te Favoriler’de durur.</p>
 
             <dl className="mt-4 grid grid-cols-3 divide-x divide-line rounded-[12px] border border-line bg-field text-center">
               {[
