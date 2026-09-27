@@ -148,6 +148,20 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
 // Fictional names and course ideas for this inert showcase, never published or imported.
 const CATALOG_EXAMPLES = [
   {
+    id: 'yks-2027',
+    name: 'YKS 2027 hazırlık kampı',
+    authorName: 'Ömer Yıldız',
+    description: 'Matematik, Türkçe, Fizik, Kimya ve Biyoloji konularını aynı çalışma planında topla.',
+    subjects: ['Matematik', 'Türkçe', 'Fizik', 'Kimya', 'Biyoloji'],
+  },
+  {
+    id: 'computer-engineering-fall',
+    name: 'Bilgisayar Mühendisliği · 3. sınıf 1. dönem',
+    authorName: 'Ayşe Koç',
+    description: 'Algoritmalar, veritabanı, işletim sistemleri ve bilgisayar ağları. Dönem derslerini tek planda takip et.',
+    subjects: ['Algoritmalar', 'Veritabanı', 'İşletim Sistemleri', 'Bilgisayar Ağları'],
+  },
+  {
     id: 'python',
     name: 'Sıfırdan Python',
     authorName: 'Deniz Arslan',
