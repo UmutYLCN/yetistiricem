@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { CalendarRange, CircleCheck, Eye, ListVideo, Play, Plus } from 'lucide-react';
 import { EmptyState, FeaturedIcon } from '../ui/EmptyState';
 import { BranchesArt, CampsArt, PathArt, ProgressArt, WelcomeArt } from './EmptyArt';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   onAddCamp: () => void;
@@ -35,25 +37,20 @@ export function Welcome({ onAddCamp, onStartDemo }: Props) {
       <section aria-labelledby="welcome-title" className="card empty-surface overflow-hidden">
         <div className="grid items-center gap-10 px-6 pt-9 pb-10 sm:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-8 lg:py-14">
           <div className="min-w-0">
-            <span className="chip chip-forest">Başlangıç</span>
+            <span className="chip chip-forest">{msg("Başlangıç")}</span>
             <h1 id="welcome-title" className="font-display mt-4 text-[30px] leading-[1.12] text-ink sm:text-[38px]">
-              İlk kampını kur; ne zaman yetişeceğini Yetişir gün gün hesaplasın.
-            </h1>
+              {msg("\n              İlk kampını kur; ne zaman yetişeceğini Yetişir gün gün hesaplasın.\n            ")}</h1>
             <p className="mt-4 max-w-[500px] text-[15.5px] leading-relaxed text-ink-2">
-              Oynatma listelerini ekle, günlük çalışma süreni seç. Ders videoları bu süreyi aşmayacak şekilde günlere bölünür; her gün ne
-              çalışacağını ve hedefe ne kadar kaldığını görürsün. Planın şu an boş.
-            </p>
+              {msg("\n              Oynatma listelerini ekle, günlük çalışma süreni seç. Ders videoları bu süreyi aşmayacak şekilde günlere bölünür; her gün ne\n              çalışacağını ve hedefe ne kadar kaldığını görürsün. Planın şu an boş.\n            ")}</p>
             <div className="mt-7 flex flex-wrap gap-2.5">
               <button type="button" className="btn btn-primary btn-lg" onClick={onAddCamp}>
                 <Plus aria-hidden="true" />
-                İlk kampını kur
-              </button>
+                {msg("\n                İlk kampını kur\n              ")}</button>
               <button type="button" className="btn btn-secondary btn-lg" onClick={onStartDemo}>
                 <Eye aria-hidden="true" />
-                Demo ile göz at
-              </button>
+                {msg("\n                Demo ile göz at\n              ")}</button>
             </div>
-            <p className="mt-3.5 text-[12.5px] text-ink-3">{DEMO_NOTE}</p>
+            <p className="mt-3.5 text-[12.5px] text-ink-3">{msg(DEMO_NOTE)}</p>
           </div>
           <WelcomeArt />
         </div>
@@ -65,9 +62,9 @@ export function Welcome({ onAddCamp, onStartDemo }: Props) {
             >
               <FeaturedIcon icon={<Icon />} size="sm" rings={false} />
               <div className="min-w-0">
-                <p className="tnum text-[12px] font-semibold text-ink-3">{i + 1}. adım</p>
-                <p className="mt-0.5 font-semibold text-ink">{title}</p>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">{body}</p>
+                <p className="tnum text-[12px] font-semibold text-ink-3">{i + 1}{msg(". adım")}</p>
+                <p className="mt-0.5 font-semibold text-ink">{msg(title)}</p>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-2">{msg(body)}</p>
               </div>
             </li>
           ))}
@@ -112,22 +109,20 @@ export function NoCampsYet({ view, onAddCamp, onStartDemo }: Props & { view: NoC
   return (
     <EmptyPage
       art={art}
-      title={title}
-      footnote={DEMO_NOTE}
+      title={msg(title)}
+      footnote={msg(DEMO_NOTE)}
       actions={
         <>
           <button type="button" className="btn btn-primary" onClick={onAddCamp}>
             <Plus aria-hidden="true" />
-            Kamp kur
-          </button>
+            {msg("\n            Kamp kur\n          ")}</button>
           <button type="button" className="btn btn-secondary" onClick={onStartDemo}>
             <Eye aria-hidden="true" />
-            Demo ile göz at
-          </button>
+            {msg("\n            Demo ile göz at\n          ")}</button>
         </>
       }
     >
-      {body}
+      {msg(body)}
     </EmptyPage>
   );
 }
@@ -137,16 +132,14 @@ export function NoBranchesYet({ onAddBranches }: { onAddBranches: () => void }) 
   return (
     <EmptyPage
       art={<BranchesArt />}
-      title="Bu kampta henüz branş yok"
+      title={msg("Bu kampta henüz branş yok")}
       actions={
         <button type="button" className="btn btn-primary" onClick={onAddBranches}>
           <Plus aria-hidden="true" />
-          Branş ekle
-        </button>
+          {msg("\n          Branş ekle\n        ")}</button>
       }
     >
-      Bir oynatma listesi ekle; her liste bir branş olur ve plan kendiliğinden kurulur.
-    </EmptyPage>
+      {msg("\n      Bir oynatma listesi ekle; her liste bir branş olur ve plan kendiliğinden kurulur.\n    ")}</EmptyPage>
   );
 }
 
@@ -155,22 +148,19 @@ export function NoCampVideos({ campName, onAddBranches, onOpenCamps }: { campNam
   return (
     <EmptyPage
       art={<BranchesArt />}
-      title="Kamplarında henüz video yok"
+      title={msg("Kamplarında henüz video yok")}
       actions={
         <>
           {campName && (
             <button type="button" className="btn btn-primary" onClick={onAddBranches}>
-              <Plus aria-hidden="true" />“{campName}” kampına branş ekle
-            </button>
+              <Plus aria-hidden="true" />{msg("“")}{campName}{msg("” kampına branş ekle\n            ")}</button>
           )}
           <button type="button" className="btn btn-secondary" onClick={onOpenCamps}>
-            Kamplara git
-          </button>
+            {msg("\n            Kamplara git\n          ")}</button>
         </>
       }
     >
-      Plan ekranları video içeren kampları tarihe göre birlikte gösterir. Bir kampa branş ekle; o kamp kendi temposuyla buraya katılır.
-    </EmptyPage>
+      {msg("\n      Plan ekranları video içeren kampları tarihe göre birlikte gösterir. Bir kampa branş ekle; o kamp kendi temposuyla buraya katılır.\n    ")}</EmptyPage>
   );
 }
 
@@ -179,15 +169,13 @@ export function AllCampsPaused({ count, onOpenCamps }: { count: number; onOpenCa
   return (
     <EmptyPage
       art={<CampsArt />}
-      title={count > 1 ? 'Tüm kampların duraklatıldı' : 'Kampın duraklatıldı'}
+      title={count > 1 ? msg("Tüm kampların duraklatıldı") : msg("Kampın duraklatıldı")}
       actions={
         <button type="button" className="btn btn-primary" onClick={onOpenCamps}>
           <Play aria-hidden="true" />
-          Kamplara git
-        </button>
+          {msg("\n          Kamplara git\n        ")}</button>
       }
     >
-      Hazır olduğunda Kamplar’dan “Devam et” de; kalan görevler o günden itibaren yeniden dağıtılır. İlerlemen yerinde duruyor.
-    </EmptyPage>
+      {msg("\n      Hazır olduğunda Kamplar’dan “Devam et” de; kalan görevler o günden itibaren yeniden dağıtılır. İlerlemen yerinde duruyor.\n    ")}</EmptyPage>
   );
 }

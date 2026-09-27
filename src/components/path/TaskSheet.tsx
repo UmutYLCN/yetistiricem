@@ -9,6 +9,8 @@ import { criticalLabel, isCriticallyPostponed } from '../../lib/postpone';
 import type { CampInfo } from '../../lib/planView';
 import { KindBadge, SubjectDot } from '../ui/Bits';
 import { Dialog } from '../ui/Dialog';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   /** The open stop; null when the sheet is closed. */
@@ -76,7 +78,7 @@ function TaskDetails({
       {linkState === 'video' ? (
         // The picture repeats the "YouTube’da izle" link below for the pointer; screen readers get the link once.
         <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" className="sheet-media" tabIndex={-1} aria-hidden="true">
-          {thumbnail ? <img src={thumbnail} alt="" referrerPolicy="no-referrer" onError={() => setBrokenThumbnail(true)} /> : art}
+          {thumbnail ? <img src={thumbnail} alt={msg("")} referrerPolicy="no-referrer" onError={() => setBrokenThumbnail(true)} /> : art}
           <span className="sheet-play">
             <Play fill="currentColor" />
           </span>
@@ -92,8 +94,7 @@ function TaskDetails({
         {linkState === 'video' && onFocus && (
           <button type="button" className="btn btn-secondary flex-1" onClick={() => onFocus(item)} aria-haspopup="dialog">
             <Play aria-hidden="true" />
-            Yetişir Focus’ta izle
-          </button>
+            {msg("\n            Yetişir Focus’ta izle\n          ")}</button>
         )}
         {linkState === 'video' && (
           <a
@@ -104,28 +105,25 @@ function TaskDetails({
             aria-label={`${item.title} videosunu YouTube’da izle (yeni sekme)`}
           >
             {!onFocus && <Play aria-hidden="true" />}
-            YouTube’da izle
-            <ExternalLink className="text-ink-3" aria-hidden="true" />
+            {msg("\n            YouTube’da izle\n            ")}<ExternalLink className="text-ink-3" aria-hidden="true" />
           </a>
         )}
         {linkState === 'playlist-only' && (
           <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary flex-1">
             <ExternalLink aria-hidden="true" />
-            Oynatma listesini aç
-          </a>
+            {msg("\n            Oynatma listesini aç\n          ")}</a>
         )}
         {(linkState === 'none' || linkState === 'sample') && (
           <button type="button" className="btn btn-secondary flex-1" onClick={() => onEditLink(item)}>
             <Link2 aria-hidden="true" />
-            Video bağlantısı ekle
-          </button>
+            {msg("\n            Video bağlantısı ekle\n          ")}</button>
         )}
       </div>
 
       {linkState === 'sample' && (
         <p className="callout callout-warn mt-4 text-[13.5px] text-ink-2">
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
-          <span>Bu görevin bağlantısı eski sürümün örnek verisi ve çalışmıyor. Gerçek videoyu biliyorsan ekleyebilirsin.</span>
+          <span>{msg("Bu görevin bağlantısı eski sürümün örnek verisi ve çalışmıyor. Gerçek videoyu biliyorsan ekleyebilirsin.")}</span>
         </p>
       )}
 
@@ -141,7 +139,7 @@ function TaskDetails({
                 {criticalLabel(item.postponeCount)}
               </span>
             ) : (
-              <span className="tnum">{item.postponeCount} kez ileri taşındı</span>
+              <span className="tnum">{item.postponeCount} {msg(" kez ileri taşındı")}</span>
             )}
           </Fact>
         ) : null}
@@ -150,8 +148,8 @@ function TaskDetails({
         </Fact>
         {differs && (
           <Fact label="Çalışma">
-            <span className="tnum">~{formatMinutes(item.effectiveMinutes)}</span>
-            <span className="block text-[12.5px] font-normal text-ink-3">izleme hızın ve tekrar payınla</span>
+            <span className="tnum">{msg("~")}{formatMinutes(item.effectiveMinutes)}</span>
+            <span className="block text-[12.5px] font-normal text-ink-3">{msg("izleme hızın ve tekrar payınla")}</span>
           </Fact>
         )}
         <Fact label="Branş">
@@ -161,7 +159,7 @@ function TaskDetails({
           </span>
           {info && order >= 0 && (
             <span className="tnum block text-[12.5px] font-normal text-ink-3">
-              {order + 1}. video · toplam {info.camp.videos.length}
+              {order + 1}{msg(". video · toplam ")}{info.camp.videos.length}
             </span>
           )}
         </Fact>
@@ -178,7 +176,7 @@ function TaskDetails({
       {oversized && (
         <p className="callout callout-warn mt-5 text-[13.5px] text-ink-2">
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
-          <span>Bu video günlük çalışma süresinden uzun; tek başına bir güne yerleştirildi.</span>
+          <span>{msg("Bu video günlük çalışma süresinden uzun; tek başına bir güne yerleştirildi.")}</span>
         </p>
       )}
     </>
@@ -198,7 +196,7 @@ export function TaskSheet({ stop, index, total, info, campName, oversized, onTog
       onClose={onClose}
       placement="side"
       width={440}
-      title={item?.title ?? ''}
+      title={item?.title ?? msg("")}
       eyebrow={
         item && (
           <span className="flex min-w-0 items-center gap-1.5">
@@ -207,7 +205,7 @@ export function TaskSheet({ stop, index, total, info, campName, oversized, onTog
               {item.subject}
             </span>
             <span className="tnum shrink-0">
-              · Görev {index + 1}/{total}
+              {msg("\n              · Görev ")}{index + 1}{msg("/")}{total}
             </span>
           </span>
         )
@@ -218,12 +216,10 @@ export function TaskSheet({ stop, index, total, info, campName, oversized, onTog
           <div className="flex w-full items-center justify-between gap-3">
             <p className="flex items-center gap-2 text-[15px] font-semibold text-forest">
               <CircleCheck className="size-5" aria-hidden="true" />
-              İzledin
-            </p>
+              {msg("\n              İzledin\n            ")}</p>
             <button type="button" className="btn btn-secondary" onClick={() => onToggle(item, false)}>
               <Undo2 aria-hidden="true" />
-              Geri al
-            </button>
+              {msg("\n              Geri al\n            ")}</button>
           </div>
         ) : (
           <button
@@ -235,8 +231,7 @@ export function TaskSheet({ stop, index, total, info, campName, oversized, onTog
             }}
           >
             <Check strokeWidth={2.75} aria-hidden="true" />
-            İzledim
-          </button>
+            {msg("\n            İzledim\n          ")}</button>
         ))
       }
     >

@@ -4,6 +4,8 @@ import type { DetailErrors } from '../../lib/campDraft';
 import { addDays } from '../../lib/engine';
 import { formatLongDate } from '../../lib/format';
 import { MAX_CAMP_NAME } from '../../lib/studyCamp';
+import { msg } from '../../lib/messages';
+
 
 interface NameProps {
   value: string;
@@ -16,13 +18,12 @@ export function CampNameField({ value, error, onChange }: NameProps) {
   return (
     <div>
       <label className="field-label" htmlFor={`${uid}-name`}>
-        Kamp adı
-      </label>
+        {msg("\n        Kamp adı\n      ")}</label>
       <input
         id={`${uid}-name`}
         className="input"
         maxLength={MAX_CAMP_NAME}
-        placeholder="ör. TYT 2027 kampı"
+        placeholder={msg("ör. TYT 2027 kampı")}
         value={value}
         onChange={e => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
@@ -35,8 +36,7 @@ export function CampNameField({ value, error, onChange }: NameProps) {
         </p>
       ) : (
         <p id={`${uid}-name-hint`} className="field-hint">
-          Tüm branşlarını kapsayan programın adı.
-        </p>
+          {msg("\n          Tüm branşlarını kapsayan programın adı.\n        ")}</p>
       )}
     </div>
   );
@@ -65,8 +65,7 @@ export function CampDatesFields({ startDate, targetEndDate, today, errors, onCha
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
         <label className="field-label" htmlFor={`${uid}-start`}>
-          Başlangıç tarihi
-        </label>
+          {msg("\n          Başlangıç tarihi\n        ")}</label>
         <input
           id={`${uid}-start`}
           type="date"
@@ -83,14 +82,14 @@ export function CampDatesFields({ startDate, targetEndDate, today, errors, onCha
           </p>
         ) : (
           <p id={`${uid}-start-hint`} className={`field-hint ${startInPast ? 'font-medium text-warn' : ''}`}>
-            {startInPast ? 'Geçmiş bir gün: o günlere düşen videolar geciken görünür.' : 'İlk ders günü bu tarihten başlar.'}
+            {startInPast ? msg("Geçmiş bir gün: o günlere düşen videolar geciken görünür.") : msg("İlk ders günü bu tarihten başlar.")}
           </p>
         )}
       </div>
 
       <div>
         <label className="field-label" htmlFor={`${uid}-target`}>
-          Hedef bitiş tarihi <span className="font-normal text-ink-3">(isteğe bağlı)</span>
+          {msg("\n          Hedef bitiş tarihi ")}<span className="font-normal text-ink-3">{msg("(isteğe bağlı)")}</span>
         </label>
         <input
           id={`${uid}-target`}
@@ -108,7 +107,7 @@ export function CampDatesFields({ startDate, targetEndDate, today, errors, onCha
           </p>
         ) : (
           <p id={`${uid}-target-hint`} className="field-hint">
-            {targetEndDate ? `Plan bu tarihe yetişiyor mu, önizlemede görürsün.` : 'Boş bırakırsan plan tüm videolar bitene kadar sürer.'}
+            {targetEndDate ? msg("Plan bu tarihe yetişiyor mu, önizlemede görürsün.") : msg("Boş bırakırsan plan tüm videolar bitene kadar sürer.")}
           </p>
         )}
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -130,8 +129,7 @@ export function CampDatesFields({ startDate, targetEndDate, today, errors, onCha
             })}
           {targetEndDate && (
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange({ targetEndDate: '' })}>
-              Hedefi kaldır
-            </button>
+              {msg("\n              Hedefi kaldır\n            ")}</button>
           )}
         </div>
       </div>
@@ -144,10 +142,8 @@ export function WorkloadNote({ branches, videos, minutes }: { branches: number; 
     <p className="flex items-start gap-2 rounded-[12px] bg-sunk px-3.5 py-3 text-[13px] text-ink-2">
       <Info className="mt-0.5 size-4 shrink-0 text-ink-3" aria-hidden="true" />
       <span>
-        Bu kampta <span className="font-semibold text-ink">{branches} branş</span>, <span className="font-semibold text-ink">{videos} video</span> ve{' '}
-        yaklaşık <span className="font-semibold text-ink">{minutes}</span> video süresi var. Hedef tarih seçersen, ritmin buna yetip
-        yetmediğini önizlemede gösteririz.
-      </span>
+        {msg("\n        Bu kampta ")}<span className="font-semibold text-ink">{branches} {msg(" branş")}</span>{msg(", ")}<span className="font-semibold text-ink">{videos} {msg(" video")}</span> {msg(" ve")}{msg(" ")}
+        {msg("\n        yaklaşık ")}<span className="font-semibold text-ink">{minutes}</span> {msg(" video süresi var. Hedef tarih seçersen, ritmin buna yetip\n        yetmediğini önizlemede gösteririz.\n      ")}</span>
     </p>
   );
 }

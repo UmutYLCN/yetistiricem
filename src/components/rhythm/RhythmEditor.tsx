@@ -9,6 +9,8 @@ import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatMinutes } from '../../
 import type { AutoRhythm, ManualRhythm, WeekdayType } from '../../lib/studyCamp';
 import { MAX_DAILY_HOURS, MIN_DAILY_HOURS, PRESET_ORDER, RHYTHM_PRESETS, emptyWeekPlan, resolveAutoRhythm, suggestWeekPlan, unassignedBranches } from '../../lib/studyCamp';
 import { resolveColor } from '../../lib/subjects';
+import { msg, translateTemplate } from '../../lib/messages';
+
 
 interface Props {
   value: RhythmDraft;
@@ -41,14 +43,14 @@ export function RhythmEditor({ value, onChange, branches, errors, showErrors }: 
   return (
     <div className="space-y-6">
       <fieldset aria-describedby={showErrors && errors.mode ? `${uid}-mode-error` : undefined}>
-        <legend className="mb-2.5 text-[15px] font-semibold text-ink">Haftalık plan nasıl oluşsun?</legend>
+        <legend className="mb-2.5 text-[15px] font-semibold text-ink">{msg("Haftalık plan nasıl oluşsun?")}</legend>
         <div className="grid gap-2.5 sm:grid-cols-2">
           <ChoiceCard
             name={`${uid}-mode`}
             checked={value.mode === 'auto'}
             onSelect={() => setMode('auto')}
             icon={<Sparkles aria-hidden="true" />}
-            title="Otomatik dağıt"
+            title={msg("Otomatik dağıt")}
             body="Günlerini, süreni ve günde kaç branş istediğini söyle; planlayıcı branşları sırayla dağıtsın."
           />
           <ChoiceCard
@@ -56,7 +58,7 @@ export function RhythmEditor({ value, onChange, branches, errors, showErrors }: 
             checked={value.mode === 'manual'}
             onSelect={() => setMode('manual')}
             icon={<CalendarRange aria-hidden="true" />}
-            title="Branşları günlere ben yerleştireceğim"
+            title={msg("Branşları günlere ben yerleştireceğim")}
             body="Her güne hangi branşların geleceğini sen seç; o branşların sıradaki videoları kendiliğinden gelir."
           />
         </div>
@@ -84,16 +86,14 @@ export function RhythmEditor({ value, onChange, branches, errors, showErrors }: 
       {value.mode !== null && (
         <details className="group rounded-[12px] border border-line bg-card">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 text-[14px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
-            İzleme hızı ve tekrar payı
-            <span className="text-[12.5px] font-normal text-ink-3">
-              {value.playbackSpeed.toLocaleString('tr-TR')}x · %{Math.round(value.practiceMultiplier * 100)}
+            {msg("\n            İzleme hızı ve tekrar payı\n            ")}<span className="text-[12.5px] font-normal text-ink-3">
+              {value.playbackSpeed.toLocaleString('tr-TR')}{msg("x · %")}{Math.round(value.practiceMultiplier * 100)}
             </span>
           </summary>
           <div className="grid gap-4 border-t border-line px-4 py-4 sm:grid-cols-3">
             <div>
               <label className="field-label" htmlFor={`${uid}-speed`}>
-                İzleme hızı
-              </label>
+                {msg("\n                İzleme hızı\n              ")}</label>
               <select
                 id={`${uid}-speed`}
                 className="input"
@@ -102,15 +102,14 @@ export function RhythmEditor({ value, onChange, branches, errors, showErrors }: 
               >
                 {withCurrent(SPEEDS, value.playbackSpeed).map(s => (
                   <option key={s} value={s}>
-                    {s.toLocaleString('tr-TR')}x{s === 1 ? ' (normal)' : ''}
+                    {s.toLocaleString('tr-TR')}{msg("x")}{s === 1 ? msg(" (normal)") : msg("")}
                   </option>
                 ))}
               </select>
             </div>
             <div>
               <label className="field-label" htmlFor={`${uid}-practice`}>
-                Tekrar ve soru payı
-              </label>
+                {msg("\n                Tekrar ve soru payı\n              ")}</label>
               <select
                 id={`${uid}-practice`}
                 className="input"
@@ -119,18 +118,17 @@ export function RhythmEditor({ value, onChange, branches, errors, showErrors }: 
               >
                 {withCurrent(PRACTICE, value.practiceMultiplier).map(p => (
                   <option key={p} value={p}>
-                    %{Math.round(p * 100)}
+                    {msg("\n                    %")}{Math.round(p * 100)}
                   </option>
                 ))}
               </select>
             </div>
             <p className="self-end rounded-[10px] bg-sunk px-3 py-2.5 text-[12.5px] text-ink-2">
-              1 saatlik video ≈{' '}
+              {msg("\n              1 saatlik video ≈")}{msg(" ")}
               <span className="font-semibold text-ink">
                 {formatMinutes(getEffectiveMinutes(60, value))}
-              </span>{' '}
-              çalışma
-            </p>
+              </span>{msg(" ")}
+              {msg("\n              çalışma\n            ")}</p>
           </div>
         </details>
       )}
@@ -198,15 +196,14 @@ function AutoFields({
   return (
     <div className="space-y-5">
       <fieldset>
-        <legend className="field-label">Ritim ön ayarı</legend>
+        <legend className="field-label">{msg("Ritim ön ayarı")}</legend>
         <div className="grid gap-2 sm:grid-cols-3">
           {PRESET_ORDER.map(key => (
             <PresetOption key={key} name={`${uid}-preset`} preset={key} checked={value.preset === key} onSelect={() => onChange({ ...value, preset: key })} />
           ))}
         </div>
         <p className="field-hint">
-          Aşağıdakiler isteğe bağlı: dokunmadığın alanı seçtiğin ön ayar doldurur. Kararsızsan “Dengeli” ile devam et.
-        </p>
+          {msg("\n          Aşağıdakiler isteğe bağlı: dokunmadığın alanı seçtiğin ön ayar doldurur. Kararsızsan “Dengeli” ile devam et.\n        ")}</p>
       </fieldset>
 
       <div className="grid gap-5 rounded-[14px] border border-line bg-card p-4 sm:grid-cols-2 sm:p-5">
@@ -233,14 +230,14 @@ function AutoFields({
               {errors.days}
             </p>
           ) : (
-            <p className="field-hint">Seçmediğin günler dinlenme günü olur.</p>
+            <p className="field-hint">{msg("Seçmediğin günler dinlenme günü olur.")}</p>
           )}
         </div>
 
         <div>
           <FieldHead id={`${uid}-hours`} label="Günlük çalışma süresi" custom={value.hours !== null} onReset={() => onChange({ ...value, hours: null })} />
           <HoursStepper labelledBy={`${uid}-hours`} hours={resolved.hours} onChange={hours => onChange({ ...value, hours })} />
-          {showErrors && errors.hours ? <p className="field-error">{errors.hours}</p> : <p className="field-hint">Video, not ve soru çözme dahil.</p>}
+          {showErrors && errors.hours ? <p className="field-error">{errors.hours}</p> : <p className="field-hint">{msg("Video, not ve soru çözme dahil.")}</p>}
         </div>
 
         <div>
@@ -258,13 +255,13 @@ function AutoFields({
           <p className="field-hint">
             {branchCount > 0 && resolved.perDay > branchCount
               ? `Kampında ${branchCount} branş var; her gün en fazla ${branchCount} farklı branş çalışılır.`
-              : 'Aynı gün en fazla bu kadar farklı branşa ait video gelir.'}
+              : msg("Aynı gün en fazla bu kadar farklı branşa ait video gelir.")}
           </p>
         </div>
 
         <div className="sm:col-span-2">
           <label className="field-label" htmlFor={`${uid}-mock`}>
-            Deneme günü <span className="font-normal text-ink-3">(isteğe bağlı)</span>
+            {msg("\n            Deneme günü ")}<span className="font-normal text-ink-3">{msg("(isteğe bağlı)")}</span>
           </label>
           <select
             id={`${uid}-mock`}
@@ -272,7 +269,7 @@ function AutoFields({
             value={mockDay ?? ''}
             onChange={e => onChange({ ...value, days: resolved.days, mockDays: e.target.value === '' ? [] : [Number(e.target.value)] })}
           >
-            <option value="">Deneme günü yok</option>
+            <option value="">{msg("Deneme günü yok")}</option>
             {nonStudy.map(d => (
               <option key={d} value={d}>
                 {LONG_WEEKDAYS[d]}
@@ -280,13 +277,12 @@ function AutoFields({
             ))}
           </select>
           <p className="field-hint">
-            {nonStudy.length === 0 ? 'Her gün çalışma günü; deneme için bir günü boşalt.' : 'Deneme günlerine video konmaz.'}
+            {nonStudy.length === 0 ? msg("Her gün çalışma günü; deneme için bir günü boşalt.") : msg("Deneme günlerine video konmaz.")}
           </p>
         </div>
       </div>
       <p className="text-[12.5px] text-ink-3">
-        Ön ayar: {preset.label} · {preset.summary}.
-      </p>
+        {msg("\n        Ön ayar: ")}{preset.label} {msg(" · ")}{preset.summary}{msg(".\n      ")}</p>
     </div>
   );
 }
@@ -299,7 +295,7 @@ function PresetOption({ name, preset, checked, onSelect }: { name: string; prese
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2 text-[14.5px] font-semibold text-ink">
           {info.label}
-          {preset === 'balanced' && <span className="chip chip-forest">Önerilen</span>}
+          {preset === 'balanced' && <span className="chip chip-forest">{msg("Önerilen")}</span>}
         </span>
         <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-2">{info.summary}</span>
       </span>
@@ -316,11 +312,10 @@ function FieldHead({ id, label, custom, onReset }: { id: string; label: string; 
       {custom ? (
         <button type="button" className="inline-flex items-center gap-1 text-[12px] font-semibold text-forest hover:underline" onClick={onReset}>
           <RotateCcw className="size-3.5" aria-hidden="true" />
-          Ön ayara dön
-          <span className="sr-only">({label})</span>
+          {msg("\n          Ön ayara dön\n          ")}<span className="sr-only">{msg("(")}{label}{msg(")")}</span>
         </button>
       ) : (
-        <span className="text-[12px] text-ink-3">Ön ayardan</span>
+        <span className="text-[12px] text-ink-3">{msg("Ön ayardan")}</span>
       )}
     </div>
   );
@@ -463,13 +458,12 @@ function ManualFields({
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div>
           <span id={`${uid}-hours`} className="field-label">
-            Günlük çalışma süresi
-          </span>
+            {msg("\n            Günlük çalışma süresi\n          ")}</span>
           <HoursStepper labelledBy={`${uid}-hours`} hours={value.hours} onChange={hours => onChange({ ...value, hours })} />
           {showErrors && errors.hours ? (
             <p className="field-error">{errors.hours}</p>
           ) : (
-            <p className="field-hint">Bir güne bundan fazlası konmaz; sığmayan video sonraki gününe kalır.</p>
+            <p className="field-hint">{msg("Bir güne bundan fazlası konmaz; sığmayan video sonraki gününe kalır.")}</p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -479,19 +473,16 @@ function ManualFields({
             onClick={suggest}
           >
             <Wand2 aria-hidden="true" />
-            Önerilen dağılım
-          </button>
+            {msg("\n            Önerilen dağılım\n          ")}</button>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange({ ...value, weekPlan: emptyWeekPlan() })}>
-            Temizle
-          </button>
+            {msg("\n            Temizle\n          ")}</button>
         </div>
       </div>
 
       <fieldset>
-        <legend className="field-label">Haftalık yerleşim</legend>
+        <legend className="field-label">{msg("Haftalık yerleşim")}</legend>
         <p className="-mt-1 mb-2.5 text-[12.5px] text-ink-3">
-          Her ders gününe branş seç. O gün, seçtiğin branşların sıradaki videoları liste sırasıyla gelir.
-        </p>
+          {msg("\n          Her ders gününe branş seç. O gün, seçtiğin branşların sıradaki videoları liste sırasıyla gelir.\n        ")}</p>
         <ul className="divide-y divide-line overflow-hidden rounded-[14px] border border-line bg-card">
           {WEEK_ORDER.map(dow => {
             const type = value.dayTypes[dow];
@@ -502,10 +493,10 @@ function ManualFields({
                   <span id={`${uid}-day-${dow}`} className="text-[14.5px] font-semibold text-ink">
                     {LONG_WEEKDAYS[dow]}
                     {type === 'study' && value.weekPlan[dow].length > 0 && (
-                      <span className="tnum ml-2 text-[12.5px] font-normal text-ink-3">{value.weekPlan[dow].length} branş</span>
+                      <span className="tnum ml-2 text-[12.5px] font-normal text-ink-3">{value.weekPlan[dow].length} {msg(" branş")}</span>
                     )}
                   </span>
-                  <div className="segmented" role="group" aria-label={`${LONG_WEEKDAYS[dow]} gün türü`}>
+                  <div className="segmented" role="group" aria-label={translateTemplate('{weekday} gün türü', { weekday: LONG_WEEKDAYS[dow] })}>
                     {(['study', 'mock', 'rest'] as const).map(kind => (
                       <button key={kind} type="button" aria-pressed={type === kind} onClick={() => setType(dow, kind)}>
                         {DAY_TYPE_LABEL[kind]}
@@ -514,7 +505,7 @@ function ManualFields({
                   </div>
                 </div>
                 {type === 'study' && (
-                  <div className="mt-2.5 flex flex-wrap gap-1.5" role="group" aria-label={`${LONG_WEEKDAYS[dow]} branşları`}>
+                  <div className="mt-2.5 flex flex-wrap gap-1.5" role="group" aria-label={translateTemplate('{weekday} branşları', { weekday: LONG_WEEKDAYS[dow] })}>
                     {branches.map(branch => {
                       const on = value.weekPlan[dow].includes(branch.id);
                       const color = resolveColor(branch.colorTag, branch.subject);
@@ -536,7 +527,7 @@ function ManualFields({
                   </div>
                 )}
                 {type !== 'study' && (
-                  <p className="mt-1 text-[12.5px] text-ink-3">{type === 'mock' ? 'Video yok; deneme çözme günü.' : 'Video yok; dinlenme günü.'}</p>
+                  <p className="mt-1 text-[12.5px] text-ink-3">{type === 'mock' ? msg("Video yok; deneme çözme günü.") : msg("Video yok; dinlenme günü.")}</p>
                 )}
                 {dayError && <p className="field-error">{dayError}</p>}
               </li>
@@ -552,7 +543,7 @@ function ManualFields({
 
       {branches.length > 0 && (
         <div>
-          <p className="mb-1.5 text-[12.5px] font-semibold tracking-wide text-ink-3 uppercase">Branşların haftası</p>
+          <p className="mb-1.5 text-[12.5px] font-semibold tracking-wide text-ink-3 uppercase">{msg("Branşların haftası")}</p>
           <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px]">
             {branches.map(branch => {
               const days = daysOf(branch.id);
@@ -562,7 +553,7 @@ function ManualFields({
                   <span className="size-2 rounded-full" style={{ background: color.solid }} aria-hidden="true" />
                   <span className="font-medium text-ink">{branch.subject}</span>
                   <span className={days.length === 0 ? 'font-semibold text-accent-strong' : 'text-ink-3'}>
-                    {days.length === 0 ? 'hiçbir gün' : days.map(d => SHORT_WEEKDAYS[d]).join(', ')}
+                    {days.length === 0 ? msg("hiçbir gün") : days.map(d => SHORT_WEEKDAYS[d]).join(', ')}
                   </span>
                 </li>
               );
@@ -575,14 +566,11 @@ function ManualFields({
         <div className={`callout ${showErrors ? 'callout-accent' : 'callout-warn'} flex-wrap items-center`} role={showErrors ? 'alert' : undefined}>
           <TriangleAlert className="size-4 shrink-0 text-accent-strong" aria-hidden="true" />
           <p className="min-w-[12rem] flex-1 text-[13.5px] text-ink-2">
-            <span className="font-semibold text-ink">{left.map(b => b.subject).join(', ')}</span> henüz hiçbir güne yerleşmedi. Bir güne
-            eklemezsen bu branşın videoları plana giremez.
-          </p>
+            <span className="font-semibold text-ink">{left.map(b => b.subject).join(', ')}</span> {msg(" henüz hiçbir güne yerleşmedi. Bir güne\n            eklemezsen bu branşın videoları plana giremez.\n          ")}</p>
           {studyDays.length > 0 && (
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => onChange(assignLeftovers(value, branches))}>
               <Wand2 aria-hidden="true" />
-              En boş günlere yerleştir
-            </button>
+              {msg("\n              En boş günlere yerleştir\n            ")}</button>
           )}
         </div>
       )}

@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { Heart } from 'lucide-react';
 import { coverPhotoUrl } from '../../lib/catalogApi';
 import { subjectColors } from '../../lib/subjects';
+import { msg } from '../../lib/messages';
+
 
 function seeded(seed: string) {
   let h = 2166136261;
@@ -82,7 +84,7 @@ export function CoverImage({
   }
   return (
     <span className={`camp-cover bg-sunk ${className}`}>
-      <img src={url} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" decoding="async" draggable={false} />
+      <img src={url} alt={msg("")} className="absolute inset-0 size-full object-cover" loading="lazy" decoding="async" draggable={false} />
       {children}
     </span>
   );
@@ -107,8 +109,8 @@ export function SaveButton({
     return (
       <button type="button" className={`btn btn-secondary w-full ${saved ? 'text-danger' : ''}`} aria-pressed={saved} aria-label={label} onClick={onToggle}>
         <Heart className={saved ? 'fill-current' : ''} aria-hidden="true" />
-        {saved ? 'Kaydedildi' : 'Kaydet'}
-        {count !== undefined && count > 0 && <span className="tnum text-ink-3">· {count}</span>}
+        {saved ? msg("Kaydedildi") : msg("Kaydet")}
+        {count !== undefined && count > 0 && <span className="tnum text-ink-3">{msg("· ")}{count}</span>}
       </button>
     );
   }

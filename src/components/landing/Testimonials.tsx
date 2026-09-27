@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, MessageSquareQuote, Quote } from 'lucide-react';
 import { APP_PATH } from '../../lib/routes';
+import { msg } from '../../lib/messages';
+
 
 // Fictional sample quotes and identities for the landing page until real testimonials are available.
 const EXAMPLE_REVIEWS = [
@@ -54,22 +56,20 @@ export function Testimonials() {
         <div>
           <p className="section-eyebrow">
             <MessageSquareQuote aria-hidden="true" />
-            Birlikte ilerliyoruz
-          </p>
+            {msg("\n            Birlikte ilerliyoruz\n          ")}</p>
           <h2 id="yorumlar-baslik" className="section-title mt-4">
-            Küçük adımlar.
-            <br />
-            <span className="text-ink-3">Yeni başlangıçlar.</span>
+            {msg("\n            Küçük adımlar.\n            ")}<br />
+            <span className="text-ink-3">{msg("Yeni başlangıçlar.")}</span>
           </h2>
         </div>
         <div className="testimonials-heading-right">
-          <p>Her hedefin arkasında bir hikâye var.</p>
-          <p className="testimonials-disclosure">Tanıtım için kurgulanmış isimler ve yorumlar.</p>
+          <p>{msg("Her hedefin arkasında bir hikâye var.")}</p>
+          <p className="testimonials-disclosure">{msg("Tanıtım için kurgulanmış isimler ve yorumlar.")}</p>
           <div className="flex gap-2">
-            <button type="button" className="landing-icon-button" disabled={edges.start} aria-label="Önceki yorum" onClick={() => move(-1)}>
+            <button type="button" className="landing-icon-button" disabled={edges.start} aria-label={msg("Önceki yorum")} onClick={() => move(-1)}>
               <ArrowLeft aria-hidden="true" />
             </button>
-            <button type="button" className="landing-icon-button" disabled={edges.end} aria-label="Sonraki yorum" onClick={() => move(1)}>
+            <button type="button" className="landing-icon-button" disabled={edges.end} aria-label={msg("Sonraki yorum")} onClick={() => move(1)}>
               <ArrowRight aria-hidden="true" />
             </button>
           </div>
@@ -79,7 +79,7 @@ export function Testimonials() {
         ref={track}
         className="testimonials-track"
         tabIndex={0}
-        aria-label="Kullanıcı yorumları, sağa kaydırılabilir"
+        aria-label={msg("Kullanıcı yorumları, sağa kaydırılabilir")}
         onScroll={event => {
           const element = event.currentTarget;
           setEdges({ start: element.scrollLeft <= 2, end: element.scrollLeft + element.clientWidth >= element.scrollWidth - 2 });
@@ -90,21 +90,21 @@ export function Testimonials() {
             <div className="flex items-center justify-between">
               <Quote className="testimonial-quote-icon" aria-hidden="true" />
             </div>
-            <blockquote>“{review.quote}”</blockquote>
+            <blockquote>{msg("“")}{msg(review.quote)}{msg("”")}</blockquote>
             <div className="testimonial-person">
               <span aria-hidden="true">{review.initial}</span>
               <div>
                 <p>{review.name}</p>
-                <small>{review.context}</small>
+                <small>{msg(review.context)}</small>
               </div>
             </div>
           </li>
         ))}
       </ul>
       <div className="testimonials-bottom">
-        <p>Senin hikâyen de bir adımla başlar.</p>
+        <p>{msg("Senin hikâyen de bir adımla başlar.")}</p>
         <a href={APP_PATH}>
-          Kendi ritmini bul <ArrowRight aria-hidden="true" />
+          {msg("\n          Kendi ritmini bul ")}<ArrowRight aria-hidden="true" />
         </a>
       </div>
     </section>

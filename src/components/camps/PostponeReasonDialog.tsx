@@ -7,6 +7,8 @@ import type { ShortTask } from '../../lib/postpone';
 import { REASON_COPY, microTipFor } from '../../lib/postpone';
 import { Dialog } from '../ui/Dialog';
 import { REASON_ICONS } from './reasonIcons';
+import { msg } from '../../lib/messages';
+
 
 /** A shift waiting for its reason. */
 export interface PostponeRequest {
@@ -84,18 +86,16 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
             {REASON_COPY[savedReason].label}
           </span>
         }
-        title="Sorun değil, ritmin güncellendi"
+        title={msg("Sorun değil, ritmin güncellendi")}
         description={`${count} görev ${when} gününden itibaren yeniden planlandı.${perCamp}`}
         width={520}
         footer={
           <>
             <button type="button" className="btn btn-ghost mr-auto" onClick={onUndo}>
               <Undo2 aria-hidden="true" />
-              Geri al
-            </button>
+              {msg("\n              Geri al\n            ")}</button>
             <button ref={doneRef} type="button" className="btn btn-primary" onClick={onClose}>
-              Tamam
-            </button>
+              {msg("\n              Tamam\n            ")}</button>
           </>
         }
       >
@@ -104,7 +104,7 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
             <Lightbulb />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="eyebrow text-accent-strong">Küçük bir öneri</p>
+            <p className="eyebrow text-accent-strong">{msg("Küçük bir öneri")}</p>
             <h3 id={`${uid}-tip`} className="mt-1 text-[17px] font-semibold text-ink">
               {tip.title}
             </h3>
@@ -112,13 +112,12 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
             {savedReason === 'distraction' && onStartFocus && (
               <button type="button" className="btn btn-primary btn-sm mt-3" onClick={onStartFocus}>
                 <Play aria-hidden="true" />
-                Yetişir Focus’u aç
-              </button>
+                {msg("\n                Yetişir Focus’u aç\n              ")}</button>
             )}
             {savedReason === 'exhausted' && request?.shortest && (
               <p className="mt-3 rounded-[10px] bg-sunk px-3 py-2 text-[13.5px] text-ink-2">
-                En kısa görevin: <span className="font-semibold break-words text-ink">{request.shortest.title}</span>
-                <span className="tnum whitespace-nowrap"> · {formatMinutes(request.shortest.minutes)}</span>
+                {msg("\n                En kısa görevin: ")}<span className="font-semibold break-words text-ink">{request.shortest.title}</span>
+                <span className="tnum whitespace-nowrap"> {msg(" · ")}{formatMinutes(request.shortest.minutes)}</span>
               </p>
             )}
           </div>
@@ -132,27 +131,24 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
       open={request !== null}
       onClose={onClose}
       eyebrow="Ritmi güncelle"
-      title="Neden yetişmedi?"
+      title={msg("Neden yetişmedi?")}
       description={`${count} görev ${when} gününden itibaren yeniden planlanacak.${perCamp} Nedenini seçmek, seni en çok neyin zorladığını görmene yardım eder.`}
       width={520}
       dismissOnBackdrop={false}
       footer={
         <>
           <button type="button" className="btn btn-ghost mr-auto max-sm:px-2.5" onClick={() => onConfirm({})}>
-            Belirtmeden güncelle
-          </button>
+            {msg("\n            Belirtmeden güncelle\n          ")}</button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
+            {msg("\n            Vazgeç\n          ")}</button>
           <button type="button" className="btn btn-primary" disabled={reason === null} onClick={confirm}>
             <Forward aria-hidden="true" />
-            Ritmi güncelle
-          </button>
+            {msg("\n            Ritmi güncelle\n          ")}</button>
         </>
       }
     >
       <fieldset>
-        <legend className="visually-hidden">Erteleme nedeni</legend>
+        <legend className="visually-hidden">{msg("Erteleme nedeni")}</legend>
         <div className="grid gap-2">
           {POSTPONE_REASONS.map(key => {
             const Icon = REASON_ICONS[key];
@@ -183,14 +179,14 @@ export function PostponeReasonDialog({ request, savedReason, onConfirm, onUndo, 
       </fieldset>
       <div className="mt-4">
         <label htmlFor={`${uid}-note`} className="field-label">
-          Not <span className="font-normal text-ink-3">(isteğe bağlı)</span>
+          {msg("\n          Not ")}<span className="font-normal text-ink-3">{msg("(isteğe bağlı)")}</span>
         </label>
         <input
           id={`${uid}-note`}
           className="input"
           value={note}
           maxLength={MAX_SHIFT_NOTE_LENGTH}
-          placeholder="Örn. türevde örnek soru çözmem lazım"
+          placeholder={msg("Örn. türevde örnek soru çözmem lazım")}
           onChange={event => setNote(event.target.value)}
           onKeyDown={event => {
             if (event.key === 'Enter') confirm();

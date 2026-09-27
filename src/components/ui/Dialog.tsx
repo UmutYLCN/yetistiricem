@@ -1,6 +1,8 @@
 import { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import type { KeyboardEvent, MouseEvent, ReactNode, RefObject } from 'react';
 import { X } from 'lucide-react';
+import { msg } from '../../lib/messages';
+
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -169,7 +171,7 @@ export function Dialog({
               )}
             </div>
             {headerActions}
-            <button type="button" className="icon-btn -mr-2 -mt-1" onClick={() => onCloseRef.current()} aria-label="Kapat">
+            <button type="button" className="icon-btn -mr-2 -mt-1" onClick={() => onCloseRef.current()} aria-label={msg("Kapat")}>
               <X aria-hidden="true" />
             </button>
           </header>

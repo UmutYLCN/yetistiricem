@@ -3,6 +3,8 @@ import { ChartColumn, Compass, Library, Plus, Route, Settings } from 'lucide-rea
 import { LANDING_PATH } from '../../lib/routes';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
+import { msg } from '../../lib/messages';
+
 
 export type View = 'today' | 'path' | 'progress' | 'camps' | 'discover' | 'settings';
 
@@ -56,7 +58,7 @@ export function Sidebar({ view, onNavigate, onAddCamp, campCount, onOpenSettings
           }`}
         >
           <Icon className={`size-[17px] ${active ? 'text-forest' : 'text-ink-3'}`} aria-hidden="true" />
-          <span className="flex-1 text-left">{label}</span>
+          <span className="flex-1 text-left">{msg(label)}</span>
           {target === 'camps' && campCount > 0 && (
             <span className="tnum text-[12px] font-semibold text-ink-3">{campCount}</span>
           )}
@@ -71,14 +73,14 @@ export function Sidebar({ view, onNavigate, onAddCamp, campCount, onOpenSettings
         <a
           href={LANDING_PATH}
           className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-[10px] px-2 py-1 transition-colors hover:bg-sunk/60"
-          aria-label="Yetişir ana sayfası"
+          aria-label={msg("Yetişir ana sayfası")}
         >
           <BrandMark />
           <div className="min-w-0">
             <p className="text-[16px] leading-none">
               <Wordmark />
             </p>
-            <p className="mt-1 text-[12px] text-ink-3">Panik yok, yetişir</p>
+            <p className="mt-1 text-[12px] text-ink-3">{msg("Panik yok, yetişir")}</p>
           </div>
         </a>
         {bell}
@@ -86,10 +88,10 @@ export function Sidebar({ view, onNavigate, onAddCamp, campCount, onOpenSettings
 
       <button type="button" className={`btn mt-5 w-full ${campCount > 0 ? 'btn-secondary' : 'btn-primary'}`} onClick={onAddCamp}>
         <Plus aria-hidden="true" />
-        {isDemo ? 'Kendi planını kur' : 'Yeni kamp'}
+        {isDemo ? msg("Kendi planını kur") : msg("Yeni kamp")}
       </button>
 
-      <nav aria-label="Ana menü" className="mt-6 flex-1">
+      <nav aria-label={msg("Ana menü")} className="mt-6 flex-1">
         <ul className="space-y-1">{PRIMARY_NAV.map(item)}</ul>
       </nav>
 
@@ -109,7 +111,7 @@ export function Sidebar({ view, onNavigate, onAddCamp, campCount, onOpenSettings
             <span className="block truncate text-[12px] text-ink-3">{profile.detail}</span>
           </span>
         </button>
-        <button type="button" className="icon-btn shrink-0" onClick={onOpenSettings} aria-label="Ayarlar" title="Ayarlar">
+        <button type="button" className="icon-btn shrink-0" onClick={onOpenSettings} aria-label={msg("Tercihler")} title={msg("Tercihler")}>
           <Settings aria-hidden="true" />
         </button>
       </div>
@@ -120,7 +122,7 @@ export function Sidebar({ view, onNavigate, onAddCamp, campCount, onOpenSettings
 export function MobileTopBar({ view, onNavigate, onAddCamp, onOpenSettings, isDemo, bell, profile }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/80 px-4 backdrop-blur-md lg:hidden">
-      <a href={LANDING_PATH} className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-[9px] p-1" aria-label="Yetişir ana sayfası">
+      <a href={LANDING_PATH} className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-[9px] p-1" aria-label={msg("Yetişir ana sayfası")}>
         <BrandMark size={28} />
         <Wordmark className="text-[16px]" />
       </a>
@@ -129,11 +131,11 @@ export function MobileTopBar({ view, onNavigate, onAddCamp, onOpenSettings, isDe
         type="button"
         className="icon-btn shrink-0"
         onClick={onAddCamp}
-        aria-label={isDemo ? 'Kendi planını kur' : 'Yeni kamp'}
+        aria-label={isDemo ? msg("Kendi planını kur") : msg("Yeni kamp")}
       >
         <Plus aria-hidden="true" />
       </button>
-      <button type="button" className="icon-btn shrink-0" onClick={onOpenSettings} aria-label="Ayarlar">
+      <button type="button" className="icon-btn shrink-0" onClick={onOpenSettings} aria-label={msg("Tercihler")}>
         <Settings aria-hidden="true" />
       </button>
       <button
@@ -152,7 +154,7 @@ export function MobileTopBar({ view, onNavigate, onAddCamp, onOpenSettings, isDe
 export function MobileTabBar({ view, onNavigate }: Pick<NavProps, 'view' | 'onNavigate'>) {
   return (
     <nav
-      aria-label="Ana menü"
+      aria-label={msg("Ana menü")}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
       <ul className="mx-auto grid max-w-lg grid-cols-4">
@@ -171,7 +173,7 @@ export function MobileTabBar({ view, onNavigate }: Pick<NavProps, 'view' | 'onNa
                 <span className={`flex h-7 w-12 items-center justify-center rounded-full ${active ? 'bg-forest-soft text-forest' : ''}`}>
                   <Icon className="size-[19px]" aria-hidden="true" />
                 </span>
-                {label}
+                {msg(label)}
               </button>
             </li>
           );

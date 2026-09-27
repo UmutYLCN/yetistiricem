@@ -7,6 +7,8 @@ import { SUBJECTS } from '../../lib/subjects';
 import { parseTopicLines } from '../../lib/topicList';
 import type { DraftVideo } from '../../utils/youtubeParser';
 import { parseDurationInput } from '../../utils/youtubeParser';
+import { msg } from '../../lib/messages';
+
 
 interface Topic {
   key: number;
@@ -114,14 +116,13 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
       {askName && (
         <div className="max-w-sm">
           <label className="field-label" htmlFor={`${uid}-name`}>
-            Branş adı
-          </label>
+            {msg("\n            Branş adı\n          ")}</label>
           <input
             id={`${uid}-name`}
             className="input"
             maxLength={MAX_BRANCH_NAME}
             list={`${uid}-subjects`}
-            placeholder="ör. Kimya"
+            placeholder={msg("ör. Kimya")}
             value={name}
             onChange={e => {
               setName(e.target.value);
@@ -141,8 +142,7 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
             </p>
           ) : (
             <p id={`${uid}-name-hint`} className="field-hint">
-              Planda bu adla görünür.
-            </p>
+              {msg("\n              Planda bu adla görünür.\n            ")}</p>
           )}
         </div>
       )}
@@ -150,11 +150,10 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
       <div>
         <div className="mb-2 flex items-baseline justify-between gap-3">
           <p className="text-[13px] font-semibold text-ink" id={`${uid}-topics`}>
-            Konular
-          </p>
+            {msg("\n            Konular\n          ")}</p>
           {topics.length > 0 && (
             <p className="tnum text-[12.5px] text-ink-3">
-              {topics.length} konu · {formatMinutes(total)}
+              {topics.length} {msg(" konu · ")}{formatMinutes(total)}
             </p>
           )}
         </div>
@@ -173,7 +172,7 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
               <input
                 className="input tnum min-h-[38px] w-[4.75rem] shrink-0 py-1.5 text-[14px] sm:w-24"
                 value={topic.duration}
-                placeholder="Süre"
+                placeholder={msg("Süre")}
                 onChange={e => update(topic.key, { duration: e.target.value })}
                 aria-label={`${i + 1}. konunun süresi`}
                 aria-invalid={invalidDuration(topic) ? true : undefined}
@@ -197,12 +196,12 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
                 ref={titleRef}
                 className="input min-h-[38px] py-1.5 text-[14px]"
                 maxLength={MAX_TITLE}
-                placeholder={topics.length === 0 ? 'Konu adı, ör. Atom ve Periyodik Sistem' : 'Sonraki konu'}
+                placeholder={topics.length === 0 ? msg("Konu adı, ör. Atom ve Periyodik Sistem") : msg("Sonraki konu")}
                 value={next.title}
                 onChange={e => setNext(n => ({ ...n, title: e.target.value }))}
                 onKeyDown={onNextKey}
                 onPaste={onNextPaste}
-                aria-label="Yeni konunun adı"
+                aria-label={msg("Yeni konunun adı")}
                 aria-invalid={nextTitleError ? true : undefined}
                 aria-describedby={nextTitleError ? `${uid}-next-title-error` : `${uid}-hint`}
               />
@@ -215,16 +214,16 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
             <div className="w-[4.75rem] shrink-0 sm:w-24">
               <input
                 className="input tnum min-h-[38px] py-1.5 text-[14px]"
-                placeholder="45 dk"
+                placeholder={msg("45 dk")}
                 value={next.duration}
                 onChange={e => setNext(n => ({ ...n, duration: e.target.value }))}
                 onKeyDown={onNextKey}
-                aria-label="Yeni konunun süresi"
+                aria-label={msg("Yeni konunun süresi")}
                 aria-invalid={nextDurationError ? true : undefined}
                 aria-describedby={nextDurationError ? `${uid}-next-duration-error` : `${uid}-hint`}
               />
             </div>
-            <button type="button" className="icon-btn size-[38px] shrink-0 text-forest max-sm:w-8" onClick={addNext} aria-label="Konuyu listeye ekle">
+            <button type="button" className="icon-btn size-[38px] shrink-0 text-forest max-sm:w-8" onClick={addNext} aria-label={msg("Konuyu listeye ekle")}>
               <CornerDownLeft aria-hidden="true" />
             </button>
           </li>
@@ -235,9 +234,7 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
           </p>
         ) : (
           <p id={`${uid}-hint`} className="field-hint">
-            Enter ile sonraki konuya geç. Süre 45, 38:20 ya da “1 sa 5 dk” olabilir; birden çok satırı birden yapıştırabilirsin. Video
-            bağlantısını sonra plandan ekleyebilirsin.
-          </p>
+            {msg("\n            Enter ile sonraki konuya geç. Süre 45, 38:20 ya da “1 sa 5 dk” olabilir; birden çok satırı birden yapıştırabilirsin. Video\n            bağlantısını sonra plandan ekleyebilirsin.\n          ")}</p>
         )}
         {listError && (
           <p className="field-error" role="alert">
@@ -249,14 +246,13 @@ export function ManualTopics({ askName = false, onAdd, submitLabel = defaultSubm
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <button type="button" className="btn btn-secondary btn-sm" onClick={submit} disabled={all.length === 0}>
           <ListPlus aria-hidden="true" />
-          {all.length > 0 ? submitLabel(all.length) : 'Eklemek için konu yaz'}
+          {all.length > 0 ? submitLabel(all.length) : msg("Eklemek için konu yaz")}
         </button>
         <p role="status" className="text-[12.5px] font-semibold text-forest">
           {added !== null && (
             <span className="inline-flex items-center gap-1.5">
               <CircleCheck className="size-4" aria-hidden="true" />
-              {added} konu eklendi.
-            </span>
+              {added} {msg(" konu eklendi.\n            ")}</span>
           )}
         </p>
       </div>

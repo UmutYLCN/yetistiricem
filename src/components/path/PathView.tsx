@@ -13,6 +13,8 @@ import { OverdueCard } from '../rail/RightRail';
 import type { StopLook } from './DayPath';
 import { DayPath } from './DayPath';
 import { TaskSheet } from './TaskSheet';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   summary: DaySummary;
@@ -91,14 +93,12 @@ export function PathView({
             <div className="callout callout-danger mb-2">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-ink">Bu günden {open} görev yetişmedi.</p>
+                <p className="font-semibold text-ink">{msg("Bu günden ")}{open} {msg(" görev yetişmedi.")}</p>
                 <p className="mt-0.5 text-[13px] text-ink-2">
-                  Ritmini güncellersen kalanlar {formatLongDate(addDays(today, 1))} gününden itibaren yeniden dağıtılır.
-                </p>
+                  {msg("\n                  Ritmini güncellersen kalanlar ")}{formatLongDate(addDays(today, 1))} {msg(" gününden itibaren yeniden dağıtılır.\n                ")}</p>
                 <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={() => onShift(date)}>
                   <Forward aria-hidden="true" />
-                  Ritmi güncelle
-                </button>
+                  {msg("\n                  Ritmi güncelle\n                ")}</button>
               </div>
             </div>
           )}
@@ -117,11 +117,10 @@ export function PathView({
 
           {isToday && open > 0 && (
             <div className="mx-auto flex max-w-[600px] flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-line pt-4 text-center">
-              <p className="text-[13px] text-ink-3">Bugün yetişmeyecek mi?</p>
+              <p className="text-[13px] text-ink-3">{msg("Bugün yetişmeyecek mi?")}</p>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => onShift(date)}>
                 <Forward aria-hidden="true" />
-                Kalanları yarına kaydır
-              </button>
+                {msg("\n                Kalanları yarına kaydır\n              ")}</button>
             </div>
           )}
         </>

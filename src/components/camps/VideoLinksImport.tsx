@@ -7,6 +7,8 @@ import { VIDEO_FAILURE_TEXT } from '../../lib/playlistImport';
 import type { DraftVideo } from '../../utils/youtubeParser';
 import { parseVideoLinks } from '../../utils/youtubeParser';
 import { EntryReview, ReviewSkeleton } from './PlaylistImport';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   /** YouTube ids already in the branch or the draft list. */
@@ -87,15 +89,14 @@ export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImpo
     <div>
       <form onSubmit={submit} noValidate>
         <label className="field-label" htmlFor={`${uid}-links`}>
-          YouTube video bağlantıları
-        </label>
+          {msg("\n          YouTube video bağlantıları\n        ")}</label>
         <textarea
           id={`${uid}-links`}
           className="input font-mono text-[13px]"
           rows={3}
           spellCheck={false}
           autoComplete="off"
-          placeholder={'https://youtu.be/…\nhttps://www.youtube.com/watch?v=…'}
+          placeholder={msg("https://youtu.be/…\nhttps://www.youtube.com/watch?v=…")}
           value={text}
           onChange={e => {
             setText(e.target.value);
@@ -112,19 +113,17 @@ export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImpo
           </p>
         ) : (
           <p id={`${uid}-links-hint`} className="field-hint">
-            Her satıra bir bağlantı. Başlık, kanal ve süre YouTube’dan gelir; eklemeden önce seçebilirsin.
-          </p>
+            {msg("\n            Her satıra bir bağlantı. Başlık, kanal ve süre YouTube’dan gelir; eklemeden önce seçebilirsin.\n          ")}</p>
         )}
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="submit" className="btn btn-secondary btn-sm" disabled={loading || !text.trim()}>
             {loading ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Download aria-hidden="true" />}
-            {loading ? 'Getiriliyor…' : 'Videoları getir'}
+            {loading ? msg("Getiriliyor…") : msg("Videoları getir")}
           </button>
           {playlistLink && onOpenPlaylist && (
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => onOpenPlaylist(playlistLink)}>
               <ListVideo aria-hidden="true" />
-              Oynatma listesi olarak aç
-            </button>
+              {msg("\n              Oynatma listesi olarak aç\n            ")}</button>
           )}
         </div>
       </form>
@@ -134,22 +133,19 @@ export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImpo
         {imported !== null && !loading && (
           <p className="pop-in mt-3 flex items-center gap-2 rounded-[10px] bg-forest-tint px-3.5 py-2.5 text-[13px] font-semibold text-forest-strong">
             <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
-            {imported} video eklendi. Başka bağlantılar yapıştırabilirsin.
-          </p>
+            {imported} {msg(" video eklendi. Başka bağlantılar yapıştırabilirsin.\n          ")}</p>
         )}
         {loading && <ReviewSkeleton message="Videolar YouTube’dan okunuyor…" />}
       </div>
       )}
       {showResults && loading && (
         <button type="button" className="btn btn-ghost btn-sm mt-2" onClick={reset}>
-          Getirmeyi durdur
-        </button>
+          {msg("\n          Getirmeyi durdur\n        ")}</button>
       )}
 
       {unreadable.length > 0 && !loading && !problem && (
         <p className="mt-3 text-[12.5px] break-words text-warn">
-          {unreadable.length === 1 ? 'Bir satırda' : `${unreadable.length} satırda`} video bağlantısı yok, atlandı: “
-          {unreadable[0].length > 60 ? `${unreadable[0].slice(0, 60)}…` : unreadable[0]}”{unreadable.length > 1 && ' …'}
+          {unreadable.length === 1 ? msg("Bir satırda") : `${unreadable.length} satırda`} {msg(" video bağlantısı yok, atlandı: “\n          ")}{unreadable[0].length > 60 ? `${unreadable[0].slice(0, 60)}…` : unreadable[0]}{msg("”")}{unreadable.length > 1 && msg(" …")}
         </p>
       )}
 
@@ -162,8 +158,7 @@ export function VideoLinksImport({ knownIds, onImport, importLabel = defaultImpo
             {VIDEO_FAILURE_TEXT[state.failure].retry && (
               <button type="button" className="btn btn-secondary btn-sm mt-2.5" onClick={() => void load(state.ids)}>
                 <RotateCcw aria-hidden="true" />
-                Tekrar dene
-              </button>
+                {msg("\n                Tekrar dene\n              ")}</button>
             )}
           </div>
         </div>

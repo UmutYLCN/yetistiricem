@@ -12,12 +12,13 @@ import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { SHAPE_ART } from '../profile/shapeArt';
 import { AvatarPicker, BioField, StageChip, StageFields, StagePicker } from '../profile/ProfileForm';
 import { AiConnections } from '../settings/AiConnections';
+import { msg } from '../../lib/messages';
+
 
 type SignedIn = Extract<AccountState, { status: 'signed-in' }>;
 
 interface Props {
   account: AccountState;
-  today: string;
   onRename: (name: string) => Promise<ApiResult<string>>;
   onSaveProfile: (profile: StudentProfile) => Promise<ApiResult<StudentProfile>>;
   onUploadAvatar: (blob: Blob, extension: 'webp' | 'jpg') => Promise<ApiResult<string>>;
@@ -101,24 +102,21 @@ function ProfileCard({ account, onRename, onSaveProfile, onUploadAvatar }: { acc
           {!editing && (
             <button type="button" className="btn btn-secondary btn-sm" onClick={startEditing}>
               <Pencil aria-hidden="true" />
-              Profili düzenle
-            </button>
+              {msg("\n              Profili düzenle\n            ")}</button>
           )}
         </div>
 
         {editing ? (
           <form onSubmit={event => void save(event)} noValidate className="mt-5 space-y-6">
             <h2 id={`${uid}-title`} className="text-[18px] font-semibold text-ink">
-              Profili düzenle
-            </h2>
+              {msg("\n              Profili düzenle\n            ")}</h2>
             <div>
-              <p className="field-label">Profil resmi</p>
+              <p className="field-label">{msg("Profil resmi")}</p>
               <AvatarPicker preview={false} value={draft.avatar} name={draftName || name} onChange={avatar => setDraft(d => ({ ...d, avatar }))} onUpload={onUploadAvatar} />
             </div>
             <div>
               <label htmlFor={`${uid}-name`} className="field-label">
-                Görünen ad
-              </label>
+                {msg("\n                Görünen ad\n              ")}</label>
               <input
                 id={`${uid}-name`}
                 className="input"
@@ -137,8 +135,7 @@ function ProfileCard({ account, onRename, onSaveProfile, onUploadAvatar }: { acc
                 </p>
               ) : (
                 <p id={`${uid}-name-note`} className="field-hint">
-                  Keşfet’te kamplarının yanında adın, resmin, durumun, bölümün ya da mesleğin ve Hakkında yazın görünür; okulun, sınıfın ve e-postan gösterilmez.
-                </p>
+                  {msg("\n                  Keşfet’te kamplarının yanında adın, resmin, durumun, bölümün ya da mesleğin ve Hakkında yazın görünür; okulun, sınıfın ve e-postan gösterilmez.\n                ")}</p>
               )}
             </div>
             <StagePicker value={draft.stage} onChange={stage => setDraft(d => ({ ...d, stage }))} />
@@ -151,17 +148,16 @@ function ProfileCard({ account, onRename, onSaveProfile, onUploadAvatar }: { acc
             )}
             <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-4">
               <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)} disabled={busy}>
-                Vazgeç
-              </button>
+                {msg("\n                Vazgeç\n              ")}</button>
               <button type="submit" className="btn btn-primary" disabled={busy}>
-                {busy ? 'Kaydediliyor…' : 'Kaydet'}
+                {busy ? msg("Kaydediliyor…") : msg("Kaydet")}
               </button>
             </div>
           </form>
         ) : (
           <div className="mt-3">
             <h2 id={`${uid}-title`} className="font-display truncate text-[24px] leading-tight text-ink">
-              {account.displayName ?? '…'}
+              {account.displayName ?? msg("…")}
             </h2>
             {account.email && <p className="mt-0.5 truncate text-[13.5px] text-ink-3">{account.email}</p>}
             {profile.bio && <p className="mt-3 max-w-[60ch] text-[14.5px] leading-relaxed break-words whitespace-pre-line text-ink-2">{profile.bio}</p>}
@@ -190,9 +186,8 @@ function ProfileCard({ account, onRename, onSaveProfile, onUploadAvatar }: { acc
               >
                 <GraduationCap className="size-5 shrink-0 text-ink-3" aria-hidden="true" />
                 <span className="min-w-0 flex-1 text-[13.5px] text-ink-2">
-                  <span className="block font-semibold text-ink">Okulunu ve bölümünü ekle</span>
-                  Lise, üniversite ya da meslek: seni tanımamıza yardım eder.
-                </span>
+                  <span className="block font-semibold text-ink">{msg("Okulunu ve bölümünü ekle")}</span>
+                  {msg("\n                  Lise, üniversite ya da meslek: seni tanımamıza yardım eder.\n                ")}</span>
               </button>
             )}
           </div>
@@ -203,43 +198,39 @@ function ProfileCard({ account, onRename, onSaveProfile, onUploadAvatar }: { acc
 }
 
 /** Profile, AI connections and data. Each camp's tempo is edited from the camp itself. */
-export function SettingsView({ account, today, onRename, onSaveProfile, onUploadAvatar, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo }: Props) {
+export function SettingsView({ account, onRename, onSaveProfile, onUploadAvatar, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
   return (
     <div className="mx-auto max-w-[760px] space-y-5">
-      <PageHeader title="Profil ve ayarlar" subtitle={isDemo ? 'Demo açık: buradaki değişiklikler kaydedilmez.' : 'Sen, yapay zekâ bağlantıların ve verilerin.'} />
+      <PageHeader title={msg("Profil")} />
 
       {account.status === 'signed-in' && <ProfileCard key={account.userId} account={account} onRename={onRename} onSaveProfile={onSaveProfile} onUploadAvatar={onUploadAvatar} />}
 
-      {account.status === 'signed-in' && <AiConnections today={today} />}
+      {account.status === 'signed-in' && <AiConnections />}
 
       <section className="card" aria-labelledby={`${uid}-data`}>
         <div className="border-b border-line px-5 py-4 sm:px-6">
           <h2 id={`${uid}-data`} className="text-[16px] font-semibold text-ink">
-            Verilerin
-          </h2>
+            {msg("\n            Verilerin\n          ")}</h2>
           <p className="mt-0.5 text-[13px] text-ink-2">
-            Kampların, ilerlemen ve notların hesabına kaydedilir; hangi cihazdan girersen gir planın seninle. İstersen hepsini bir
-            dosyaya yedekleyebilirsin.
-          </p>
+            {msg("\n            Kampların, ilerlemen ve notların hesabına kaydedilir; hangi cihazdan girersen gir planın seninle. İstersen hepsini bir\n            dosyaya yedekleyebilirsin.\n          ")}</p>
         </div>
         <ul className="divide-y divide-line">
           <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-ink">Yedek indir</p>
-              <p className="text-[13px] text-ink-2">Tüm kampların (branşları ve tempolarıyla), tamamlananlar, ileri taşımalar ve notlar tek bir JSON dosyasında.</p>
+              <p className="font-medium text-ink">{msg("Yedek indir")}</p>
+              <p className="text-[13px] text-ink-2">{msg("Tüm kampların (branşları ve tempolarıyla), tamamlananlar, ileri taşımalar ve notlar tek bir JSON dosyasında.")}</p>
             </div>
             <button type="button" className="btn btn-secondary" onClick={onBackup} disabled={isDemo}>
               <Download aria-hidden="true" />
-              İndir
-            </button>
+              {msg("\n              İndir\n            ")}</button>
           </li>
           <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-ink">Yedekten geri yükle</p>
-              <p className="text-[13px] text-ink-2">Dosya kontrol edilir ve onayından sonra mevcut verilerin yerine geçer.</p>
+              <p className="font-medium text-ink">{msg("Yedekten geri yükle")}</p>
+              <p className="text-[13px] text-ink-2">{msg("Dosya kontrol edilir ve onayından sonra mevcut verilerin yerine geçer.")}</p>
             </div>
             <input
               ref={fileRef}
@@ -256,61 +247,53 @@ export function SettingsView({ account, today, onRename, onSaveProfile, onUpload
             />
             <button type="button" className="btn btn-secondary" onClick={() => fileRef.current?.click()} disabled={isDemo}>
               <Upload aria-hidden="true" />
-              Dosya seç
-            </button>
+              {msg("\n              Dosya seç\n            ")}</button>
           </li>
           <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-ink">Demo önizleme</p>
+              <p className="font-medium text-ink">{msg("Demo önizleme")}</p>
               <p className="text-[13px] text-ink-2">
                 {isDemo
-                  ? 'Şu an örnek bir plana bakıyorsun. Çıkınca kendi verilerine dönersin.'
-                  : 'Örnek bir planla uygulamayı dene. Verilerine dokunmaz, hiçbir şey kaydedilmez.'}
+                  ? msg("Şu an örnek bir plana bakıyorsun. Çıkınca kendi verilerine dönersin.")
+                  : msg("Örnek bir planla uygulamayı dene. Verilerine dokunmaz, hiçbir şey kaydedilmez.")}
               </p>
             </div>
             {isDemo ? (
               <button type="button" className="btn btn-secondary" onClick={onExitDemo}>
                 <LogOut aria-hidden="true" />
-                Demodan çık
-              </button>
+                {msg("\n                Demodan çık\n              ")}</button>
             ) : (
               <button type="button" className="btn btn-secondary" onClick={onStartDemo}>
                 <Eye aria-hidden="true" />
-                Demoyu aç
-              </button>
+                {msg("\n                Demoyu aç\n              ")}</button>
             )}
           </li>
           <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-danger">Tüm verileri sıfırla</p>
+              <p className="font-medium text-danger">{msg("Tüm verileri sıfırla")}</p>
               <p className="text-[13px] text-ink-2">
-                {campCount > 0 ? `${campCount} kamp, ilerlemen ve notların silinir.` : 'Hesabındaki tüm kayıtlar silinir.'} Geri
-                alınamaz.
-              </p>
+                {campCount > 0 ? `${campCount} kamp, ilerlemen ve notların silinir.` : msg("Hesabındaki tüm kayıtlar silinir.")} {msg(" Geri\n                alınamaz.\n              ")}</p>
             </div>
             <button type="button" className="btn btn-danger-quiet" onClick={onReset} disabled={isDemo}>
               <RotateCcw aria-hidden="true" />
-              Sıfırla
-            </button>
+              {msg("\n              Sıfırla\n            ")}</button>
           </li>
         </ul>
         {isDemo && (
           <p className="border-t border-line px-5 py-3 text-[12.5px] text-ink-3 sm:px-6">
-            Demo açıkken yedekleme, geri yükleme ve sıfırlama kapalı.
-          </p>
+            {msg("\n            Demo açıkken yedekleme, geri yükleme ve sıfırlama kapalı.\n          ")}</p>
         )}
       </section>
 
       {account.status === 'signed-in' && (
-        <section className="card flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6" aria-label="Oturum">
+        <section className="card flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6" aria-label={msg("Oturum")}>
           <p className="min-w-0 flex-1 text-[13px] text-ink-2">
-            <span className="text-ink-3">Giriş yapılan hesap: </span>
-            <span className="break-all text-ink">{account.email ?? account.displayName ?? '…'}</span>
+            <span className="text-ink-3">{msg("Giriş yapılan hesap: ")}</span>
+            <span className="break-all text-ink">{account.email ?? account.displayName ?? msg("…")}</span>
           </p>
           <button type="button" className="btn btn-secondary hover:text-danger" onClick={onSignOut}>
             <LogOut aria-hidden="true" />
-            Çıkış yap
-          </button>
+            {msg("\n            Çıkış yap\n          ")}</button>
         </section>
       )}
     </div>

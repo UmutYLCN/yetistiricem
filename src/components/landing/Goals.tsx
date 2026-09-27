@@ -22,6 +22,8 @@ import {
   Video,
   Zap,
 } from 'lucide-react';
+import { msg } from '../../lib/messages';
+
 
 const GOALS = [
   { label: 'Yoğun kamplar', icon: Zap },
@@ -52,13 +54,13 @@ export function Goals() {
     <section aria-labelledby="hedefler-baslik" className="learning-section">
       <div className="learning-heading">
         <div>
-          <p className="section-eyebrow">Ne öğrenirsen öğren</p>
-          <h2 id="hedefler-baslik">Hedefin sana özel. Ritmin de öyle.</h2>
+          <p className="section-eyebrow">{msg("Ne öğrenirsen öğren")}</p>
+          <h2 id="hedefler-baslik">{msg("Hedefin sana özel. Ritmin de öyle.")}</h2>
         </div>
         <button
           type="button"
           className="landing-icon-button marquee-control"
-          aria-label={paused ? 'Kayan listeyi oynat' : 'Kayan listeyi duraklat'}
+          aria-label={paused ? msg("Kayan listeyi oynat") : msg("Kayan listeyi duraklat")}
           aria-pressed={paused}
           onClick={() => setPaused((value) => !value)}
         >
@@ -74,7 +76,7 @@ export function Goals() {
                   {row.map(({ label, icon: Icon }) => (
                     <li key={label}>
                       <Icon aria-hidden="true" />
-                      {label}
+                      {msg(label)}
                     </li>
                   ))}
                 </ul>

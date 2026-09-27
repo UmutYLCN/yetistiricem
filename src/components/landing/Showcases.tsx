@@ -21,6 +21,8 @@ import { PageHeader } from '../layout/PageHeader';
 import { AppPreviewLayout } from './AppPreviewLayout';
 import { BrandMark } from '../ui/BrandMark';
 import { Skeleton, Thumbnail } from './Illustrations';
+import { msg } from '../../lib/messages';
+
 
 const noop = () => {};
 
@@ -34,21 +36,17 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
         <div>
           <p className="section-eyebrow">
             <Focus aria-hidden="true" />
-            02 / yetişir focus
-          </p>
+            {msg("\n            02 / yetişir focus\n          ")}</p>
           <h3 id="focus-heading">
-            Bir video.
-            <br />
-            <span className="text-ink-3">Bütün dikkatin.</span>
+            {msg("\n            Bir video.\n            ")}<br />
+            <span className="text-ink-3">{msg("Bütün dikkatin.")}</span>
           </h3>
         </div>
         <div>
           <p>
-            YouTube’a gitmeden, akışa kapılmadan. Dersini aç, kendi hızında izle. Video bittiğinde görevin tamamlanır; bir sonraki adımın
-            hazırdır.
-          </p>
+            {msg("\n            YouTube’a gitmeden, akışa kapılmadan. Dersini aç, kendi hızında izle. Video bittiğinde görevin tamamlanır; bir sonraki adımın\n            hazırdır.\n          ")}</p>
           <a href={DEMO_APP_PATH} className="landing-text-link">
-            Uygulamaya göz at <ArrowRight aria-hidden="true" />
+            {msg("\n            Uygulamaya göz at ")}<ArrowRight aria-hidden="true" />
           </a>
         </div>
       </div>
@@ -56,8 +54,7 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
         <div className="focus-side-card focus-side-left">
           <span className="art-meta">
             <ListVideo />
-            Bugünün listesi
-          </span>
+            {msg("\n            Bugünün listesi\n          ")}</span>
           {items.slice(0, 3).map((task, i) => (
             <div key={task.id} className="sketch-row">
               <Thumbnail tone={i} />
@@ -74,10 +71,10 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
             <div className="flex min-w-0 items-center gap-2">
               <BrandMark size={22} />
               <span className="font-semibold">
-                yetişir <span className="text-ink-3">/ focus</span>
+                {msg("\n                yetişir ")}<span className="text-ink-3">{msg("/ focus")}</span>
               </span>
             </div>
-            <span className="art-sample-label">Örnek görünüm</span>
+            <span className="art-sample-label">{msg("Örnek görünüm")}</span>
             <X className="size-4 text-ink-3" />
           </div>
           <div className="focus-window-title">
@@ -95,11 +92,10 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
           <div className="focus-preview-footer">
             <span className="flex items-center gap-2">
               <CircleCheck className="size-4 text-forest" />
-              Tamamlandı
-            </span>
-            <span>{formatSpeed(preview.prefs.playbackSpeed)} hız</span>
+              {msg("\n              Tamamlandı\n            ")}</span>
+            <span>{formatSpeed(preview.prefs.playbackSpeed)} {msg(" hız")}</span>
             <span className="art-flat-action ml-auto">
-              Sıradaki göreve geç <ArrowRight />
+              {msg("\n              Sıradaki göreve geç ")}<ArrowRight />
             </span>
           </div>
         </div>
@@ -108,9 +104,8 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
             <Check />
           </span>
           <p>
-            Bir adım daha
-            <br />
-            <strong>tamamlandı.</strong>
+            {msg("\n            Bir adım daha\n            ")}<br />
+            <strong>{msg("tamamlandı.")}</strong>
           </p>
           <Skeleton width="75%" />
           <Skeleton width="50%" />
@@ -120,22 +115,22 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
         <li>
           <ShieldCheck aria-hidden="true" />
           <div>
-            <strong>Dikkatin derste kalsın</strong>
-            <span>Duraklatınca ve bitirince öneriler gizlenir.</span>
+            <strong>{msg("Dikkatin derste kalsın")}</strong>
+            <span>{msg("Duraklatınca ve bitirince öneriler gizlenir.")}</span>
           </div>
         </li>
         <li>
           <Focus aria-hidden="true" />
           <div>
-            <strong>Nasıl çalıştığını gör</strong>
-            <span>Odak süren, hızın ve duraklamaların kaydedilir.</span>
+            <strong>{msg("Nasıl çalıştığını gör")}</strong>
+            <span>{msg("Odak süren, hızın ve duraklamaların kaydedilir.")}</span>
           </div>
         </li>
         <li>
           <CircleCheck aria-hidden="true" />
           <div>
-            <strong>Bitir, sıradakine geç</strong>
-            <span>Tamamlanan video planında işaretlenir.</span>
+            <strong>{msg("Bitir, sıradakine geç")}</strong>
+            <span>{msg("Tamamlanan video planında işaretlenir.")}</span>
           </div>
         </li>
       </ul>
@@ -230,6 +225,8 @@ const CATALOG_EXAMPLES: Omit<CatalogPreviewEntry, 'preview' | 'createdAt'>[] = [
 function CatalogPreview({ preview }: { preview: LandingPreview }) {
   const entries: CatalogPreviewEntry[] = CATALOG_EXAMPLES.map((example, index) => ({
     ...example,
+    name: msg(example.name),
+    subjects: example.subjects.map(subject => msg(subject)),
     preview: true,
     createdAt: `${addDays(preview.today, -index * 4)}T12:00:00`,
   }));
@@ -237,11 +234,10 @@ function CatalogPreview({ preview }: { preview: LandingPreview }) {
     <div className="preview-frame max-h-none text-left [mask-image:none]" aria-hidden="true" inert>
       <AppPreviewLayout view="discover">
         <PageHeader
-          title="Keşfet"
+          title={msg("Keşfet")}
           actions={
-            <span className="chip chip-demo" title="Kamp ve kişi adları, etiketler ve kayıt sayıları bu tanıtım için kurgulanmıştır.">
-              Örnek kamplar
-            </span>
+            <span className="chip chip-demo" title={msg("Kamp ve kişi adları, etiketler ve kayıt sayıları bu tanıtım için kurgulanmıştır.")}>
+              {msg("\n              Örnek kamplar\n            ")}</span>
           }
         />
         <div className="relative">
@@ -249,8 +245,8 @@ function CatalogPreview({ preview }: { preview: LandingPreview }) {
           <input
             className="input min-h-[46px] rounded-full pl-10"
             type="search"
-            placeholder="Kamp adı ya da #etiket ara"
-            aria-label="Kamplarda ara"
+            placeholder={msg("Kamp adı ya da #etiket ara")}
+            aria-label={msg("Kamplarda ara")}
             readOnly
             tabIndex={-1}
           />
@@ -258,7 +254,7 @@ function CatalogPreview({ preview }: { preview: LandingPreview }) {
         <div className="mt-3 mb-5 flex gap-1.5 overflow-hidden">
           {['Tümü', '#yks', '#yazılım', '#ingilizce', '#tasarım'].map((label, i) => (
             <span key={label} className={`filter-chip inline-flex items-center ${i === 0 ? 'is-active' : ''}`}>
-              {label}
+              {msg(label)}
             </span>
           ))}
         </div>
@@ -279,21 +275,17 @@ export function DiscoverShowcase({ preview }: { preview: LandingPreview }) {
         <div>
           <p className="section-eyebrow">
             <Compass aria-hidden="true" />
-            05 / Birlikte
-          </p>
+            {msg("\n            05 / Birlikte\n          ")}</p>
           <h3 id="kesfet-heading">
-            Birinin rotası,
-            <br />
-            <span className="text-ink-3">senin başlangıcın.</span>
+            {msg("\n            Birinin rotası,\n            ")}<br />
+            <span className="text-ink-3">{msg("senin başlangıcın.")}</span>
           </h3>
         </div>
         <div>
           <p>
-            Her şeyi sıfırdan kurmak zorunda değilsin. Paylaşılan kampları keşfet, içeriklerine bak, beğendiğini kendi planına ekle. Tempoyu
-            yine sen belirlersin.
-          </p>
+            {msg("\n            Her şeyi sıfırdan kurmak zorunda değilsin. Paylaşılan kampları keşfet, içeriklerine bak, beğendiğini kendi planına ekle. Tempoyu\n            yine sen belirlersin.\n          ")}</p>
           <a href={discoverReturnUrl('')} className="landing-text-link">
-            Kampları keşfet <ArrowRight aria-hidden="true" />
+            {msg("\n            Kampları keşfet ")}<ArrowRight aria-hidden="true" />
           </a>
         </div>
       </div>
@@ -302,14 +294,11 @@ export function DiscoverShowcase({ preview }: { preview: LandingPreview }) {
         <div>
           <p className="section-eyebrow">
             <Layers aria-hidden="true" />
-            Tüm Kamplar
-          </p>
+            {msg("\n            Tüm Kamplar\n          ")}</p>
           <h4>
-            Birden fazla hedef.
-            <br />
-            Tek bir bugün.
-          </h4>
-          <p>Her kamp kendi temposunda ilerler. Günün planında hepsi bir araya gelir.</p>
+            {msg("\n            Birden fazla hedef.\n            ")}<br />
+            {msg("\n            Tek bir bugün.\n          ")}</h4>
+          <p>{msg("Her kamp kendi temposunda ilerler. Günün planında hepsi bir araya gelir.")}</p>
         </div>
         <div className="all-camps-art" aria-hidden="true" inert>
           <div className="all-camps-sources">
@@ -326,9 +315,9 @@ export function DiscoverShowcase({ preview }: { preview: LandingPreview }) {
           </div>
           <ArrowRight className="all-camps-arrow" />
           <div className="sketch-panel all-camps-today">
-            <span className="art-meta">Bugün · tüm kamplar</span>
+            <span className="art-meta">{msg("Bugün · tüm kamplar")}</span>
             <strong>{formatMinutes(preview.prefs.dailyStudyHours * 60 + 30)}</strong>
-            <span>Örnek günlük hedef</span>
+            <span>{msg("Örnek günlük hedef")}</span>
             <div className="flex gap-1">
               <span className="h-1.5 flex-[4] rounded-full bg-study-indigo" />
               <span className="h-1.5 flex-1 rounded-full bg-study-plum" />

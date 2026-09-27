@@ -2,6 +2,8 @@ import { avatarPhotoUrl } from '../../lib/catalogApi';
 import type { AvatarShape } from '../../lib/studentProfile';
 import { isAvatarPhoto, isAvatarShape } from '../../lib/studentProfile';
 import { SHAPE_ART } from './shapeArt';
+import { msg } from '../../lib/messages';
+
 
 const tileOf = (color: string) => `color-mix(in srgb, ${color} 20%, var(--color-card))`;
 
@@ -38,7 +40,7 @@ export function ProfileAvatar({ avatar, name, size = 32, className = '' }: { ava
   if (photo) {
     return (
       <span className={`${box} bg-sunk`} style={style} aria-hidden="true">
-        <img src={photo} alt="" className="size-full object-cover" draggable={false} loading="lazy" decoding="async" />
+        <img src={photo} alt={msg("")} className="size-full object-cover" draggable={false} loading="lazy" decoding="async" />
       </span>
     );
   }

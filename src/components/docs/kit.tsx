@@ -3,6 +3,8 @@ import { useContext, useState } from 'react';
 import { ArrowRight, Check, Copy, Info, Lightbulb, TriangleAlert } from 'lucide-react';
 import { docsHref } from '../../lib/routes';
 import { DocsNavigate } from './navigate';
+import { msg } from '../../lib/messages';
+
 
 // The pieces docs pages are written with (`content.tsx`). Text is styled by
 // `.docs-prose` (index.css); these add what plain text cannot: section
@@ -27,9 +29,8 @@ export function H2({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h2 id={id} className="group flex items-center gap-2">
       {children}
-      <a href={`#${id}`} className="text-ink-3 no-underline opacity-0 transition-opacity group-hover:opacity-100" aria-label="Bu bölümün bağlantısı">
-        #
-      </a>
+      <a href={`#${id}`} className="text-ink-3 no-underline opacity-0 transition-opacity group-hover:opacity-100" aria-label={msg("Bu bölümün bağlantısı")}>
+        {msg("\n        #\n      ")}</a>
     </h2>
   );
 }
@@ -88,10 +89,10 @@ export function CodeBlock({ children, label }: { children: string; label?: strin
   return (
     <div className="overflow-hidden rounded-[12px] border border-line bg-field">
       <div className="flex items-center justify-between border-b border-line px-3.5 py-1.5">
-        <span className="text-[12px] text-ink-3">{label ?? 'Kopyala'}</span>
+        <span className="text-[12px] text-ink-3">{label ?? msg("Kopyala")}</span>
         <button type="button" onClick={() => void copy()} className="flex items-center gap-1.5 rounded-[6px] px-1.5 py-1 text-[12px] text-ink-3 hover:text-ink">
           {copied ? <Check className="size-3.5 text-forest" aria-hidden="true" /> : <Copy className="size-3.5" aria-hidden="true" />}
-          {copied ? 'Kopyalandı' : 'Kopyala'}
+          {copied ? msg("Kopyalandı") : msg("Kopyala")}
         </button>
       </div>
       <pre className="overflow-x-auto px-4 py-3 font-mono text-[13px] leading-relaxed text-ink">

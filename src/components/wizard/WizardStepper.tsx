@@ -1,4 +1,6 @@
 import { Check } from 'lucide-react';
+import { msg } from '../../lib/messages';
+
 
 /**
  * Step indicator of a multi-step dialog. Earlier steps can be revisited;
@@ -22,7 +24,7 @@ export function WizardStepper({
   return (
     <nav aria-label={label}>
       <p className="mb-2 text-[12.5px] font-semibold text-ink-3 sm:hidden">
-        Adım {step + 1} / {titles.length} · <span className="text-ink">{titles[step]}</span>
+        {msg("\n        Adım ")}{step + 1} {msg(" / ")}{titles.length} {msg(" · ")}<span className="text-ink">{titles[step]}</span>
       </p>
       <ol className="flex items-center gap-1.5 sm:gap-2">
         {titles.map((title, index) => {
@@ -42,7 +44,7 @@ export function WizardStepper({
                   {done ? <Check strokeWidth={3} /> : index + 1}
                 </span>
                 <span className="truncate max-sm:sr-only">{title}</span>
-                {done && <span className="sr-only">(tamamlandı)</span>}
+                {done && <span className="sr-only">{msg("(tamamlandı)")}</span>}
               </button>
               {index < titles.length - 1 && (
                 <span className={`h-0.5 min-w-3 flex-1 rounded-full ${index < step ? 'bg-forest' : 'bg-line'}`} aria-hidden="true" />

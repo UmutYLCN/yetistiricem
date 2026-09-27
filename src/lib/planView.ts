@@ -3,7 +3,7 @@ import type { CampDaySummary } from './allCamps.ts';
 import type { CampKind } from './camps.ts';
 import { classifyCamp, displayChannel } from './camps.ts';
 import { dayOfWeek, formatDateKey } from './engine.ts';
-import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatMinutes, startOfWeek } from './format.ts';
+import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, dateLocale, formatMinutes, startOfWeek } from './format.ts';
 import type { SubjectColor } from './subjects.ts';
 import { resolveColor } from './subjects.ts';
 
@@ -117,7 +117,7 @@ export function groupByBranch<T extends Pick<DailyPlanItem, 'playlistId'>>(items
 
 /** Screen-reader summary of a day: date, today, kind and task progress. */
 export function describeDay(day: DaySummary, today: string): string {
-  const parts = [`${LONG_WEEKDAYS[dayOfWeek(day.date)]} ${formatDateKey(day.date)}`];
+  const parts = [`${LONG_WEEKDAYS[dayOfWeek(day.date)]} ${formatDateKey(day.date, undefined, dateLocale())}`];
   if (day.date === today) parts.push('bugün');
   if (day.kind === 'rest') parts.push('dinlenme günü');
   else if (day.kind === 'mock') parts.push('deneme günü');

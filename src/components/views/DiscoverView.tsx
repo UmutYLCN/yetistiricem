@@ -7,6 +7,8 @@ import type { AccountState } from '../../hooks/useAccount';
 import { CatalogCard } from '../discover/CatalogCard';
 import { PageHeader } from '../layout/PageHeader';
 import { EmptyState } from '../ui/EmptyState';
+import { msg } from '../../lib/messages';
+
 
 export type SaveToggle = (campId: string) => Promise<{ ok: true; saved: boolean } | { ok: false; error: string }>;
 
@@ -100,11 +102,10 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
   if (account.status === 'off') {
     return (
       <div className="mx-auto max-w-[920px]">
-        <PageHeader title="Keşfet" subtitle="Öğrencilerin yayınladığı kamplar" />
+        <PageHeader title={msg("Keşfet")} subtitle={msg("Öğrencilerin yayınladığı kamplar")} />
         <section className="card empty-surface px-6 py-14">
-          <EmptyState icon={<Compass className="size-5" />} title="Keşfet bu sunucuda kurulmamış">
-            Uygulamanın Supabase bağlantısı tanımlı değil (kurulum: docs/kesfet.md). Kendi kampların bundan etkilenmez.
-          </EmptyState>
+          <EmptyState icon={<Compass className="size-5" />} title={msg("Keşfet bu sunucuda kurulmamış")}>
+            {msg("\n            Uygulamanın Supabase bağlantısı tanımlı değil (kurulum: docs/kesfet.md). Kendi kampların bundan etkilenmez.\n          ")}</EmptyState>
         </section>
       </div>
     );
@@ -117,15 +118,14 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
   return (
     <div className="mx-auto max-w-[920px]">
       <PageHeader
-        title="Keşfet"
-        subtitle={scope === 'saved' ? 'Favorilerin: sonra dönmek için kaydettiğin kamplar.' : scope === 'mine' ? 'Keşfet’te paylaştığın kamplar.' : undefined}
+        title={msg("Keşfet")}
+        subtitle={scope === 'saved' ? msg('Favorilerin: sonra dönmek için kaydettiğin kamplar.') : scope === 'mine' ? msg('Keşfet’te paylaştığın kamplar.') : undefined}
         actions={
           <>
             {account.status === 'signed-out' && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={onSignIn}>
                 <LogIn aria-hidden="true" />
-                Giriş yap
-              </button>
+                {msg("\n                Giriş yap\n              ")}</button>
             )}
             <button
               type="button"
@@ -134,8 +134,7 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
               onClick={() => (userId ? setScope(scope === 'saved' ? 'all' : 'saved') : onSignIn())}
             >
               <Heart className={scope === 'saved' ? 'fill-current text-danger' : ''} aria-hidden="true" />
-              Favoriler
-              {saved && saved.size > 0 && <span className="tnum opacity-70">{saved.size}</span>}
+              {msg("\n              Favoriler\n              ")}{saved && saved.size > 0 && <span className="tnum opacity-70">{saved.size}</span>}
             </button>
             {userId && (
               <button
@@ -145,8 +144,7 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
                 onClick={() => setScope(scope === 'mine' ? 'all' : 'mine')}
               >
                 <Share2 aria-hidden="true" />
-                Paylaştıklarım
-              </button>
+                {msg("\n                Paylaştıklarım\n              ")}</button>
             )}
           </>
         }
@@ -155,37 +153,34 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
       <div className="relative">
         <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
         <label htmlFor={`${uid}-search`} className="visually-hidden">
-          Kamplarda ara
-        </label>
+          {msg("\n          Kamplarda ara\n        ")}</label>
         <input
           id={`${uid}-search`}
           type="search"
           className="input min-h-[46px] rounded-full pl-10"
-          placeholder="Kamp adı ya da #etiket ara"
+          placeholder={msg("Kamp adı ya da #etiket ara")}
           value={query}
           onChange={event => setQuery(event.target.value)}
         />
       </div>
 
       <div className="mt-3 mb-5 flex flex-wrap items-center gap-x-3 gap-y-2.5">
-        <div className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 py-0.5" role="group" aria-label="Etikete göre süz">
+        <div className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 py-0.5" role="group" aria-label={msg("Etikete göre süz")}>
           <button type="button" className="filter-chip" aria-pressed={tag === null} onClick={() => setTag(null)}>
-            Tümü
-          </button>
+            {msg("\n            Tümü\n          ")}</button>
           {tags.map(name => (
             <button key={name} type="button" className="filter-chip" aria-pressed={tag === name} onClick={() => setTag(tag === name ? null : name)}>
-              #{name}
+              {msg("\n              #")}{name}
             </button>
           ))}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <label htmlFor={`${uid}-sort`} className="visually-hidden">
-            Sırala
-          </label>
+            {msg("\n            Sırala\n          ")}</label>
           <select id={`${uid}-sort`} className="input min-h-[38px] w-auto py-1.5 text-[13px]" value={sort} onChange={e => setSort(e.target.value as CatalogSort)}>
             {SORTS.map(option => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {msg(option.label)}
               </option>
             ))}
           </select>
@@ -193,7 +188,7 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
       </div>
 
       {list.status === 'loading' && (
-        <ul className="grid gap-x-4 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" aria-label="Kamplar yükleniyor" aria-busy="true">
+        <ul className="grid gap-x-4 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" aria-label={msg("Kamplar yükleniyor")} aria-busy="true">
           {Array.from({ length: 6 }, (_, i) => (
             <CardSkeleton key={i} />
           ))}
@@ -205,8 +200,7 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
           <p className="min-w-[14rem] flex-1 text-[14px] text-ink-2">{list.message}</p>
           <button type="button" className="btn btn-secondary btn-sm" onClick={retry}>
             <RefreshCw aria-hidden="true" />
-            Tekrar dene
-          </button>
+            {msg("\n            Tekrar dene\n          ")}</button>
         </div>
       )}
       {list.status === 'ready' &&
@@ -215,37 +209,34 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
             <EmptyState
               icon={<Compass className="size-5" />}
               tone="forest"
-              title="Henüz yayınlanmış kamp yok"
+              title={msg("Henüz yayınlanmış kamp yok")}
               actions={
                 <button type="button" className="btn btn-primary" onClick={onOpenCamps}>
                   <Upload aria-hidden="true" />
-                  İlk kampı sen yayınla
-                </button>
+                  {msg("\n                  İlk kampı sen yayınla\n                ")}</button>
               }
             >
-              Kamplar’dan bir kampını yayınladığında burada herkes görebilir ve kendi planına ekleyebilir.
-            </EmptyState>
+              {msg("\n              Kamplar’dan bir kampını yayınladığında burada herkes görebilir ve kendi planına ekleyebilir.\n            ")}</EmptyState>
           </section>
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center rounded-[16px] border border-dashed border-line-strong px-6 py-12 text-center">
             <p className="font-semibold text-ink">
               {scope === 'saved' && !query.trim() && !tag
-                ? 'Favorilerinde kamp yok.'
+                ? msg("Favorilerinde kamp yok.")
                 : scope === 'mine' && !query.trim() && !tag
-                  ? 'Henüz kamp paylaşmadın.'
-                  : 'Eşleşen kamp yok.'}
+                  ? msg("Henüz kamp paylaşmadın.")
+                  : msg("Eşleşen kamp yok.")}
             </p>
             <p className="mt-1 text-[13.5px] text-ink-2">
               {scope === 'saved' && !query.trim() && !tag
-                ? 'Sonra dönmek istediğin bir kampın kalbine bas; burada toplanır.'
+                ? msg("Sonra dönmek istediğin bir kampın kalbine bas; burada toplanır.")
                 : scope === 'mine' && !query.trim() && !tag
-                  ? 'Kamplar’da bir kampının ⋯ menüsünden “Keşfet’te yayınla”yı seç.'
-                  : 'Aramayı ya da süzgeçleri değiştirip tekrar dene.'}
+                  ? msg("Kamplar’da bir kampının ⋯ menüsünden “Keşfet’te yayınla”yı seç.")
+                  : msg("Aramayı ya da süzgeçleri değiştirip tekrar dene.")}
             </p>
             {scope === 'mine' && !query.trim() && !tag ? (
               <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={onOpenCamps}>
-                Kamplar’a git
-              </button>
+                {msg("\n                Kamplar’a git\n              ")}</button>
             ) : filtered && (
               <button
                 type="button"
@@ -257,12 +248,11 @@ export function DiscoverView({ account, today, version, saved, onToggleSave, onO
                 }}
               >
                 <X aria-hidden="true" />
-                Süzgeçleri temizle
-              </button>
+                {msg("\n                Süzgeçleri temizle\n              ")}</button>
             )}
           </div>
         ) : (
-          <ul className="grid gap-x-4 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" aria-label="Yayınlanan kamplar">
+          <ul className="grid gap-x-4 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" aria-label={msg("Yayınlanan kamplar")}>
             {entries.map(entry => (
               <CatalogCard
                 key={entry.id}

@@ -14,6 +14,8 @@ import { CampFields } from './CampFields';
 import type { CampFieldValues } from './campForm';
 import { campFieldErrors, storedPlaylistUrl } from './campForm';
 import { VideoEntry } from './VideoEntry';
+import { msg } from '../../lib/messages';
+
 
 function durationText(minutes: number): string {
   if (Number.isInteger(minutes)) return String(minutes);
@@ -67,28 +69,24 @@ export function EditBranchDialog({
     <Dialog
       open
       onClose={onClose}
-      title="Branşı düzenle"
+      title={msg("Branşı düzenle")}
       width={600}
       dismissOnBackdrop={false}
       footer={
         <>
           <button type="button" className="btn btn-danger-quiet mr-auto" onClick={onRemove}>
             <Trash2 aria-hidden="true" />
-            Branşı kaldır
-          </button>
+            {msg("\n            Branşı kaldır\n          ")}</button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
+            {msg("\n            Vazgeç\n          ")}</button>
           <button type="button" className="btn btn-primary" onClick={save}>
-            Kaydet
-          </button>
+            {msg("\n            Kaydet\n          ")}</button>
         </>
       }
     >
       <CampFields values={fields} onChange={setFields} errors={errors} showErrors={submitted} />
       <p className="field-hint mt-4">
-        Branşın adını değiştirmek otomatik dağıtımı etkileyebilir (aynı adlı branşlar tek branş sayılır); tamamlanan görevler korunur.
-      </p>
+        {msg("\n        Branşın adını değiştirmek otomatik dağıtımı etkileyebilir (aynı adlı branşlar tek branş sayılır); tamamlanan görevler korunur.\n      ")}</p>
     </Dialog>
   );
 }
@@ -121,22 +119,20 @@ export function AddVideosDialog({
     <Dialog
       open
       onClose={onClose}
-      title="Video ekle"
+      title={msg("Video ekle")}
       description={
         <>
-          <span className="font-semibold text-ink">{camp.subject}</span> branşının sonuna, sırayla eklenir.
-        </>
+          <span className="font-semibold text-ink">{camp.subject}</span> {msg(" branşının sonuna, sırayla eklenir.\n        ")}</>
       }
       width={640}
       dismissOnBackdrop={false}
       footer={
         <>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
+            {msg("\n            Vazgeç\n          ")}</button>
           <button type="button" className="btn btn-primary" onClick={save}>
             <Plus aria-hidden="true" />
-            {drafts.length > 0 ? `${drafts.length} videoyu ekle` : 'Videoları ekle'}
+            {drafts.length > 0 ? `${drafts.length} videoyu ekle` : msg("Videoları ekle")}
           </button>
         </>
       }
@@ -151,9 +147,7 @@ export function AddVideosDialog({
       />
       {camp.playlistUrl && source && source.url !== camp.playlistUrl && (
         <p className="field-hint mt-3">
-          Videolar kendi bağlantılarıyla eklenir; branşın kaynak listesi değişmez. Bir listeyi kendi bağlantısıyla ayrı tutmak için
-          Kamplar’dan “Branş ekle”yi kullan.
-        </p>
+          {msg("\n          Videolar kendi bağlantılarıyla eklenir; branşın kaynak listesi değişmez. Bir listeyi kendi bağlantısıyla ayrı tutmak için\n          Kamplar’dan “Branş ekle”yi kullan.\n        ")}</p>
       )}
     </Dialog>
   );
@@ -220,9 +214,7 @@ export function EditVideoDialog({
       title: 'Video silinsin mi?',
       body: (
         <p>
-          <span className="font-semibold text-ink">{video.title}</span> branştan çıkarılır ve tamamlanma kaydı silinir. Sonraki
-          görevler yeniden dağıtılır.
-        </p>
+          <span className="font-semibold text-ink">{video.title}</span> {msg(" branştan çıkarılır ve tamamlanma kaydı silinir. Sonraki\n          görevler yeniden dağıtılır.\n        ")}</p>
       ),
       confirmLabel: 'Videoyu sil',
       tone: 'danger',
@@ -238,7 +230,7 @@ export function EditVideoDialog({
     <Dialog
       open
       onClose={onClose}
-      title="Videoyu düzenle"
+      title={msg("Videoyu düzenle")}
       description={`${camp.subject} · ${camp.title}`}
       width={540}
       dismissOnBackdrop={false}
@@ -246,22 +238,18 @@ export function EditVideoDialog({
         <>
           <button type="button" className="btn btn-danger-quiet mr-auto" onClick={remove}>
             <Trash2 aria-hidden="true" />
-            Sil
-          </button>
+            {msg("\n            Sil\n          ")}</button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
+            {msg("\n            Vazgeç\n          ")}</button>
           <button type="button" className="btn btn-primary" onClick={save}>
-            Kaydet
-          </button>
+            {msg("\n            Kaydet\n          ")}</button>
         </>
       }
     >
       <div className="space-y-4">
         <div>
           <label className="field-label" htmlFor="edit-video-title">
-            Başlık
-          </label>
+            {msg("\n            Başlık\n          ")}</label>
           <input
             id="edit-video-title"
             className="input"
@@ -279,13 +267,13 @@ export function EditVideoDialog({
         </div>
         <div>
           <label className="field-label" htmlFor="edit-video-url">
-            YouTube video bağlantısı <span className="font-normal text-ink-3">(isteğe bağlı)</span>
+            {msg("\n            YouTube video bağlantısı ")}<span className="font-normal text-ink-3">{msg("(isteğe bağlı)")}</span>
           </label>
           <input
             id="edit-video-url"
             className="input"
             inputMode="url"
-            placeholder="https://www.youtube.com/watch?v=…"
+            placeholder={msg("https://www.youtube.com/watch?v=…")}
             value={url}
             onChange={e => setUrl(e.target.value)}
             aria-invalid={show(urlError) ? true : undefined}
@@ -299,17 +287,16 @@ export function EditVideoDialog({
           ) : (
             <p id="edit-video-url-hint" className="field-hint">
               {kind === 'legacy-sample'
-                ? 'Bu görev eski örnek veriden geliyor; kayıtlı bağlantı gerçek değil.'
+                ? msg("Bu görev eski örnek veriden geliyor; kayıtlı bağlantı gerçek değil.")
                 : kind === 'legacy-generated'
-                  ? 'Bu görev otomatik uydurulmuştu; gerçek videonun bağlantısını ve süresini girebilirsin.'
-                  : 'Videonun kendi bağlantısı (oynatma listesi değil).'}
+                  ? msg("Bu görev otomatik uydurulmuştu; gerçek videonun bağlantısını ve süresini girebilirsin.")
+                  : msg("Videonun kendi bağlantısı (oynatma listesi değil).")}
             </p>
           )}
         </div>
         <div className="max-w-[12rem]">
           <label className="field-label" htmlFor="edit-video-duration">
-            Süre
-          </label>
+            {msg("\n            Süre\n          ")}</label>
           <input
             id="edit-video-duration"
             className="input tnum"
@@ -324,8 +311,7 @@ export function EditVideoDialog({
             </p>
           ) : (
             <p id="edit-video-duration-hint" className="field-hint">
-              Dakika ya da dk:sn
-            </p>
+              {msg("\n              Dakika ya da dk:sn\n            ")}</p>
           )}
         </div>
       </div>

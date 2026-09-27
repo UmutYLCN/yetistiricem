@@ -3,12 +3,14 @@ import type { FormEvent } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import type { ApiResult, PasswordSignUpResult, Providers } from '../../lib/catalogApi';
 import { signInProviders } from '../../lib/catalogApi';
+import { msg } from '../../lib/messages';
+
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** The Google "G" (its brand colours live in the file, not in the theme). */
 function GoogleMark() {
-  return <img src="/google-g.svg" alt="" className="size-4" />;
+  return <img src="/google-g.svg" alt={msg("")} className="size-4" />;
 }
 
 interface Props {
@@ -54,15 +56,15 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
     setError(null);
     setNotice(null);
     if (!EMAIL_RE.test(email.trim())) {
-      setError('Geçerli bir e-posta adresi yaz.');
+      setError(msg('Geçerli bir e-posta adresi yaz.'));
       return;
     }
     if (!password) {
-      setError('Şifreni yaz.');
+      setError(msg('Şifreni yaz.'));
       return;
     }
     if (mode === 'sign-up' && password !== confirmation) {
-      setError('Şifreler eşleşmiyor.');
+      setError(msg('Şifreler eşleşmiyor.'));
       return;
     }
 
@@ -71,7 +73,7 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
       const result = await onSignIn(email, password);
       setBusy(false);
       if (!result.ok) setError(result.error);
-      else setNotice('Giriş başarılı. Planın açılıyor…');
+      else setNotice(msg('Giriş başarılı. Planın açılıyor…'));
       return;
     }
 
@@ -80,9 +82,9 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
     if (!result.ok) {
       setError(result.error);
     } else if (result.data.emailConfirmationRequired) {
-      setNotice('Hesap isteği alındı. E-posta onayı açıksa gelen kutunu kontrol et; e-posta alamıyorsan Supabase’te Confirm email ayarını geçici olarak kapat.');
+      setNotice(msg('Hesap isteği alındı. E-posta onayı açıksa gelen kutunu kontrol et; e-posta alamıyorsan Supabase’te Confirm email ayarını geçici olarak kapat.'));
     } else {
-      setNotice('Giriş başarılı. Planın açılıyor…');
+      setNotice(msg('Giriş başarılı. Planın açılıyor…'));
     }
   };
 
@@ -99,7 +101,7 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-1 rounded-[10px] bg-sunk p-1" aria-label="Hesap işlemi">
+      <div className="grid grid-cols-2 gap-1 rounded-[10px] bg-sunk p-1" aria-label={msg("Hesap işlemi")}>
         <button
           type="button"
           className={`rounded-[8px] px-3 py-2 text-[13.5px] font-medium transition-colors ${mode === 'sign-in' ? 'bg-card text-ink shadow-sm' : 'text-ink-3 hover:text-ink'}`}
@@ -107,8 +109,7 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
           disabled={busy}
           onClick={() => changeMode('sign-in')}
         >
-          Giriş yap
-        </button>
+          {msg("\n          Giriş yap\n        ")}</button>
         <button
           type="button"
           className={`rounded-[8px] px-3 py-2 text-[13.5px] font-medium transition-colors ${mode === 'sign-up' ? 'bg-card text-ink shadow-sm' : 'text-ink-3 hover:text-ink'}`}
@@ -116,28 +117,24 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
           disabled={busy}
           onClick={() => changeMode('sign-up')}
         >
-          Hesap oluştur
-        </button>
+          {msg("\n          Hesap oluştur\n        ")}</button>
       </div>
 
       {providers?.google && (
         <>
           <button type="button" className="btn btn-secondary w-full" onClick={() => void google()} disabled={busy}>
             <GoogleMark />
-            Google ile devam et
-          </button>
+            {msg("\n            Google ile devam et\n          ")}</button>
           <div className="flex items-center gap-3 text-[12px] text-ink-3" aria-hidden="true">
             <span className="h-px flex-1 bg-line" />
-            ya da e-posta ile
-            <span className="h-px flex-1 bg-line" />
+            {msg("\n            ya da e-posta ile\n            ")}<span className="h-px flex-1 bg-line" />
           </div>
         </>
       )}
 
       <form onSubmit={event => void submit(event)} noValidate>
         <label htmlFor={`${uid}-email`} className="field-label">
-          E-posta
-        </label>
+          {msg("\n          E-posta\n        ")}</label>
         <input
           id={`${uid}-email`}
           type="email"
@@ -152,8 +149,7 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
         />
 
         <label htmlFor={`${uid}-password`} className="field-label mt-4">
-          Şifre
-        </label>
+          {msg("\n          Şifre\n        ")}</label>
         <input
           id={`${uid}-password`}
           type="password"
@@ -169,8 +165,7 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
         {mode === 'sign-up' && (
           <>
             <label htmlFor={`${uid}-confirmation`} className="field-label mt-4">
-              Şifreyi tekrar yaz
-            </label>
+              {msg("\n              Şifreyi tekrar yaz\n            ")}</label>
             <input
               id={`${uid}-confirmation`}
               type="password"
@@ -197,7 +192,7 @@ export function SignInForm({ onSignIn, onSignUp, onGoogle }: Props) {
         )}
         <button type="submit" className="btn btn-primary mt-4 w-full" disabled={busy}>
           {busy && <LoaderCircle className="animate-spin" aria-hidden="true" />}
-          {mode === 'sign-in' ? 'E-posta ve şifreyle giriş yap' : 'Hesap oluştur'}
+          {mode === 'sign-in' ? msg("E-posta ve şifreyle giriş yap") : msg("Hesap oluştur")}
         </button>
       </form>
     </div>

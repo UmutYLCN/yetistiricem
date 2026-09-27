@@ -13,6 +13,8 @@ import { ProductPreview } from './ProductPreview';
 import { Goals } from './Goals';
 import { Testimonials } from './Testimonials';
 import './landing.css';
+import { msg } from '../../lib/messages';
+
 
 const SECTIONS = [
   { id: 'ozellikler', label: 'Özellikler' },
@@ -66,7 +68,7 @@ const FAQ = [
 
 /** The hero's account button opens the planner: straight in with a session, otherwise its sign-in page. */
 function accountLabel(signedIn: boolean): string {
-  return signedIn ? 'Dashboard’a git' : 'Giriş yap ve başla';
+  return msg(signedIn ? 'Dashboard’a git' : 'Giriş yap ve başla');
 }
 
 function SiteHeader() {
@@ -82,17 +84,17 @@ function SiteHeader() {
       }}
     >
       <div className="landing-header-inner">
-        <a href={LANDING_PATH} className="landing-brand" aria-label="Yetişir ana sayfası">
+        <a href={LANDING_PATH} className="landing-brand" aria-label={msg("Yetişir ana sayfası")}>
           <BrandMark size={27} />
           <Wordmark className="text-[21px]" />
         </a>
-        <nav aria-label="Sayfa bölümleri" className="landing-desktop-nav">
+        <nav aria-label={msg("Sayfa bölümleri")} className="landing-desktop-nav">
           {SECTIONS.map((section) => (
             <a key={section.id} href={`#${section.id}`}>
-              {section.label}
+              {msg(section.label)}
             </a>
           ))}
-          <a href={DOCS_PATH}>Belgeler</a>
+          <a href={DOCS_PATH}>{msg("Belgeler")}</a>
         </nav>
         <div className="landing-header-actions">
           <ThemeIconToggle />
@@ -100,7 +102,7 @@ function SiteHeader() {
             id="landing-menu-toggle"
             type="button"
             className="landing-icon-button landing-menu-toggle"
-            aria-label={menuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+            aria-label={menuOpen ? msg("Menüyü kapat") : msg("Menüyü aç")}
             aria-expanded={menuOpen}
             aria-controls="landing-mobile-nav"
             onClick={() => setMenuOpen((value) => !value)}
@@ -109,16 +111,15 @@ function SiteHeader() {
           </button>
         </div>
       </div>
-      <nav id="landing-mobile-nav" aria-label="Mobil sayfa bölümleri" className="landing-mobile-nav" hidden={!menuOpen}>
+      <nav id="landing-mobile-nav" aria-label={msg("Mobil sayfa bölümleri")} className="landing-mobile-nav" hidden={!menuOpen}>
         {SECTIONS.map((section) => (
           <a key={section.id} href={`#${section.id}`} onClick={() => setMenuOpen(false)}>
-            {section.label}
+            {msg(section.label)}
             <ArrowRight aria-hidden="true" />
           </a>
         ))}
         <a href={DOCS_PATH}>
-          Belgeler
-          <ArrowRight aria-hidden="true" />
+          {msg("\n          Belgeler\n          ")}<ArrowRight aria-hidden="true" />
         </a>
       </nav>
     </header>
@@ -132,19 +133,15 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
       <div className="hero-backdrop" aria-hidden="true" />
       <div className="relative mx-auto max-w-[1200px] px-4 pt-16 text-center sm:px-6 sm:pt-24">
         <a href="#yapay-zeka" className="announce">
-          <span className="announce-badge">Yeni</span>
-          <span className="min-w-0 truncate">Claude, ChatGPT ve Grok ile planla</span>
+          <span className="announce-badge">{msg("Yeni")}</span>
+          <span className="min-w-0 truncate">{msg("Claude, ChatGPT ve Grok ile planla")}</span>
           <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
         </a>
         <h1 id="hero-title" className="hero-title text-gradient mx-auto mt-7">
-          Panik yok,
-          <br />
-          yetişir.
-        </h1>
+          {msg("\n          Panik yok,\n          ")}<br />
+          {msg("\n          yetişir.\n        ")}</h1>
         <p className="mx-auto mt-6 max-w-[640px] text-[17px] leading-relaxed text-ink-2 sm:text-[19px]">
-          YouTube ders videolarını günlük ritmine göre dağıt; bugün ne izleyeceğini düşünme, hedefine tam vaktinde ulaş. Günlük süreni ve
-          izleme hızını gir, Yetişir ne zaman biteceğini gün gün hesaplasın.
-        </p>
+          {msg("\n          YouTube ders videolarını günlük ritmine göre dağıt; bugün ne izleyeceğini düşünme, hedefine tam vaktinde ulaş. Günlük süreni ve\n          izleme hızını gir, Yetişir ne zaman biteceğini gün gün hesaplasın.\n        ")}</p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={APP_PATH} className="btn btn-primary btn-lg group">
             {accountLabel(signedIn)}
@@ -152,14 +149,13 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
           </a>
           <a href={DEMO_APP_PATH} className="btn btn-secondary btn-lg">
             <Eye aria-hidden="true" />
-            Demo ile göz at
-          </a>
+            {msg("\n            Demo ile göz at\n          ")}</a>
         </div>
         <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] text-ink-3">
           {['Ücretsiz', 'E-posta ve şifre', 'Demo ile göz at'].map((point) => (
             <li key={point} className="flex items-center gap-1.5">
               <Check className="size-3.5 text-forest" strokeWidth={2.5} aria-hidden="true" />
-              {point}
+              {msg(point)}
             </li>
           ))}
         </ul>
@@ -182,23 +178,20 @@ function Faq() {
         <div className="reveal">
           <p className="section-eyebrow">
             <MessageCircleQuestion aria-hidden="true" />
-            SSS
-          </p>
+            {msg("\n            SSS\n          ")}</p>
           <h2 id="sss-baslik" className="section-title text-gradient mt-4">
-            Sık sorulanlar
-          </h2>
+            {msg("\n            Sık sorulanlar\n          ")}</h2>
           <p className="mt-5 max-w-[420px] text-[17px] leading-relaxed text-ink-2">
-            Başlamadan önce aklına takılanlar. Hesabın, planın ve çalışma ritmin hakkında kısa cevaplar.
-          </p>
+            {msg("\n            Başlamadan önce aklına takılanlar. Hesabın, planın ve çalışma ritmin hakkında kısa cevaplar.\n          ")}</p>
         </div>
         <div className="reveal border-t border-line">
           {FAQ.map((item) => (
             <details key={item.q} className="faq-item border-b border-line">
               <summary className="flex items-center justify-between gap-6 rounded-[8px] py-5 text-[16px] font-medium text-ink">
-                {item.q}
+                {msg(item.q)}
                 <Plus className="faq-icon size-4 shrink-0 text-ink-3 transition-transform duration-200" aria-hidden="true" />
               </summary>
-              <p className="-mt-1 pr-10 pb-6 text-[15px] leading-relaxed text-ink-2">{item.a}</p>
+              <p className="-mt-1 pr-10 pb-6 text-[15px] leading-relaxed text-ink-2">{msg(item.a)}</p>
             </details>
           ))}
         </div>
@@ -217,39 +210,35 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
             <Wordmark className="text-[15.5px]" />
           </div>
           <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">
-            Panik yok, yetişir. Ders videolarını günlük ritmine göre dağıtan çalışma planlayıcı.
-          </p>
+            {msg("\n            Panik yok, yetişir. Ders videolarını günlük ritmine göre dağıtan çalışma planlayıcı.\n          ")}</p>
         </div>
-        <nav aria-label="Alt menü">
+        <nav aria-label={msg("Alt menü")}>
           <ul className="flex flex-wrap gap-x-8 gap-y-3 text-[13.5px] text-ink-2">
             {SECTIONS.map((section) => (
               <li key={section.id}>
                 <a href={`#${section.id}`} className="transition-colors hover:text-ink">
-                  {section.label}
+                  {msg(section.label)}
                 </a>
               </li>
             ))}
             <li>
               <a href={DOCS_PATH} className="transition-colors hover:text-ink">
-                Belgeler
-              </a>
+                {msg("\n                Belgeler\n              ")}</a>
             </li>
             <li>
               <a href={DEMO_APP_PATH} className="transition-colors hover:text-ink">
-                Demo
-              </a>
+                {msg("\n                Demo\n              ")}</a>
             </li>
             <li>
               <a href={APP_PATH} className="transition-colors hover:text-ink">
-                {signedIn ? 'Dashboard' : 'Giriş yap'}
+                {signedIn ? msg("Dashboard") : msg("Giriş yap")}
               </a>
             </li>
           </ul>
         </nav>
       </div>
       <div className="mx-auto max-w-[1200px] border-t border-line/70 px-4 py-6 text-[12.5px] text-ink-3 sm:px-6">
-        © {new Date().getFullYear()} Yetişir · Bugünün adımını at, gerisi yetişir.
-      </div>
+        {msg("\n        © ")}{new Date().getFullYear()} {msg(" Yetişir · Bugünün adımını at, gerisi yetişir.\n      ")}</div>
     </footer>
   );
 }
@@ -265,8 +254,7 @@ export default function Landing() {
   return (
     <div className="landing overflow-x-clip">
       <a href="#icerik" className="skip-link">
-        İçeriğe geç
-      </a>
+        {msg("\n        İçeriğe geç\n      ")}</a>
       <SiteHeader />
       <main id="icerik" tabIndex={-1} className="outline-none">
         <Hero preview={preview} signedIn={signedIn} />

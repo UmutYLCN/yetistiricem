@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { Check, Flag, Link2, Play, Plus, Timer, Trophy } from 'lucide-react';
 import { SHORT_WEEKDAYS, WEEK_ORDER } from '../../lib/format';
 import { resolveColor } from '../../lib/subjects';
+import { msg } from '../../lib/messages';
+
 
 // Illustrations for the empty states: faint sketches of the screen a camp
 // will fill, drawn from the design tokens. They show no data and are hidden
@@ -72,8 +74,8 @@ export function WelcomeArt() {
       <Sheet className="top-[27%] right-0 w-[62%] p-4">
         <span className="absolute inset-x-8 -top-px h-px bg-linear-to-r from-transparent via-forest/70 to-transparent" />
         <div className="flex items-center justify-between">
-          <span className="text-[10.5px] font-semibold tracking-[0.08em] text-accent">BUGÜN</span>
-          <span className="tnum text-[11px] font-semibold text-ink-3">1/3</span>
+          <span className="text-[10.5px] font-semibold tracking-[0.08em] text-accent">{msg("BUGÜN")}</span>
+          <span className="tnum text-[11px] font-semibold text-ink-3">{msg("1/3")}</span>
         </div>
         <div className="mt-3 grid grid-cols-7 gap-1">
           {WEEKDAYS.map((day, i) => (
@@ -105,12 +107,10 @@ export function WelcomeArt() {
 
       {/* What the planner weighs in. */}
       <span className="chip absolute top-[22%] right-[5%] border border-line-strong bg-card shadow-[var(--shadow-card)]">
-        <Timer />3 sa / gün
-      </span>
+        <Timer />{msg("3 sa / gün\n      ")}</span>
       <span className="chip chip-forest absolute bottom-[1%] left-[46%] shadow-[var(--shadow-card)]">
         <Flag />
-        Tahmini bitiş
-      </span>
+        {msg("\n        Tahmini bitiş\n      ")}</span>
     </Stage>
   );
 }
@@ -163,8 +163,7 @@ export function PathArt() {
           {stop.state === 'done' ? <Check className="size-4" strokeWidth={3.25} /> : <Play className="size-4" fill={stop.state === 'next' ? 'currentColor' : 'none'} />}
           {stop.state === 'next' && (
             <span className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 rounded-[8px] bg-ink px-2 py-1 text-[10.5px] font-bold whitespace-nowrap text-on-fill">
-              Sıradaki
-            </span>
+              {msg("\n              Sıradaki\n            ")}</span>
           )}
         </span>
       ))}
@@ -262,7 +261,7 @@ export function BranchesArt() {
       <Sheet className="inset-x-[6%] top-[5%] flex items-center gap-2 py-2 pr-2 pl-3">
         <Link2 className="size-3.5 shrink-0 text-ink-3" />
         <Bar width={52} />
-        <span className="ml-auto rounded-[7px] bg-ink px-2 py-1 text-[10px] font-semibold text-on-fill">Listeyi getir</span>
+        <span className="ml-auto rounded-[7px] bg-ink px-2 py-1 text-[10px] font-semibold text-on-fill">{msg("Listeyi getir")}</span>
       </Sheet>
       <Sheet className="inset-x-[6%] top-[33%] overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2.5">

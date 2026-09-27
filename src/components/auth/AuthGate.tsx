@@ -8,6 +8,8 @@ import { todayKey } from '../../lib/engine';
 import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
 import { SignInForm } from './SignInForm';
+import { msg } from '../../lib/messages';
+
 
 /** The planner's sign-in page. */
 function SignInScreen({ account }: { account: Account }) {
@@ -18,19 +20,19 @@ function SignInScreen({ account }: { account: Account }) {
     <div className="signin-page">
       <div className="signin-backdrop" aria-hidden="true" />
       <main id="main" className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col justify-center px-4 py-12">
-        <a href={LANDING_PATH} className="mx-auto flex items-center gap-2.5 rounded-[10px]" aria-label="Yetişir ana sayfası">
+        <a href={LANDING_PATH} className="mx-auto flex items-center gap-2.5 rounded-[10px]" aria-label={msg("Yetişir ana sayfası")}>
           <BrandMark size={34} />
           <Wordmark className="text-[18px]" />
         </a>
-        <h1 className="font-display mt-8 text-center text-[28px] leading-tight text-ink">Planına giriş yap</h1>
-        <p className="mt-2 text-center text-[14.5px] text-ink-2">Kampların, bugünün görevleri ve ilerlemen seni bekliyor.</p>
+        <h1 className="font-display mt-8 text-center text-[28px] leading-tight text-ink">{msg("Planına giriş yap")}</h1>
+        <p className="mt-2 text-center text-[14.5px] text-ink-2">{msg("Kampların, bugünün görevleri ve ilerlemen seni bekliyor.")}</p>
         {account.callbackError && (
           <p className="callout callout-warn mt-6 text-[13.5px] text-ink-2" role="alert">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
             <span>{account.callbackError}</span>
           </p>
         )}
-        <section className="card mt-7 p-5 sm:p-6" aria-label="Giriş">
+        <section className="card mt-7 p-5 sm:p-6" aria-label={msg("Giriş")}>
           <SignInForm
             onSignIn={(email, password) => account.signInWithPassword(email, password)}
             onSignUp={(email, password) => account.signUpWithPassword(email, password, draftReturnUrl)}
@@ -38,17 +40,14 @@ function SignInScreen({ account }: { account: Account }) {
           />
         </section>
         <p className="mt-5 text-center text-[12.5px] leading-relaxed text-ink-3">
-          Kampların ve ilerlemen hesabına kaydedilir; hangi cihazdan girersen gir planın seninle.
-        </p>
+          {msg("\n          Kampların ve ilerlemen hesabına kaydedilir; hangi cihazdan girersen gir planın seninle.\n        ")}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <a href={LANDING_PATH} className="btn btn-ghost btn-sm">
             <ArrowLeft aria-hidden="true" />
-            Ana sayfa
-          </a>
+            {msg("\n            Ana sayfa\n          ")}</a>
           <a href={DEMO_APP_PATH} className="btn btn-ghost btn-sm">
             <Eye aria-hidden="true" />
-            Önce demoya göz at
-          </a>
+            {msg("\n            Önce demoya göz at\n          ")}</a>
         </div>
       </main>
     </div>
@@ -138,23 +137,21 @@ export function AuthGate({ startInDemo, children }: {
 
   if (shown) return <>{children(account, ownerChanged ? null : userId)}</>;
   if (state.status === 'off') {
-    return <GateMessage title="Giriş bu sunucuda kurulmamış" body="Uygulamanın Supabase bağlantısı tanımlı değil (kurulum: docs/kesfet.md)." />;
+    return <GateMessage title={msg("Giriş bu sunucuda kurulmamış")} body="Uygulamanın Supabase bağlantısı tanımlı değil (kurulum: docs/kesfet.md)." />;
   }
   if (state.status === 'signed-out') return <SignInScreen account={account} />;
   if (hydration?.status === 'error' && hydration.userId === userId) {
     return (
       <GateMessage
-        title="Planın açılamadı"
+        title={msg("Planın açılamadı")}
         body={hydration.message}
         action={
           <>
             <button type="button" className="btn btn-primary" onClick={() => setAttempt(n => n + 1)}>
               <RefreshCw aria-hidden="true" />
-              Tekrar dene
-            </button>
+              {msg("\n              Tekrar dene\n            ")}</button>
             <button type="button" className="btn btn-ghost" onClick={() => void account.signOut()}>
-              Çıkış yap
-            </button>
+              {msg("\n              Çıkış yap\n            ")}</button>
           </>
         }
       />

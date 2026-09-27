@@ -63,7 +63,8 @@ test('the profile reads as short facts and a one-line summary', () => {
   const student = profile({ stage: 'university', school: 'ODTÜ', department: 'Bilgisayar Mühendisliği', grade: '3' });
   assert.deepEqual(profileFacts(student).map(f => f.text), ['ODTÜ', 'Bilgisayar Mühendisliği', '3. sınıf']);
   assert.equal(profileSummary(student), 'ODTÜ · Bilgisayar Mühendisliği');
-  assert.deepEqual(profileFacts(profile({ stage: 'high-school', grade: '12', department: 'Tıp' })).map(f => f.text), ['12. sınıf', 'Hedef: Tıp']);
+  assert.deepEqual(profileFacts(profile({ stage: 'high-school', grade: '12', department: 'Tıp' })).map(f => f.text), ['12. sınıf', 'Tıp']);
+  assert.deepEqual(profileFacts(profile({ stage: 'exam-prep', department: 'Doktorluk', school: 'Medipol' })).map(f => f.text), ['Doktorluk', 'Medipol']);
   assert.equal(profileSummary(profile({ stage: 'working' })), 'Çalışıyor');
   assert.equal(profileSummary(EMPTY_PROFILE), null);
 });
@@ -81,7 +82,7 @@ test('the bio is optional, trimmed, keeps its line breaks and stays within the l
 test('an author’s public profile is read defensively and summed up in one line', () => {
   const author = readPublicAuthor({ display_name: '  Sude   Y. ', avatar: 'shape-5', stage: 'exam-prep', department: 'Tıp', profession: 'Pilot', bio: '  Merhaba ' });
   assert.deepEqual(author, { name: 'Sude Y.', avatar: 'shape-5', stage: 'exam-prep', department: 'Tıp', profession: null, bio: 'Merhaba' });
-  assert.equal(authorHeadline(author), 'Sınava hazırlanıyor · Hedef: Tıp');
+  assert.equal(authorHeadline(author), 'Sınava hazırlanıyor · Tıp');
   assert.deepEqual(readPublicAuthor({ display_name: 42, avatar: 'javascript:alert(1)', stage: 'robot' }), {
     name: 'Bir öğrenci',
     avatar: null,

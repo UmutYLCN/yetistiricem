@@ -5,6 +5,8 @@ import { addDays, assessDeadline, buildCampSchedule, dailyHoursForDeadline, dayO
 import { LONG_WEEKDAYS, SHORT_WEEKDAYS, formatHours, formatLongDate, formatMinutes, formatShortDate, formatWeekRange, startOfWeek } from '../../lib/format';
 import { resolveColor } from '../../lib/subjects';
 import { Meter } from '../ui/Bits';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   camp: Pick<StudyCamp, 'branches' | 'schedule' | 'shiftEvents'>;
@@ -44,7 +46,7 @@ export function PlanPreview({ camp, today, onUseHours, onEditRhythm }: Props) {
   for (const plan of plans) for (const item of plan.items) branchFinish.set(item.playlistId, plan.date);
 
   if (plans.length === 0 && unscheduledItems.length === 0) {
-    return <p className="rounded-[12px] border border-dashed border-line-strong px-4 py-8 text-center text-ink-2">Planlanacak video yok.</p>;
+    return <p className="rounded-[12px] border border-dashed border-line-strong px-4 py-8 text-center text-ink-2">{msg("Planlanacak video yok.")}</p>;
   }
 
   return (
@@ -70,16 +72,13 @@ export function PlanPreview({ camp, today, onUseHours, onEditRhythm }: Props) {
         <div className="callout callout-warn">
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
           <p className="text-[13.5px] text-ink-2">
-            <span className="font-semibold text-ink">{oversized.length} video günlük süreden uzun.</span> Her biri tek başına bir
-            güne yerleşti; o günler {formatMinutes(capacityMinutes)} sınırını aşar.
-          </p>
+            <span className="font-semibold text-ink">{oversized.length} {msg(" video günlük süreden uzun.")}</span> {msg(" Her biri tek başına bir\n            güne yerleşti; o günler ")}{formatMinutes(capacityMinutes)} {msg(" sınırını aşar.\n          ")}</p>
         </div>
       )}
 
       <section aria-labelledby="preview-branches">
         <h3 id="preview-branches" className="mb-2 text-[12.5px] font-semibold tracking-wide text-ink-3 uppercase">
-          Branşlar
-        </h3>
+          {msg("\n          Branşlar\n        ")}</h3>
         <ul className="flex flex-wrap gap-2">
           {camp.branches.map(branch => {
             const color = resolveColor(branch.colorTag, branch.subject);
@@ -89,7 +88,7 @@ export function PlanPreview({ camp, today, onUseHours, onEditRhythm }: Props) {
                 <span className="size-2.5 rounded-full" style={{ background: color.solid }} aria-hidden="true" />
                 <span className="font-semibold text-ink">{branch.subject}</span>
                 <span className="tnum text-ink-3">
-                  {branch.videos.length} video · {end ? `bitiş ${formatShortDate(end)}` : 'plana girmedi'}
+                  {branch.videos.length} {msg(" video · ")}{end ? `bitiş ${formatShortDate(end)}` : msg("plana girmedi")}
                 </span>
               </li>
             );
@@ -136,13 +135,12 @@ export function PreviewWeeks({
   return (
     <section aria-labelledby="preview-days" className="space-y-5">
       <h3 id="preview-days" className="sr-only">
-        Günlük plan
-      </h3>
+        {msg("\n        Günlük plan\n      ")}</h3>
       {weeks.slice(0, weeksShown).map(([monday, days], weekIndex) => (
         <div key={monday}>
           <div className="mb-2 flex items-baseline justify-between gap-3">
             <p className="text-[14px] font-semibold text-ink">
-              {weekTitle(monday, weekIndex)} <span className="font-normal text-ink-3">· {formatWeekRange(monday)}</span>
+              {weekTitle(monday, weekIndex)} <span className="font-normal text-ink-3">{msg("· ")}{formatWeekRange(monday)}</span>
             </p>
             <p className="tnum text-[12.5px] text-ink-3">{formatMinutes(days.reduce((acc, d) => acc + d.totalMinutes, 0))}</p>
           </div>
@@ -156,8 +154,7 @@ export function PreviewWeeks({
       {weeks.length > weeksShown && (
         <button type="button" className="btn btn-secondary w-full" onClick={() => setWeeksShown(n => n + WEEKS_STEP)}>
           <ChevronDown aria-hidden="true" />
-          Sonraki {Math.min(WEEKS_STEP, weeks.length - weeksShown)} haftayı göster
-          <span className="font-normal text-ink-3">({weeks.length - weeksShown} hafta daha)</span>
+          {msg("\n          Sonraki ")}{Math.min(WEEKS_STEP, weeks.length - weeksShown)} {msg(" haftayı göster\n          ")}<span className="font-normal text-ink-3">{msg("(")}{weeks.length - weeksShown} {msg(" hafta daha)")}</span>
         </button>
       )}
     </section>
@@ -197,14 +194,14 @@ function PreviewDay({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[13.5px] font-semibold text-ink">
-            {LONG_WEEKDAYS[dow]} <span className="font-normal text-ink-3">· {formatShortDate(day.date)}</span>
+            {LONG_WEEKDAYS[dow]} <span className="font-normal text-ink-3">{msg("· ")}{formatShortDate(day.date)}</span>
           </p>
           <div className="mt-1.5 flex items-center gap-2">
             <div className="flex-1">
               <Meter value={Math.min(day.totalMinutes, capacity)} max={capacity} label={`${LONG_WEEKDAYS[dow]} doluluğu`} />
             </div>
             <p className="tnum shrink-0 text-[12px] text-ink-2">
-              <span className="font-semibold text-ink">{formatMinutes(day.totalMinutes)}</span> / {formatMinutes(capacity)}
+              <span className="font-semibold text-ink">{formatMinutes(day.totalMinutes)}</span> {msg(" / ")}{formatMinutes(capacity)}
             </p>
           </div>
         </div>
@@ -219,7 +216,7 @@ function PreviewDay({
               <span className="min-w-0 flex-1">
                 <span className="block text-[11.5px] font-bold" style={{ color }}>
                   {item.subject}
-                  {added && <span className="chip chip-forest ml-1.5 h-[18px] px-1.5 align-[1px] text-[10.5px]">Yeni</span>}
+                  {added && <span className="chip chip-forest ml-1.5 h-[18px] px-1.5 align-[1px] text-[10.5px]">{msg("Yeni")}</span>}
                 </span>
                 <span className="line-clamp-2 text-[13px] leading-snug text-ink">{item.title}</span>
               </span>
@@ -247,8 +244,7 @@ export function DeadlineSignal({
     return (
       <p className="flex items-center gap-2 text-[13px] text-ink-3">
         <CalendarClock className="size-4 shrink-0" aria-hidden="true" />
-        Hedef bitiş tarihi seçmedin; plan tüm videoları bitirene kadar sürer.
-      </p>
+        {msg("\n        Hedef bitiş tarihi seçmedin; plan tüm videoları bitirene kadar sürer.\n      ")}</p>
     );
   }
   if (deadline.kind === 'on-track') {
@@ -256,8 +252,7 @@ export function DeadlineSignal({
       <div className="callout callout-info" role="status">
         <CircleCheck className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
         <p className="text-[13.5px] text-ink-2">
-          <span className="font-semibold text-ink">Panik yok, yetişir.</span> Plan {formatLongDate(deadline.finishDate)} tarihinde bitiyor
-          {deadline.spareDays > 0 ? `; hedef tarihten ${deadline.spareDays} gün önce.` : '; tam hedef gününde.'}
+          <span className="font-semibold text-ink">{msg("Panik yok, yetişir.")}</span> {msg(" Plan ")}{formatLongDate(deadline.finishDate)} {msg(" tarihinde bitiyor\n          ")}{deadline.spareDays > 0 ? `; hedef tarihten ${deadline.spareDays} gün önce.` : msg("; tam hedef gününde.")}
         </p>
       </div>
     );
@@ -267,9 +262,7 @@ export function DeadlineSignal({
       <div className="callout callout-accent" role="alert">
         <TriangleAlert className="mt-0.5 size-4 shrink-0 text-accent-strong" aria-hidden="true" />
         <p className="text-[13.5px] text-ink-2">
-          <span className="font-semibold text-ink">{deadline.unscheduledCount} video hiçbir güne yerleşmedi.</span> Branşlarını günlere
-          yerleştirmeden hedef tarihe yetişme hesaplanamaz.
-        </p>
+          <span className="font-semibold text-ink">{deadline.unscheduledCount} {msg(" video hiçbir güne yerleşmedi.")}</span> {msg(" Branşlarını günlere\n          yerleştirmeden hedef tarihe yetişme hesaplanamaz.\n        ")}</p>
       </div>
     );
   }
@@ -278,26 +271,22 @@ export function DeadlineSignal({
       <TriangleAlert className="mt-0.5 size-4 shrink-0 text-accent-strong" aria-hidden="true" />
       <div className="min-w-[14rem] flex-1 text-[13.5px] text-ink-2">
         <p>
-          <span className="font-semibold text-ink">Hedefin {deadline.lateDays} gün gerisinde.</span> Plan{' '}
-          {formatLongDate(deadline.finishDate)} tarihinde bitiyor; hedefin {formatLongDate(deadline.targetEndDate)}. Hiçbir video
-          atlanmaz ve günler taşırılmaz.
-        </p>
+          <span className="font-semibold text-ink">{msg("Hedefin ")}{deadline.lateDays} {msg(" gün gerisinde.")}</span> {msg(" Plan")}{msg(" ")}
+          {formatLongDate(deadline.finishDate)} {msg(" tarihinde bitiyor; hedefin ")}{formatLongDate(deadline.targetEndDate)}{msg(". Hiçbir video\n          atlanmaz ve günler taşırılmaz.\n        ")}</p>
         <p className="mt-1">
           {suggestion !== null
             ? `Günlük çalışma süresini ${formatMinutes(suggestion * 60)} yaparsan hedefe yetişir.`
-            : 'Günlük süreyi artırmak tek başına yetmiyor; daha çok ders günü ekle ya da hedef tarihi ertele.'}
+            : msg("Günlük süreyi artırmak tek başına yetmiyor; daha çok ders günü ekle ya da hedef tarihi ertele.")}
         </p>
         <div className="mt-2.5 flex flex-wrap gap-2">
           {suggestion !== null && onUseHours && (
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => onUseHours(suggestion)}>
-              Günlük süreyi {formatMinutes(suggestion * 60)} yap
-            </button>
+              {msg("\n              Günlük süreyi ")}{formatMinutes(suggestion * 60)} {msg(" yap\n            ")}</button>
           )}
           {onEditRhythm && (
             <button type="button" className="btn btn-ghost btn-sm" onClick={onEditRhythm}>
               <Pencil aria-hidden="true" />
-              Ritmi düzenle
-            </button>
+              {msg("\n              Ritmi düzenle\n            ")}</button>
           )}
         </div>
       </div>

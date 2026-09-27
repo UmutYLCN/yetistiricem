@@ -17,6 +17,18 @@
         try {
           var v = localStorage.getItem('yt_theme');
           if (v === 'light' || v === 'dark') document.documentElement.dataset.theme = v;
+          var supported = ['tr', 'en', 'es', 'fr'];
+          var language = localStorage.getItem('yt_language');
+          if (supported.indexOf(language) < 0) {
+            var candidates = navigator.languages || [navigator.language];
+            language = 'tr';
+            for (var i = 0; i < candidates.length; i += 1) {
+              var base = candidates[i].toLowerCase().split('-')[0];
+              if (supported.indexOf(base) >= 0) { language = base; break; }
+            }
+          }
+          document.documentElement.lang = language;
+          document.documentElement.dir = 'ltr';
         } catch (e) {}
       })();
     </script>

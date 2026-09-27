@@ -1,14 +1,16 @@
 import { Forward } from 'lucide-react';
 import type { PostponeAnalysis } from '../../lib/insights';
-import { formatPercent, formatPercentShare } from '../../lib/format';
+import { dateLocale, formatPercent, formatPercentShare } from '../../lib/format';
 import type { CampInfo } from '../../lib/planView';
 import { REASON_COPY, UNSPECIFIED_LABEL } from '../../lib/postpone';
 import { SubjectDot } from '../ui/Bits';
 import { REASON_ICONS } from '../camps/reasonIcons';
+import { msg, translateTemplate } from '../../lib/messages';
+
 
 /** "2,1" or "3" */
 function formatRatio(ratio: number): string {
-  return ratio.toLocaleString('tr-TR', { maximumFractionDigits: 1 });
+  return ratio.toLocaleString(dateLocale(), { maximumFractionDigits: 1 });
 }
 
 /** Why and where the student postpones: reason shares per shift, and the branch that is put off most. */
@@ -18,19 +20,21 @@ export function PostponeInsights({ analysis, camps }: { analysis: PostponeAnalys
   let branchLine: string | null = null;
   if (standout) {
     branchLine = Number.isFinite(standout.ratio)
-      ? `${standout.subject}, diğer branşlara göre ${formatRatio(standout.ratio)} kat daha sık erteleniyor.`
-      : `Ertelenen görevlerin hepsi ${standout.subject} branşından.`;
+      ? translateTemplate('{subject}, diğer branşlara göre {ratio} kat daha sık erteleniyor.', {
+          subject: standout.subject,
+          ratio: formatRatio(standout.ratio),
+        })
+      : translateTemplate('Ertelenen görevlerin hepsi {subject} branşından.', { subject: standout.subject });
   } else if (branches.length >= 2) {
-    branchLine = 'Ertelemeler branşlar arasında dengeli dağılıyor.';
+    branchLine = msg('Ertelemeler branşlar arasında dengeli dağılıyor.');
   }
 
   return (
     <section className="card flex min-w-0 flex-col p-5" aria-labelledby="progress-postpones">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="progress-postpones" className="text-[15px] font-semibold text-ink">
-          Erteleme analizi
-        </h2>
-        {events > 0 && <span className="chip tnum">{events} erteleme</span>}
+          {msg("\n          Erteleme analizi\n        ")}</h2>
+        {events > 0 && <span className="chip tnum">{translateTemplate('{count} erteleme', { count: events })}</span>}
       </div>
 
       {events === 0 ? (
@@ -38,21 +42,22 @@ export function PostponeInsights({ analysis, camps }: { analysis: PostponeAnalys
           <span className="grid size-11 place-items-center rounded-[13px] bg-sunk text-ink-3" aria-hidden="true">
             <Forward className="size-5" />
           </span>
-          <p className="mt-3 font-semibold text-ink">Henüz erteleme yok.</p>
+          <p className="mt-3 font-semibold text-ink">{msg("Henüz erteleme yok.")}</p>
           <p className="mt-1 max-w-[18rem] text-[13px] text-ink-2">
-            Ritmini güncellerken nedenini seçersen, seni en çok neyin zorladığını burada görürsün.
-          </p>
+            {msg("\n            Ritmini güncellerken nedenini seçersen, seni en çok neyin zorladığını burada görürsün.\n          ")}</p>
         </div>
       ) : (
         <>
           <p className="mt-2 text-[14.5px] leading-snug text-ink">
             {topReason ? (
               <>
-                Ertelemelerinin <span className="tnum font-semibold text-accent-strong">{formatPercentShare(topReason.percent)}</span>{' '}
-                {REASON_COPY[topReason.reason].phrase} kaynaklı.
+                {translateTemplate('Ertelemelerinin {share} {reason} kaynaklı.', {
+                  share: formatPercentShare(topReason.percent),
+                  reason: msg(REASON_COPY[topReason.reason].phrase),
+                })}
               </>
             ) : (
-              'Ertelemelerinde neden belirtilmemiş. Bir sonraki taşımada nedenini seçersen dağılımı burada görürsün.'
+              msg('Ertelemelerinde neden belirtilmemiş. Bir sonraki taşımada nedenini seçersen dağılımı burada görürsün.')
             )}
           </p>
 
@@ -60,7 +65,7 @@ export function PostponeInsights({ analysis, camps }: { analysis: PostponeAnalys
             {reasons.map(share => {
               const Icon = REASON_ICONS[share.reason];
               const top = share === topReason;
-              const label = share.reason === 'unspecified' ? UNSPECIFIED_LABEL : REASON_COPY[share.reason].label;
+              const label = msg(share.reason === 'unspecified' ? UNSPECIFIED_LABEL : REASON_COPY[share.reason].label);
               return (
                 <li key={share.reason}>
                   <div className="flex items-center gap-2 text-[13px]">
@@ -82,7 +87,7 @@ export function PostponeInsights({ analysis, camps }: { analysis: PostponeAnalys
 
           {branches.length > 0 && (
             <div className="mt-5 border-t border-line pt-4">
-              <h3 className="eyebrow">Branşlara göre</h3>
+              <h3 className="eyebrow">{msg("Branşlara göre")}</h3>
               {branchLine && <p className="mt-1.5 text-[13.5px] text-ink">{branchLine}</p>}
               <ul className="mt-2.5 space-y-1.5">
                 {branches.slice(0, 4).map(branch => (
@@ -90,8 +95,7 @@ export function PostponeInsights({ analysis, camps }: { analysis: PostponeAnalys
                     <SubjectDot color={camps.get(branch.playlistId)?.color.solid ?? 'var(--color-ink-3)'} />
                     <span className="min-w-0 flex-1 truncate text-ink-2">{branch.subject}</span>
                     <span className="tnum shrink-0 text-ink-3">
-                      <span className="font-semibold text-ink">{branch.count}</span> kez
-                    </span>
+                      <span className="font-semibold text-ink">{branch.count}</span> {msg(" kez\n                    ")}</span>
                   </li>
                 ))}
               </ul>

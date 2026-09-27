@@ -11,6 +11,8 @@ import { PLAYER_STATE, loadYouTubeApi, playerErrorMessage } from '../../lib/yout
 import { SubjectDot } from '../ui/Bits';
 import { Dialog } from '../ui/Dialog';
 import { FocusCompletion } from './FocusCompletion';
+import { msg } from '../../lib/messages';
+
 
 /** The task playing in focus mode. */
 export interface FocusTarget {
@@ -203,7 +205,7 @@ function FocusPlayer({ videoId, taskVideoId, videoUrl, speed, today, done, doneO
         {view.status === 'loading' && (
           <div className="focus-cover">
             <LoaderCircle className="size-7 animate-spin text-ink-3" aria-hidden="true" />
-            <p className="mt-3 text-[14px] text-ink-2">Oynatıcı hazırlanıyor…</p>
+            <p className="mt-3 text-[14px] text-ink-2">{msg("Oynatıcı hazırlanıyor…")}</p>
           </div>
         )}
 
@@ -215,19 +217,17 @@ function FocusPlayer({ videoId, taskVideoId, videoUrl, speed, today, done, doneO
             <p className="mt-4 text-[17px] font-semibold text-ink">{failure.title}</p>
             <p className="mt-1.5 max-w-[26rem] text-[14px] text-ink-2">{failure.body}</p>
             <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-5">
-              YouTube’da aç
-              <ExternalLink aria-hidden="true" />
+              {msg("\n              YouTube’da aç\n              ")}<ExternalLink aria-hidden="true" />
             </a>
           </div>
         )}
 
         {paused && (
           // Keep the paused frame readable; the transparent button catches clicks on YouTube's overlays.
-          <button type="button" className="focus-cover-paused" onClick={() => playerRef.current?.playVideo()} aria-label="Videoyu sürdür">
+          <button type="button" className="focus-cover-paused" onClick={() => playerRef.current?.playVideo()} aria-label={msg("Videoyu sürdür")}>
             <span className="focus-resume">
               <Play fill="currentColor" aria-hidden="true" />
-              Duraklatıldı · devam et
-            </span>
+              {msg("\n              Duraklatıldı · devam et\n            ")}</span>
           </button>
         )}
 
@@ -243,19 +243,19 @@ function FocusPlayer({ videoId, taskVideoId, videoUrl, speed, today, done, doneO
         {!failure && (
           <dl className="focus-meta tnum">
             <div>
-              <dt>Video</dt>
-              <dd>{formatClock(view.current)} <span className="text-ink-3">/ {view.duration > 0 ? formatClock(view.duration) : '—'}</span></dd>
+              <dt>{msg("Video")}</dt>
+              <dd>{formatClock(view.current)} <span className="text-ink-3">{msg("/ ")}{view.duration > 0 ? formatClock(view.duration) : msg("—")}</span></dd>
             </div>
-            <div><dt>Odak</dt><dd>{formatClock(view.watched)}</dd></div>
-            <div><dt>Hız</dt><dd>{formatSpeed(view.rate)}</dd></div>
-            <div><dt>Duraklatma</dt><dd>{view.pauses}</dd></div>
+            <div><dt>{msg("Odak")}</dt><dd>{formatClock(view.watched)}</dd></div>
+            <div><dt>{msg("Hız")}</dt><dd>{formatSpeed(view.rate)}</dd></div>
+            <div><dt>{msg("Duraklatma")}</dt><dd>{view.pauses}</dd></div>
           </dl>
         )}
         <div className="focus-actions">{actions}</div>
       </div>
       {pastSeconds >= 60 && (
         <p className="focus-past text-ink-3">
-          Önceki odak: {formatMinutes(pastSeconds / 60)}
+          {msg("\n          Önceki odak: ")}{formatMinutes(pastSeconds / 60)}
         </p>
       )}
     </div>
@@ -308,29 +308,24 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
     done ? (
       next ? (
         <button ref={nextRef} type="button" className="btn btn-primary focus-next" onClick={onNext}>
-          Harika iş! Sıradaki göreve geç
-          <ArrowRight aria-hidden="true" />
+          {msg("\n          Harika iş! Sıradaki göreve geç\n          ")}<ArrowRight aria-hidden="true" />
         </button>
       ) : (
         <button ref={nextRef} type="button" className="btn btn-primary" onClick={onClose}>
-          Kapat
-        </button>
+          {msg("\n          Kapat\n        ")}</button>
       )
     ) : alreadyDone ? (
       <>
         <p className="flex items-center gap-1.5 text-[14px] font-semibold text-forest">
           <CircleCheck className="size-4" aria-hidden="true" />
-          Tamamlandı
-        </p>
+          {msg("\n          Tamamlandı\n        ")}</p>
         <button type="button" className="btn btn-secondary" onClick={onClose}>
-          Kapat
-        </button>
+          {msg("\n          Kapat\n        ")}</button>
       </>
     ) : (
       <button type="button" className="btn btn-secondary" onClick={finish}>
         <Check strokeWidth={2.75} aria-hidden="true" />
-        İzledim
-      </button>
+        {msg("\n        İzledim\n      ")}</button>
     )
   );
 
@@ -339,12 +334,12 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
       open={target !== null}
       onClose={onClose}
       placement="full"
-      title={item?.title ?? ''}
+      title={item?.title ?? msg("")}
       eyebrow={
         item && (
           <span className="flex min-w-0 items-center gap-1.5">
-            <span className="text-accent-strong">Yetişir Focus</span>
-            <span aria-hidden="true">·</span>
+            <span className="text-accent-strong">{msg("Yetişir Focus")}</span>
+            <span aria-hidden="true">{msg("·")}</span>
             <SubjectDot color={color} />
             <span className="truncate" style={{ color }}>
               {target?.campName ? `${target.campName} · ${item.subject}` : item.subject}
@@ -353,7 +348,7 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
         )
       }
       headerActions={item && (
-        <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" className="icon-btn -mt-1" aria-label="YouTube’da aç" title="YouTube’da aç">
+        <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" className="icon-btn -mt-1" aria-label={msg("YouTube’da aç")} title={msg("YouTube’da aç")}>
           <ExternalLink aria-hidden="true" />
         </a>
       )}

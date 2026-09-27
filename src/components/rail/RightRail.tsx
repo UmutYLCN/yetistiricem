@@ -13,6 +13,8 @@ import {
 } from '../../lib/format';
 import type { DaySummary } from '../../lib/planView';
 import { Meter } from '../ui/Bits';
+import { msg, translateTemplate } from '../../lib/messages';
+
 
 export function ProgressCard({
   stats,
@@ -34,33 +36,32 @@ export function ProgressCard({
   return (
     <section className="card p-5" aria-labelledby="rail-progress">
       <h2 id="rail-progress" className="eyebrow">
-        {campGoals ? 'Tüm kampların ilerlemesi' : 'Genel ilerleme'}
+        {campGoals ? msg("Tüm kampların ilerlemesi") : msg("Genel ilerleme")}
       </h2>
       <div className="mt-2 flex items-end justify-between gap-3">
         <p className="font-display tnum text-[40px] leading-none text-ink">{formatPercent(stats.progressPercent)}</p>
         <p className="tnum pb-1 text-[13px] text-ink-2">
-          <span className="font-semibold text-ink">{stats.completedVideos}</span> / {stats.totalVideos} video
-        </p>
+          <span className="font-semibold text-ink">{stats.completedVideos}</span> {msg(" / ")}{stats.totalVideos} {msg(" video\n        ")}</p>
       </div>
       <div className="mt-3">
         <Meter value={stats.completedVideos} max={stats.totalVideos} label="Tamamlanan videolar" />
       </div>
       <dl className="mt-4 space-y-2.5 text-[13.5px]">
         <div className="flex justify-between gap-3">
-          <dt className="text-ink-2">Kalan çalışma</dt>
-          <dd className="tnum font-semibold text-ink">{finished ? '—' : formatHours(stats.totalMinutes)}</dd>
+          <dt className="text-ink-2">{msg("Kalan çalışma")}</dt>
+          <dd className="tnum font-semibold text-ink">{finished ? msg("—") : formatHours(stats.totalMinutes)}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-ink-2">Tahmini bitiş</dt>
+          <dt className="text-ink-2">{msg("Tahmini bitiş")}</dt>
           <dd className="tnum text-right font-semibold text-ink">
             {finished ? (
               'Tamamlandı'
             ) : (
               <>
                 {formatLongDate(stats.estimatedFinishDate)}
-                {daysLeft > 0 && <span className="block text-[12px] font-normal text-ink-3">{daysLeft} gün sonra</span>}
+                {daysLeft > 0 && <span className="block text-[12px] font-normal text-ink-3">{daysLeft} {msg(" gün sonra")}</span>}
                 {daysLeft < 0 && (
-                  <span className="block text-[12px] font-normal text-danger">geride kalan görevler var</span>
+                  <span className="block text-[12px] font-normal text-danger">{msg("geride kalan görevler var")}</span>
                 )}
               </>
             )}
@@ -68,18 +69,18 @@ export function ProgressCard({
         </div>
         {deadline && (deadline.kind === 'late' || deadline.kind === 'on-track') && (
           <div className="flex justify-between gap-3">
-            <dt className="text-ink-2">Hedef</dt>
+            <dt className="text-ink-2">{msg("Hedef")}</dt>
             <dd className="tnum text-right font-semibold text-ink">
               {formatLongDate(deadline.targetEndDate)}
               <span className={`block text-[12px] font-normal ${deadline.kind === 'late' ? 'text-accent-strong' : 'text-forest'}`}>
-                {deadline.kind === 'late' ? `${deadline.lateDays} gün geride` : deadline.spareDays > 0 ? `${deadline.spareDays} gün önce biter` : 'tam zamanında'}
+                {deadline.kind === 'late' ? `${deadline.lateDays} gün geride` : deadline.spareDays > 0 ? `${deadline.spareDays} gün önce biter` : msg("tam zamanında")}
               </span>
             </dd>
           </div>
         )}
         {campGoals ? (
           <div className="border-t border-line pt-3">
-            <dt className="text-ink-2">Günlük hedefler</dt>
+            <dt className="text-ink-2">{msg("Günlük hedefler")}</dt>
             <dd>
               <ul className="mt-1.5 space-y-1.5">
                 {campGoals.map(goal => (
@@ -95,7 +96,7 @@ export function ProgressCard({
               </ul>
               {campGoals.length > 1 && (
                 <p className="tnum mt-2 flex justify-between gap-3 border-t border-dashed border-line pt-2">
-                  <span className="text-ink-2">Toplam</span>
+                  <span className="text-ink-2">{msg("Toplam")}</span>
                   <span className="shrink-0 font-semibold text-ink">{formatMinutes(sumGoals(campGoals))}</span>
                 </p>
               )}
@@ -103,7 +104,7 @@ export function ProgressCard({
           </div>
         ) : (
           <div className="flex justify-between gap-3">
-            <dt className="text-ink-2">Günlük hedef</dt>
+            <dt className="text-ink-2">{msg("Günlük hedef")}</dt>
             <dd className="tnum font-semibold text-ink">
               {formatMinutes(prefs.dailyStudyHours * 60)}
             </dd>
@@ -135,13 +136,13 @@ export function WeekCard({
     <section className="card p-5" aria-labelledby="rail-week">
       <div className="flex items-baseline justify-between gap-2">
         <h2 id="rail-week" className="eyebrow">
-          {isThisWeek ? 'Bu hafta' : formatWeekRange(days[0].date)}
+          {isThisWeek ? msg("Bu hafta") : formatWeekRange(days[0].date)}
         </h2>
         <p className="tnum text-[12.5px] text-ink-3">{formatMinutes(minutes)}</p>
       </div>
       <p className="mt-2 text-[14px] text-ink-2">
         <span className="tnum font-display text-[26px] text-ink">{done}</span>
-        <span className="tnum"> / {total} görev</span>
+        <span className="tnum"> {msg(" / ")}{total} {msg(" görev")}</span>
       </p>
       <div className="mt-4 grid grid-cols-7 items-end gap-1.5" style={{ height: 88 }}>
         {days.map(day => {
@@ -153,7 +154,12 @@ export function WeekCard({
               key={day.date}
               type="button"
               onClick={() => onSelect(day.date)}
-              aria-label={`${SHORT_WEEKDAYS[dayOfWeek(day.date)]}: ${day.done}/${day.total} görev${day.kind === 'rest' ? ', dinlenme' : day.kind === 'mock' ? ', deneme' : ''}`}
+              aria-label={translateTemplate('{weekday}: {done}/{total} görev{status}', {
+                weekday: SHORT_WEEKDAYS[dayOfWeek(day.date)],
+                done: day.done,
+                total: day.total,
+                status: day.kind === 'rest' ? msg(', dinlenme') : day.kind === 'mock' ? msg(', deneme') : '',
+              })}
               aria-pressed={selected}
               className="group flex h-full flex-col items-center justify-end gap-1.5 rounded-md"
             >
@@ -185,15 +191,12 @@ export function OverdueCard({ count, today, onShift, className = '' }: { count: 
       <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <h2 id="rail-overdue" className="font-semibold text-ink">
-          {count} geciken görev
-        </h2>
+          {count} {msg(" geciken görev\n        ")}</h2>
         <p className="mt-0.5 text-[13px] text-ink-2">
-          Geçmiş günlerde kalanlar {formatLongDate(addDays(today, 1))} gününden itibaren yeniden dağıtılabilir.
-        </p>
+          {msg("\n          Geçmiş günlerde kalanlar ")}{formatLongDate(addDays(today, 1))} {msg(" gününden itibaren yeniden dağıtılabilir.\n        ")}</p>
         <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={onShift}>
           <Forward aria-hidden="true" />
-          Ritmi güncelle
-        </button>
+          {msg("\n          Ritmi güncelle\n        ")}</button>
       </div>
     </section>
   );

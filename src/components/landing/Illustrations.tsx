@@ -21,6 +21,8 @@ import { SHORT_WEEKDAYS, formatHours, formatLongDate, formatMinutes, formatShort
 import type { LandingPreview } from '../../lib/landingPreview';
 import { microTipFor } from '../../lib/postpone';
 import { StudyHeatmap } from '../progress/StudyHeatmap';
+import { msg } from '../../lib/messages';
+
 
 /** Decorative UI only: all displayed durations and progress come from the labelled demo. */
 export function Skeleton({ width = '100%', className = '' }: { width?: string; className?: string }) {
@@ -71,16 +73,15 @@ export function PlaylistVisual() {
         </div>
         <div className="sketch-footer">
           <CircleCheck />
-          <span>İsimler ve süreler hazır</span>
-          <span className="ml-auto text-ink-3">Örnek liste</span>
+          <span>{msg("İsimler ve süreler hazır")}</span>
+          <span className="ml-auto text-ink-3">{msg("Örnek liste")}</span>
         </div>
       </div>
       <span className="art-float-tag">
         <span className="glow-check">
           <Check />
         </span>
-        Tek bağlantı. Bütün seri.
-      </span>
+        {msg("\n        Tek bağlantı. Bütün seri.\n      ")}</span>
     </div>
   );
 }
@@ -95,12 +96,12 @@ export function DailyGoalVisual({ preview }: { preview: LandingPreview }) {
       <div className="sketch-panel daily-panel">
         <div className="art-meta">
           <Clock3 />
-          <span>Günlük alanın</span>
+          <span>{msg("Günlük alanın")}</span>
           <Check className="ml-auto text-forest" />
         </div>
         <p className="daily-value">
           {formatMinutes(planned)}
-          <span> / {formatMinutes(goal)}</span>
+          <span> {msg(" / ")}{formatMinutes(goal)}</span>
         </p>
         <div className="daily-meter">
           <span style={{ width: `${ratio}%` }} />
@@ -112,10 +113,10 @@ export function DailyGoalVisual({ preview }: { preview: LandingPreview }) {
         </div>
       </div>
       <div className="daily-settings">
-        <span>{formatSpeed(preview.prefs.playbackSpeed)} hız</span>
+        <span>{formatSpeed(preview.prefs.playbackSpeed)} {msg(" hız")}</span>
         <Plus />
-        <span>%{Math.round(preview.prefs.practiceMultiplier * 100)} tekrar</span>
-        <span className="text-forest">= sana göre</span>
+        <span>{msg("%")}{Math.round(preview.prefs.practiceMultiplier * 100)} {msg(" tekrar")}</span>
+        <span className="text-forest">{msg("= sana göre")}</span>
       </div>
     </div>
   );
@@ -127,9 +128,9 @@ export function RhythmVisual({ preview }: { preview: LandingPreview }) {
       <div className="sketch-panel rhythm-panel">
         <div className="sketch-toolbar">
           <CalendarDays />
-          <span>Senin haftan</span>
+          <span>{msg("Senin haftan")}</span>
           <span className="art-segment ml-auto">
-            Otomatik <span>Elle</span>
+            {msg("\n            Otomatik ")}<span>{msg("Elle")}</span>
           </span>
         </div>
         <ol className="rhythm-calendar">
@@ -154,7 +155,7 @@ export function RhythmVisual({ preview }: { preview: LandingPreview }) {
       </div>
       <div className="rhythm-rest-note">
         <Moon />
-        <span>Dinlenmek de planın bir parçası.</span>
+        <span>{msg("Dinlenmek de planın bir parçası.")}</span>
       </div>
     </div>
   );
@@ -179,10 +180,10 @@ export function BellVisual() {
             <Plus />
           </span>
           <div>
-            <strong>Listende {fresh.length} yeni video</strong>
-            <span>Planına eklemek senin elinde</span>
+            <strong>{msg("Listende ")}{fresh.length} {msg(" yeni video")}</strong>
+            <span>{msg("Planına eklemek senin elinde")}</span>
           </div>
-          <span className="art-sample-label">Örnek</span>
+          <span className="art-sample-label">{msg("Örnek")}</span>
         </div>
         <div className="sketch-list">
           {fresh.map((video, i) => (
@@ -191,9 +192,9 @@ export function BellVisual() {
         </div>
         <div className="sketch-footer">
           <span className="art-flat-action">
-            Planımın sonuna ekle <ArrowRight />
+            {msg("\n            Planımın sonuna ekle ")}<ArrowRight />
           </span>
-          <span className="text-ink-3">Daha sonra</span>
+          <span className="text-ink-3">{msg("Daha sonra")}</span>
         </div>
       </div>
     </div>
@@ -208,8 +209,8 @@ export function DeadlineVisual({ preview }: { preview: LandingPreview }) {
       <div className="sketch-panel deadline-panel">
         <div className="art-meta">
           <CalendarDays />
-          <span>Tahmini bitiş</span>
-          <span className="art-sample-label ml-auto">Demo planı</span>
+          <span>{msg("Tahmini bitiş")}</span>
+          <span className="art-sample-label ml-auto">{msg("Demo planı")}</span>
         </div>
         <p className="deadline-date">{formatLongDate(stats.estimatedFinishDate)}</p>
         <div className="deadline-track">
@@ -219,13 +220,13 @@ export function DeadlineVisual({ preview }: { preview: LandingPreview }) {
           <span className="deadline-target" />
         </div>
         <div className="flex justify-between gap-2 text-[11px] text-ink-3">
-          <span>Bugün</span>
-          <span className="text-forest">Bitiş</span>
-          <span>Hedefin</span>
+          <span>{msg("Bugün")}</span>
+          <span className="text-forest">{msg("Bitiş")}</span>
+          <span>{msg("Hedefin")}</span>
         </div>
         <div className="deadline-result">
           <Check />
-          <span>{onTrack ? `Hedefinden ${deadline.spareDays} gün önce.` : 'Bitiş tarihin, daha başlamadan belli.'}</span>
+          <span>{onTrack ? `Hedefinden ${deadline.spareDays} gün önce.` : msg("Bitiş tarihin, daha başlamadan belli.")}</span>
         </div>
       </div>
     </div>
@@ -238,19 +239,19 @@ export function RescheduleVisual({ preview }: { preview: LandingPreview }) {
     <div className="reschedule-art illustration-stage">
       <div className="sketch-panel reschedule-before">
         <span className="size-2 rounded-full bg-study-clay" />
-        <span>{preview.index.overdue.length} görev geride kaldı</span>
+        <span>{preview.index.overdue.length} {msg(" görev geride kaldı")}</span>
         <RotateCcw className="ml-auto size-4 text-ink-3" />
       </div>
       <div className="reschedule-connector">
         <ArrowDown />
-        <span>Ritmi güncelle</span>
+        <span>{msg("Ritmi güncelle")}</span>
       </div>
       <div className="sketch-panel reschedule-after">
         <div className="art-meta">
           <span className="glow-check">
             <Check />
           </span>
-          <span>Yeni bir gün, yeniden denge.</span>
+          <span>{msg("Yeni bir gün, yeniden denge.")}</span>
         </div>
         <div className="reschedule-days">
           {preview.rhythmWeek
@@ -271,7 +272,7 @@ export function RescheduleVisual({ preview }: { preview: LandingPreview }) {
         <div className="reschedule-tip">
           <Sparkles />
           <span>
-            <strong>{tip.title}.</strong> {tip.body}
+            <strong>{tip.title}{msg(".")}</strong> {tip.body}
           </span>
         </div>
       </div>
@@ -288,19 +289,17 @@ export function HabitsVisual({ preview }: { preview: LandingPreview }) {
           <div>
             <span className="art-meta">
               <Flame />
-              Yetişir serisi
-            </span>
+              {msg("\n              Yetişir serisi\n            ")}</span>
             <p>
               {streak.current}
-              <span> gün</span>
+              <span> {msg(" gün")}</span>
             </p>
           </div>
           <div>
             <span className="art-meta">
               <CircleCheck />
-              Zamanında tamamlanan
-            </span>
-            <p>{commitment.score === null ? '—' : `%${Math.round(commitment.score)}`}</p>
+              {msg("\n              Zamanında tamamlanan\n            ")}</span>
+            <p>{commitment.score === null ? msg("—") : `%${Math.round(commitment.score)}`}</p>
           </div>
         </div>
         <ol className="habits-chain">
@@ -314,8 +313,8 @@ export function HabitsVisual({ preview }: { preview: LandingPreview }) {
           ))}
         </ol>
         <div className="sketch-footer">
-          <span>Bir adım daha. Bir gün daha.</span>
-          <span className="ml-auto text-ink-3">Demo planı</span>
+          <span>{msg("Bir adım daha. Bir gün daha.")}</span>
+          <span className="ml-auto text-ink-3">{msg("Demo planı")}</span>
         </div>
       </div>
     </div>
@@ -338,13 +337,13 @@ export function ProgressVisual({ preview }: { preview: LandingPreview }) {
       <div className="sketch-panel progress-panel">
         <div className="progress-summary">
           <div className="progress-ring" style={{ '--progress': `${percent}%` } as CSSProperties}>
-            <span>%{percent}</span>
+            <span>{msg("%")}{percent}</span>
           </div>
           <div>
-            <span className="art-meta">Her adım sayılır</span>
+            <span className="art-meta">{msg("Her adım sayılır")}</span>
             <p className="mt-1 text-[22px] font-semibold">
               {stats.completedVideos}
-              <span className="text-[14px] font-normal text-ink-3"> / {stats.totalVideos} görev</span>
+              <span className="text-[14px] font-normal text-ink-3"> {msg(" / ")}{stats.totalVideos} {msg(" görev")}</span>
             </p>
           </div>
         </div>
@@ -357,7 +356,7 @@ export function ProgressVisual({ preview }: { preview: LandingPreview }) {
                   <Moon />
                 ) : (
                   <span>
-                    {day.done}/{day.total}
+                    {day.done}{msg("/")}{day.total}
                   </span>
                 )}
               </span>
@@ -366,11 +365,11 @@ export function ProgressVisual({ preview }: { preview: LandingPreview }) {
         </div>
         <dl className="progress-details">
           <div>
-            <dt>Tahmini bitiş</dt>
+            <dt>{msg("Tahmini bitiş")}</dt>
             <dd>{formatShortDate(stats.estimatedFinishDate)}</dd>
           </div>
           <div>
-            <dt>Kalan çalışma</dt>
+            <dt>{msg("Kalan çalışma")}</dt>
             <dd>{formatHours(stats.totalMinutes)}</dd>
           </div>
         </dl>

@@ -10,6 +10,8 @@ import { MAX_CAMP_NAME } from '../../lib/studyCamp';
 import { RhythmEditor } from '../rhythm/RhythmEditor';
 import { Dialog } from '../ui/Dialog';
 import { CampDatesFields } from '../wizard/CampDetails';
+import { msg } from '../../lib/messages';
+
 
 /**
  * Edits one camp's tempo: dates, how the week is formed and its values.
@@ -59,12 +61,10 @@ export function CampTempoDialog({
     <Dialog
       open
       onClose={onClose}
-      title="Tempoyu düzenle"
+      title={msg("Tempoyu düzenle")}
       description={
         <>
-          Bu değişiklik yalnızca <span className="font-semibold text-ink">“{camp.name}”</span> için geçerli. Tamamlanan görevlerin ve
-          ileri taşımaların korunur.
-        </>
+          {msg("\n          Bu değişiklik yalnızca ")}<span className="font-semibold text-ink">{msg("“")}{camp.name}{msg("”")}</span> {msg(" için geçerli. Tamamlanan görevlerin ve\n          ileri taşımaların korunur.\n        ")}</>
       }
       width={760}
       dismissOnBackdrop={false}
@@ -86,16 +86,14 @@ export function CampTempoDialog({
                     ? `${effect.deadline.unscheduledCount} video plana giremiyor`
                     : effect.finish
                       ? `Bitiş: ${formatLongDate(effect.finish)}`
-                      : 'Planlanacak video yok'}
+                      : msg("Planlanacak video yok")}
               </span>
             </p>
           )}
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
-          <button type="button" className="btn btn-primary" onClick={save} disabled={unchanged} title={unchanged ? 'Değişiklik yok' : undefined}>
-            Kaydet
-          </button>
+            {msg("\n            Vazgeç\n          ")}</button>
+          <button type="button" className="btn btn-primary" onClick={save} disabled={unchanged} title={unchanged ? msg("Değişiklik yok") : undefined}>
+            {msg("\n            Kaydet\n          ")}</button>
         </>
       }
     >
@@ -133,17 +131,15 @@ export function RenameCampDialog({ camp, onSave, onClose }: { camp: StudyCamp; o
     <Dialog
       open
       onClose={onClose}
-      title="Kampı yeniden adlandır"
+      title={msg("Kampı yeniden adlandır")}
       width={460}
       dismissOnBackdrop={false}
       footer={
         <>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
+            {msg("\n            Vazgeç\n          ")}</button>
           <button type="button" className="btn btn-primary" onClick={save}>
-            Kaydet
-          </button>
+            {msg("\n            Kaydet\n          ")}</button>
         </>
       }
     >
@@ -154,8 +150,7 @@ export function RenameCampDialog({ camp, onSave, onClose }: { camp: StudyCamp; o
         }}
       >
         <label className="field-label" htmlFor={`${uid}-name`}>
-          Kamp adı
-        </label>
+          {msg("\n          Kamp adı\n        ")}</label>
         <input
           id={`${uid}-name`}
           className="input"

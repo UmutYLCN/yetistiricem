@@ -5,9 +5,12 @@ import './index.css'
 import { hasAuthCallback } from './lib/authKey.ts'
 import { APP_PATH, isAppPath, isConsentPath, isDocsPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest, takeMcpDraftRequest } from './lib/routes.ts'
 import { initTheme } from './lib/theme.ts'
+import { initializeLanguage } from './lib/language.ts'
+import { msg } from './lib/messages.ts'
 import { Root } from './Root.tsx'
 
 initTheme()
+initializeLanguage()
 
 const inApp = isAppPath(window.location.pathname)
 const inConsent = isConsentPath(window.location.pathname)
@@ -22,8 +25,10 @@ if (!inApp && !inConsent && hasAuthCallback()) {
   const importPayload = inApp ? takeImportRequest() : null
   const mcpDraftId = inApp ? takeMcpDraftRequest() : null
   const openDiscover = inApp && takeDiscoverRequest()
-  if (inApp) document.title = 'Dashboard · Yetişir'
-  if (inConsent) document.title = 'Bağlantı onayı · Yetişir'
+  if (inApp) document.title = `${msg('Dashboard')} · Yetişir`
+  if (inConsent) document.title = `${msg('Bağlantı onayı')} · Yetişir`
+  if (inDocs) document.title = `${msg('Belgeler')} · Yetişir`
+  if (!inApp && !inConsent && !inDocs) document.title = msg('Yetişir — Panik yok, yetişir')
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

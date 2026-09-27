@@ -3,7 +3,9 @@ import type { CSSProperties, KeyboardEvent } from 'react';
 import { Info } from 'lucide-react';
 import type { HeatCell, Heatmap } from '../../lib/insights';
 import { addDays, formatDateKey } from '../../lib/engine';
-import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatHours, formatLongDate, formatMinutes } from '../../lib/format';
+import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, dateLocale, formatHours, formatLongDate, formatMinutes } from '../../lib/format';
+import { msg, translateTemplate } from '../../lib/messages';
+
 
 interface Props {
   heatmap: Heatmap;
@@ -15,10 +17,10 @@ interface Props {
 
 /** "24 Ekim Salı: 3 video (1 sa 25 dk)" */
 function describeCell(cell: HeatCell): string {
-  const day = formatDateKey(cell.date, { day: 'numeric', month: 'long', weekday: 'long' });
-  if (cell.future) return `${day}: henüz gelmedi`;
-  if (cell.count === 0) return `${day}: çalışma yok`;
-  return `${day}: ${cell.count} video (${formatMinutes(cell.minutes)})`;
+  const day = formatDateKey(cell.date, { day: 'numeric', month: 'long', weekday: 'long' }, dateLocale());
+  if (cell.future) return `${day}: ${msg('henüz gelmedi')}`;
+  if (cell.count === 0) return `${day}: ${msg('çalışma yok')}`;
+  return `${day}: ${cell.count} ${msg('video')} (${formatMinutes(cell.minutes)})`;
 }
 
 /** Month names over the columns where a new month begins. */
@@ -26,7 +28,7 @@ function monthLabels(weeks: HeatCell[][]): (string | null)[] {
   return weeks.map((week, w) => {
     const month = week[6].date.slice(0, 7);
     if (w > 0 && month === weeks[w - 1][6].date.slice(0, 7)) return null;
-    return formatDateKey(week[6].date, { month: 'short' });
+    return formatDateKey(week[6].date, { month: 'short' }, dateLocale());
   });
 }
 
@@ -84,11 +86,10 @@ export function StudyHeatmap({ heatmap, today, undated, since }: Props) {
     <section className="card @container min-w-0 p-5" aria-labelledby="progress-heatmap">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 id="progress-heatmap" className="text-[15px] font-semibold text-ink">
-          Çalışma haritası
-        </h2>
-        <p className="text-[12.5px] text-ink-3">Son {weeks.length} hafta</p>
+          {msg("\n          Çalışma haritası\n        ")}</h2>
+        <p className="text-[12.5px] text-ink-3">{msg("Son ")}{weeks.length} {msg(" hafta")}</p>
       </div>
-      {heatmap.activeDays === 0 && <p className="mt-1 text-[13px] text-ink-2">Tamamladığın her görev, o günün karesini yeşile boyar.</p>}
+      {heatmap.activeDays === 0 && <p className="mt-1 text-[13px] text-ink-2">{msg("Tamamladığın her görev, o günün karesini yeşile boyar.")}</p>}
 
       <div className="mt-4 grid items-end gap-x-8 gap-y-4 @lg:grid-cols-[minmax(0,1fr)_auto]">
       <div ref={boxRef} className="heatmap" style={{ ['--weeks' as string]: weeks.length }} onMouseLeave={() => setTip(null)}>
@@ -100,11 +101,16 @@ export function StudyHeatmap({ heatmap, today, undated, since }: Props) {
             </span>
           ))}
         </div>
-        <div role="grid" aria-label={`Son ${weeks.length} haftanın çalışma haritası`} onKeyDown={move} onBlur={() => setTip(null)}>
+        <div
+          role="grid"
+          aria-label={translateTemplate('Son {count} haftanın çalışma haritası', { count: weeks.length })}
+          onKeyDown={move}
+          onBlur={() => setTip(null)}
+        >
           {WEEK_ORDER.map((dow, row) => (
             <div key={dow} role="row" className="heat-row">
               <span role="rowheader" className="heat-label">
-                <span aria-hidden="true">{row % 2 === 0 && row < 6 ? SHORT_WEEKDAYS[dow] : ''}</span>
+                <span aria-hidden="true">{row % 2 === 0 && row < 6 ? SHORT_WEEKDAYS[dow] : msg("")}</span>
                 <span className="visually-hidden">{LONG_WEEKDAYS[dow]}</span>
               </span>
               {weeks.map(week => {
@@ -141,7 +147,7 @@ export function StudyHeatmap({ heatmap, today, undated, since }: Props) {
         {[
           { label: 'Aktif gün', value: String(heatmap.activeDays) },
           { label: 'Video', value: String(heatmap.videos) },
-          { label: 'Çalışma', value: formatHours(heatmap.minutes) },
+          { label: msg('Çalışma'), value: formatHours(heatmap.minutes) },
         ].map(stat => (
           <div key={stat.label} className="min-w-0">
             <dt className="text-[12px] text-ink-3">{stat.label}</dt>
@@ -153,14 +159,12 @@ export function StudyHeatmap({ heatmap, today, undated, since }: Props) {
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-center gap-1.5 text-[11.5px] text-ink-3" aria-hidden="true">
-          Az
-          {[0, 1, 2, 3, 4].map(level => (
+          {msg("\n          Az\n          ")}{[0, 1, 2, 3, 4].map(level => (
             <span key={level} className="heat-cell size-3" data-level={level} />
           ))}
-          Çok
-        </div>
+          {msg("\n          Çok\n        ")}</div>
         {cells.get(today)?.count ? (
-          <p className="text-[12.5px] font-semibold text-forest">Bugün {cells.get(today)?.count} video</p>
+          <p className="text-[12.5px] font-semibold text-forest">{msg("Bugün ")}{cells.get(today)?.count} {msg(" video")}</p>
         ) : null}
       </div>
 
@@ -168,9 +172,7 @@ export function StudyHeatmap({ heatmap, today, undated, since }: Props) {
         <p className="mt-3 flex items-start gap-1.5 border-t border-line pt-3 text-[12.5px] text-ink-3">
           <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           <span>
-            Tamamlanma günleri {formatLongDate(since)} tarihinden beri kaydediliyor; daha önce işaretlediğin {undated} video haritada
-            yer almıyor.
-          </span>
+            {msg("\n            Tamamlanma günleri ")}{formatLongDate(since)} {msg(" tarihinden beri kaydediliyor; daha önce işaretlediğin ")}{undated} {msg(" video haritada\n            yer almıyor.\n          ")}</span>
         </p>
       )}
     </section>

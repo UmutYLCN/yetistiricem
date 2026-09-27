@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { MoreHorizontal } from 'lucide-react';
+import { msg } from '../../lib/messages';
 
 export interface MenuItem {
   label: string;
@@ -117,7 +118,7 @@ export function Menu({ label, items, className = '' }: { label: string; items: M
                 }}
               >
                 {item.icon}
-                {item.label}
+                {msg(item.label)}
               </button>
             </div>
           ))}

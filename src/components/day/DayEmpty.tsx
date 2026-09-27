@@ -7,6 +7,8 @@ import type { DaySummary } from '../../lib/planView';
 import type { EmptyTone } from '../ui/EmptyState';
 import { EmptyState } from '../ui/EmptyState';
 import { CampDayTypeRows } from './CampDayTypes';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   summary: DaySummary;
@@ -51,7 +53,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
   if (campsNotOff) {
     return (
       <div>
-        <p className="px-4 pt-4 pb-1 text-[14px] font-semibold text-ink sm:px-5">Bu gün kamplarında görev yok</p>
+        <p className="px-4 pt-4 pb-1 text-[14px] font-semibold text-ink sm:px-5">{msg("Bu gün kamplarında görev yok")}</p>
         <CampDayTypeRows parts={parts} labels={campLabels} />
       </div>
     );
@@ -62,7 +64,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
         <EmptyDay
           icon={<Flag className="size-5" aria-hidden="true" />}
           tone="accent"
-          title="Deneme ve dinlenme günü"
+          title={msg("Deneme ve dinlenme günü")}
           body="Bu gün hiçbir kampında video yok. Deneme günü olan kampın için bir deneme çöz; diğerlerinde dinlen."
         />
         {/* Still says what each camp does that day. */}
@@ -76,7 +78,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
     return (
       <EmptyDay
         icon={<Coffee className="size-5" aria-hidden="true" />}
-        title="Dinlenme günü"
+        title={msg("Dinlenme günü")}
         body={
           allCamps
             ? 'Bu gün hiçbir kampında video yok. Dinlen, zihnini topla; planların yarın kaldığı yerden devam eder.'
@@ -90,7 +92,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
       <EmptyDay
         icon={<Flag className="size-5" aria-hidden="true" />}
         tone="accent"
-        title="Deneme günü"
+        title={msg("Deneme günü")}
         body="Bugün video yok. Bir deneme çöz, yanlışlarını analiz et ve not al."
       />
     );
@@ -100,7 +102,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
       <EmptyDay
         icon={<CircleCheck className="size-5" aria-hidden="true" />}
         tone="forest"
-        title="Bu günün branşları bitti"
+        title={msg("Bu günün branşları bitti")}
         body="Bu güne yerleştirdiğin branşların videoları tamamlandı. Diğer branşlar kendi günlerinde devam ediyor."
       />
     );
@@ -109,7 +111,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
     return (
       <EmptyDay
         icon={<Forward className="size-5" aria-hidden="true" />}
-        title="Görevler ileri taşındı"
+        title={msg("Görevler ileri taşındı")}
         body="Bu günün tamamlanmamış görevleri sonraki günlere kaydırıldı."
       />
     );
@@ -119,7 +121,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
     return (
       <EmptyDay
         icon={<Coffee className="size-5" aria-hidden="true" />}
-        title="Bu güne görev düşmedi"
+        title={msg("Bu güne görev düşmedi")}
         body="Planın bu günü atlıyor; görevlerin sonraki günlerde devam ediyor."
       />
     );
@@ -128,7 +130,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
     return (
       <EmptyDay
         icon={<CircleCheck className="size-5" aria-hidden="true" />}
-        title="Bu gün planların dışında"
+        title={msg("Bu gün planların dışında")}
         body="Bu tarihte hiçbir kampının planı yok: biri bitmiş, diğeri henüz başlamamış."
       />
     );
@@ -137,12 +139,11 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
     return (
       <EmptyDay
         icon={<Coffee className="size-5" aria-hidden="true" />}
-        title="Bu gün boş"
+        title={msg("Bu gün boş")}
         body="Bu kampta henüz video yok. Bir branş eklediğinde görevler buraya gelir."
         action={
           <button type="button" className="btn btn-primary btn-sm" onClick={onAddBranches}>
-            Branş ekle
-          </button>
+            {msg("\n            Branş ekle\n          ")}</button>
         }
       />
     );
@@ -151,7 +152,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
     return (
       <EmptyDay
         icon={<ArrowRight className="size-5" aria-hidden="true" />}
-        title="Plan henüz başlamadı"
+        title={msg("Plan henüz başlamadı")}
         body={
           allCamps
             ? `İlk kampın ${formatLongDate(firstDate ?? startDate)} tarihinde başlıyor.`
@@ -164,7 +165,7 @@ export function DayEmpty({ summary, firstDate, lastDate, startDate, onAddBranche
     <EmptyDay
       icon={<CircleCheck className="size-5" aria-hidden="true" />}
       tone="forest"
-      title={allCamps ? 'Planların bu tarihten önce bitiyor' : 'Planın bu tarihten önce bitiyor'}
+      title={allCamps ? msg("Planların bu tarihten önce bitiyor") : msg("Planın bu tarihten önce bitiyor")}
       body={lastDate ? `Son görevlerin ${formatLongDate(lastDate)} tarihinde. Yeni branş ekleyerek planı uzatabilirsin.` : ''}
     />
   );

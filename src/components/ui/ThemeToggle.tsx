@@ -3,13 +3,14 @@ import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import type { ThemePreference } from '../../lib/theme';
 import { resolveTheme } from '../../lib/theme';
+import { msg } from '../../lib/messages';
 
 /** A quiet icon button flipping light/dark (the landing header; no "system" here, the Ayarlar window has the full control). */
 export function ThemeIconToggle({ className = '' }: { className?: string }) {
   const [pref, setPref] = useTheme();
   const resolved = resolveTheme(pref);
   const next: ThemePreference = resolved === 'light' ? 'dark' : 'light';
-  const label = resolved === 'light' ? 'Koyu görünüme geç' : 'Açık görünüme geç';
+  const label = msg(resolved === 'light' ? 'Koyu görünüme geç' : 'Açık görünüme geç');
   return (
     <button type="button" className={`landing-icon-button ${className}`} aria-label={label} title={label} onClick={() => setPref(next)}>
       {resolved === 'light' ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
@@ -27,11 +28,11 @@ const OPTIONS: { value: ThemePreference; label: string; Icon: LucideIcon }[] = [
 export function ThemeSegmented() {
   const [pref, setPref] = useTheme();
   return (
-    <div className="segmented" role="group" aria-label="Görünüm">
+    <div className="segmented" role="group" aria-label={msg('Görünüm')}>
       {OPTIONS.map(({ value, label, Icon }) => (
         <button key={value} type="button" aria-pressed={pref === value} onClick={() => setPref(value)} className="inline-flex items-center gap-1.5">
           <Icon className="size-4" aria-hidden="true" />
-          <span className="max-[420px]:sr-only">{label}</span>
+          <span className="max-[420px]:sr-only">{msg(label)}</span>
         </button>
       ))}
     </div>

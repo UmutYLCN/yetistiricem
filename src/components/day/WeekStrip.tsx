@@ -5,6 +5,8 @@ import { addDays, dayOfWeek } from '../../lib/engine';
 import { SHORT_WEEKDAYS, formatWeekRange } from '../../lib/format';
 import type { DaySummary } from '../../lib/planView';
 import { describeDay } from '../../lib/planView';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   days: DaySummary[];
@@ -32,12 +34,12 @@ function Ring({ day }: { day: DaySummary }) {
   else if (planned)
     center = (
       <span className={`tnum leading-none font-semibold text-ink ${day.total >= 10 ? 'text-[9px]' : 'text-[10.5px]'}`}>
-        {day.done}/{day.total}
+        {day.done}{msg("/")}{day.total}
       </span>
     );
   else if (day.kind === 'rest') center = <Moon className="size-3.5 text-ink-3" />;
   else if (day.kind === 'mock') center = <Flag className="size-3.5 text-accent" />;
-  else center = <span className="text-[13px] leading-none text-ink-3">–</span>;
+  else center = <span className="text-[13px] leading-none text-ink-3">{msg("–")}</span>;
 
   return (
     <span className="relative grid size-9 place-items-center sm:size-10" aria-hidden="true">
@@ -106,14 +108,14 @@ export function WeekStrip({ days, selectedDate, today, onSelect }: Props) {
     <div className="card px-3 pt-3.5 pb-3 sm:px-5">
       <div className="flex items-center justify-between gap-2 pl-1">
         <p className="min-w-0 truncate">
-          <span className="eyebrow">{thisWeek ? 'Bu haftanın rotası' : 'Haftanın rotası'}</span>
+          <span className="eyebrow">{thisWeek ? msg("Bu haftanın rotası") : msg("Haftanın rotası")}</span>
           <span className="ml-2 text-[12.5px] text-ink-3">{formatWeekRange(monday)}</span>
         </p>
         <div className="-mr-1.5 flex shrink-0 items-center">
-          <button type="button" className="icon-btn size-9" onClick={() => onSelect(addDays(selectedDate, -7))} aria-label="Önceki hafta">
+          <button type="button" className="icon-btn size-9" onClick={() => onSelect(addDays(selectedDate, -7))} aria-label={msg("Önceki hafta")}>
             <ChevronLeft aria-hidden="true" />
           </button>
-          <button type="button" className="icon-btn size-9" onClick={() => onSelect(addDays(selectedDate, 7))} aria-label="Sonraki hafta">
+          <button type="button" className="icon-btn size-9" onClick={() => onSelect(addDays(selectedDate, 7))} aria-label={msg("Sonraki hafta")}>
             <ChevronRight aria-hidden="true" />
           </button>
         </div>
@@ -125,7 +127,7 @@ export function WeekStrip({ days, selectedDate, today, onSelect }: Props) {
           className="absolute top-[25px] right-[calc(100%/14)] left-[calc(100%/14)] h-0.5 rounded-full bg-line sm:top-[27px]"
           aria-hidden="true"
         />
-        <div ref={listRef} role="tablist" aria-label="Haftanın günleri" className="relative grid grid-cols-7 gap-0.5 sm:gap-1">
+        <div ref={listRef} role="tablist" aria-label={msg("Haftanın günleri")} className="relative grid grid-cols-7 gap-0.5 sm:gap-1">
           {days.map(day => {
             const selected = day.date === selectedDate;
             const isToday = day.date === today;
@@ -163,7 +165,7 @@ export function WeekStrip({ days, selectedDate, today, onSelect }: Props) {
                     isToday ? 'text-accent-strong' : selected ? 'text-ink' : 'text-ink-3 group-hover:text-ink-2'
                   }`}
                 >
-                  {isToday ? 'Bugün' : SHORT_WEEKDAYS[dayOfWeek(day.date)]}
+                  {isToday ? msg("Bugün") : SHORT_WEEKDAYS[dayOfWeek(day.date)]}
                 </span>
                 <span className={`tnum mt-1 text-[11px] leading-none ${selected ? 'font-semibold text-ink' : 'text-ink-3'}`}>
                   {Number(day.date.slice(8))}

@@ -11,6 +11,8 @@ import { linkStateOf } from '../../lib/camps';
 import { CampDayTypeRows } from './CampDayTypes';
 import { DayEmpty } from './DayEmpty';
 import { TaskItem } from './TaskItem';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   summary: DaySummary;
@@ -62,11 +64,11 @@ function CampSection({
             {name}
           </h3>
           <p className="tnum text-[12.5px] text-ink-3">
-            ~{formatMinutes(part.minutes)} çalışma{label && <> · günlük hedef {formatMinutes(label.dailyMinutes)}</>}
+            {msg("\n            ~")}{formatMinutes(part.minutes)} {msg(" çalışma")}{label && <> {msg(" · günlük hedef ")}{formatMinutes(label.dailyMinutes)}</>}
           </p>
         </div>
         <p className="tnum shrink-0 pt-0.5 text-[12.5px] font-semibold text-ink-2" aria-label={`${part.total} görevden ${part.done} tamamlandı`}>
-          {part.done}/{part.total}
+          {part.done}{msg("/")}{part.total}
         </p>
       </div>
       <ul aria-label={`${name} görevleri`}>
@@ -183,15 +185,12 @@ export function DayPanel({
             <div className="callout callout-danger">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-ink">Bu günden {open} görev yetişmedi.</p>
+                <p className="font-semibold text-ink">{msg("Bu günden ")}{open} {msg(" görev yetişmedi.")}</p>
                 <p className="mt-0.5 text-[13px] text-ink-2">
-                  Ritmini güncellersen kalanlar {formatLongDate(addDays(today, 1))} gününden itibaren yeniden dağıtılır. Bugünkü
-                  görevlerin yerinde kalır.
-                </p>
+                  {msg("\n                  Ritmini güncellersen kalanlar ")}{formatLongDate(addDays(today, 1))} {msg(" gününden itibaren yeniden dağıtılır. Bugünkü\n                  görevlerin yerinde kalır.\n                ")}</p>
                 <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={() => onShift(date)}>
                   <Forward aria-hidden="true" />
-                  Ritmi güncelle
-                </button>
+                  {msg("\n                  Ritmi güncelle\n                ")}</button>
               </div>
             </div>
           )}
@@ -199,9 +198,7 @@ export function DayPanel({
             <div className="callout callout-warn">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
               <p className="text-[13.5px] text-ink-2">
-                <span className="font-semibold text-ink">Bazı görevlerin bağlantısı çalışmıyor.</span> Önceki sürümün örnek
-                listelerindeki videolar gerçek değildi. Gerçek videoyu biliyorsan “Bağlantı ekle” ile ekleyebilirsin.
-              </p>
+                <span className="font-semibold text-ink">{msg("Bazı görevlerin bağlantısı çalışmıyor.")}</span> {msg(" Önceki sürümün örnek\n                listelerindeki videolar gerçek değildi. Gerçek videoyu biliyorsan “Bağlantı ekle” ile ekleyebilirsin.\n              ")}</p>
             </div>
           )}
           {total > 0 && open === 0 && <DoneNotice key={date} isToday={isToday} />}
@@ -212,11 +209,10 @@ export function DayPanel({
 
       {isToday && open > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-paper/60 px-4 py-3 sm:px-5">
-          <p className="text-[13px] text-ink-2">Bugün yetişmeyecek mi?</p>
+          <p className="text-[13px] text-ink-2">{msg("Bugün yetişmeyecek mi?")}</p>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => onShift(date)}>
             <Forward aria-hidden="true" />
-            Kalanları yarına kaydır
-          </button>
+            {msg("\n            Kalanları yarına kaydır\n          ")}</button>
         </div>
       )}
     </section>
@@ -235,8 +231,8 @@ function DoneNotice({ isToday }: { isToday: boolean }) {
     <div className="callout callout-info notice-fade" role="status">
       <CircleCheck className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
       <p className="text-[13.5px] text-ink-2">
-        <span className="font-semibold text-ink">{isToday ? 'Bugünün' : 'Bu günün'} tüm görevleri tamam.</span>{' '}
-        {isToday ? 'Güzel iş, yarın görüşürüz.' : ''}
+        <span className="font-semibold text-ink">{isToday ? msg("Bugünün") : msg("Bu günün")} {msg(" tüm görevleri tamam.")}</span>{msg(" ")}
+        {isToday ? msg("Güzel iş, yarın görüşürüz.") : msg("")}
       </p>
     </div>
   );

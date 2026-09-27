@@ -6,6 +6,8 @@ import { formatMinutes } from '../../lib/format';
 import { criticalLabel, isCriticallyPostponed } from '../../lib/postpone';
 import type { CampInfo } from '../../lib/planView';
 import { SubjectDot } from '../ui/Bits';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   item: DailyPlanItem;
@@ -51,7 +53,7 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
             <p className="mb-0.5 flex min-w-0 items-start gap-1.5 text-[12px] font-semibold">
               <SubjectDot color={color} className="mt-[5px]" />
               <span className="min-w-0 break-words" style={{ color }}>
-                <span className="sr-only">{campName} · </span>
+                <span className="sr-only">{campName} {msg(" · ")}</span>
                 {item.subject}
               </span>
             </p>
@@ -59,7 +61,7 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
             <p className="mb-0.5 flex min-w-0 items-center gap-1.5 text-[12px] font-semibold" style={{ color }}>
               <SubjectDot color={color} />
               <span className="shrink-0">{item.subject}</span>
-              {camp && <span className="truncate font-medium text-ink-3">· {camp.camp.title}</span>}
+              {camp && <span className="truncate font-medium text-ink-3">{msg("· ")}{camp.camp.title}</span>}
             </p>
           ))}
         <label
@@ -72,18 +74,16 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
         </label>
         <p id={metaId} className="tnum mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-3">
           <span>
-            {formatMinutes(item.durationMinutes)} video
-            {differs && <> · ~{formatMinutes(study)} çalışma</>}
+            {formatMinutes(item.durationMinutes)} {msg(" video\n            ")}{differs && <> {msg(" · ~")}{formatMinutes(study)} {msg(" çalışma")}</>}
           </span>
-          {item.completed && <span className="font-semibold text-forest">Tamamlandı</span>}
+          {item.completed && <span className="font-semibold text-forest">{msg("Tamamlandı")}</span>}
           {oversized && (
-            <span className="chip chip-warn" title="Bu video günlük çalışma süresinden uzun; tek başına bir güne yerleştirildi.">
+            <span className="chip chip-warn" title={msg("Bu video günlük çalışma süresinden uzun; tek başına bir güne yerleştirildi.")}>
               <TriangleAlert aria-hidden="true" />
-              Günlük süreden uzun
-            </span>
+              {msg("\n              Günlük süreden uzun\n            ")}</span>
           )}
           {isCriticallyPostponed(item) && (
-            <span className="chip chip-danger" title="Bu görev defalarca ileri taşındı. Bugün ilk iş olarak ele almayı dene.">
+            <span className="chip chip-danger" title={msg("Bu görev defalarca ileri taşındı. Bugün ilk iş olarak ele almayı dene.")}>
               <Flame aria-hidden="true" />
               {criticalLabel(item.postponeCount ?? 0)}
             </span>
@@ -100,7 +100,7 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
             aria-haspopup="dialog"
           >
             <Play aria-hidden="true" />
-            <span className={compact ? 'max-sm:hidden' : ''}>Odaklan</span>
+            <span className={compact ? 'max-sm:hidden' : ''}>{msg("Odaklan")}</span>
           </button>
         )}
         {linkState === 'video' && !onFocus && (
@@ -112,7 +112,7 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
             aria-label={`${item.title} videosunu YouTube’da aç (yeni sekme)`}
           >
             <Play aria-hidden="true" />
-            <span className={compact ? 'max-sm:hidden' : ''}>İzle</span>
+            <span className={compact ? 'max-sm:hidden' : ''}>{msg("İzle")}</span>
           </a>
         )}
         {linkState === 'playlist-only' && (
@@ -122,10 +122,10 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
             rel="noopener noreferrer"
             className="btn btn-ghost btn-sm"
             aria-label={`${item.title}: bu videonun bağlantısı yok, oynatma listesini aç (yeni sekme)`}
-            title="Bu videonun kendi bağlantısı yok; oynatma listesi açılır."
+            title={msg("Bu videonun kendi bağlantısı yok; oynatma listesi açılır.")}
           >
             <ExternalLink aria-hidden="true" />
-            <span className="max-sm:hidden">Listeyi aç</span>
+            <span className="max-sm:hidden">{msg("Listeyi aç")}</span>
           </a>
         )}
         {(linkState === 'none' || linkState === 'sample') &&
@@ -135,13 +135,13 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
               className="btn btn-ghost btn-sm text-ink-3"
               onClick={() => onEditLink(item)}
               aria-label={`${item.title} için video bağlantısı ekle`}
-              title={linkState === 'sample' ? 'Eski örnek bağlantı çalışmıyor; gerçek bağlantıyı ekleyebilirsin.' : undefined}
+              title={linkState === 'sample' ? msg("Eski örnek bağlantı çalışmıyor; gerçek bağlantıyı ekleyebilirsin.") : undefined}
             >
               <Link2 aria-hidden="true" />
-              <span className="max-sm:hidden">Bağlantı ekle</span>
+              <span className="max-sm:hidden">{msg("Bağlantı ekle")}</span>
             </button>
           ) : (
-            <span className="text-[12px] text-ink-3">Bağlantı yok</span>
+            <span className="text-[12px] text-ink-3">{msg("Bağlantı yok")}</span>
           ))}
       </div>
     </li>

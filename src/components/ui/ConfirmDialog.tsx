@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Dialog } from './Dialog';
+import { msg } from '../../lib/messages';
+
 
 export interface ConfirmOptions {
   title: string;
@@ -49,7 +51,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       <Dialog
         open={request !== null}
         onClose={() => settle(false)}
-        title={request?.title ?? ''}
+        title={request?.title ?? msg("")}
         width={460}
         tone={danger ? 'danger' : 'default'}
         initialFocus={danger ? cancelRef : undefined}
@@ -57,7 +59,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           <>
             {!request?.hideCancel && (
               <button ref={cancelRef} type="button" className="btn btn-secondary" onClick={() => settle(false)}>
-                {request?.cancelLabel ?? 'Vazgeç'}
+                {request?.cancelLabel ?? msg("Vazgeç")}
               </button>
             )}
             <button

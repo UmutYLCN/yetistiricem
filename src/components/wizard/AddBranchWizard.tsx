@@ -14,6 +14,8 @@ import { Dialog } from '../ui/Dialog';
 import { BranchSources } from './BranchSources';
 import { DeadlineSignal, PreviewWeeks } from './PlanPreview';
 import { WizardStepper } from './WizardStepper';
+import { msg } from '../../lib/messages';
+
 
 type StepId = 'sources' | 'days' | 'preview';
 
@@ -110,16 +112,15 @@ export function AddBranchWizard({ camp, today, completedMap, onAdd, onClose }: P
     <Dialog
       open
       onClose={onClose}
-      title="Branş ekle"
+      title={msg("Branş ekle")}
       description={
         <>
           <p>
-            Yeni branşlar <span className="font-semibold text-ink">“{camp.name}”</span> kampına eklenir; yeni kamp oluşturulmaz.
-          </p>
+            {msg("\n            Yeni branşlar ")}<span className="font-semibold text-ink">{msg("“")}{camp.name}{msg("”")}</span> {msg(" kampına eklenir; yeni kamp oluşturulmaz.\n          ")}</p>
           <p className="mt-1 flex items-start gap-1.5 text-[12.5px] text-ink-3">
             <Gauge className="mt-px size-3.5 shrink-0" aria-hidden="true" />
             <span>
-              {tempoSummary(camp.schedule)} · başlangıç {formatShortDate(startDate)}
+              {tempoSummary(camp.schedule)} {msg(" · başlangıç ")}{formatShortDate(startDate)}
               {targetEndDate && ` · hedef ${formatShortDate(targetEndDate)}`}
             </span>
           </p>
@@ -146,21 +147,19 @@ export function AddBranchWizard({ camp, today, completedMap, onAdd, onClose }: P
           {step > 0 ? (
             <button type="button" className="btn btn-secondary max-sm:flex-1" onClick={() => goTo(step - 1)}>
               <ArrowLeft aria-hidden="true" />
-              Geri
-            </button>
+              {msg("\n              Geri\n            ")}</button>
           ) : (
             <button type="button" className="btn btn-secondary max-sm:flex-1" onClick={onClose}>
-              Vazgeç
-            </button>
+              {msg("\n              Vazgeç\n            ")}</button>
           )}
           {isLast ? (
             <button type="button" className="btn btn-primary max-sm:flex-1" onClick={add}>
               <Plus aria-hidden="true" />
-              {branches.length > 1 ? `${branches.length} branşı kampa ekle` : 'Kampa ekle'}
+              {branches.length > 1 ? `${branches.length} branşı kampa ekle` : msg("Kampa ekle")}
             </button>
           ) : (
             <button type="button" className="btn btn-primary max-sm:flex-1" onClick={next}>
-              {steps[step + 1] === 'preview' ? 'Önizle' : 'Devam'}
+              {steps[step + 1] === 'preview' ? msg("Önizle") : msg("Devam")}
               <ArrowRight aria-hidden="true" />
             </button>
           )}
@@ -188,8 +187,7 @@ export function AddBranchWizard({ camp, today, completedMap, onAdd, onClose }: P
         {current === 'days' && (
           <fieldset className="rounded-[14px] border border-line bg-card p-4">
             <legend id={`${uid}-days`} className="px-1 text-[14px] font-semibold text-ink">
-              Çalışma günleri
-            </legend>
+              {msg("\n              Çalışma günleri\n            ")}</legend>
             <WeekdayToggles
               labelledBy={`${uid}-days`}
               selected={weekdays}
@@ -221,12 +219,11 @@ function DaysHint({ camp, selected }: { camp: StudyCamp; selected: number[] }) {
   return (
     <>
       {mockExamDays.length > 0 && (
-        <p className="field-hint">{WEEK_ORDER.filter(d => mockExamDays.includes(d)).map(d => LONG_WEEKDAYS[d]).join(', ')} deneme günü; oraya video konmaz.</p>
+        <p className="field-hint">{WEEK_ORDER.filter(d => mockExamDays.includes(d)).map(d => LONG_WEEKDAYS[d]).join(', ')} {msg(" deneme günü; oraya video konmaz.")}</p>
       )}
       {restPicked.length > 0 && (
         <p className="field-hint">
-          {restPicked.map(d => LONG_WEEKDAYS[d]).join(', ')} şu an dinlenme günü; eklersen ders günü olur.
-        </p>
+          {restPicked.map(d => LONG_WEEKDAYS[d]).join(', ')} {msg(" şu an dinlenme günü; eklersen ders günü olur.\n        ")}</p>
       )}
     </>
   );
@@ -238,7 +235,7 @@ function CurrentWeek({ camp }: { camp: StudyCamp }) {
   const { mockExamDays, weekPlan } = camp.schedule;
   return (
     <div className="mt-3">
-      <p className="text-[12px] font-semibold text-ink-3">Bu kampta şu an</p>
+      <p className="text-[12px] font-semibold text-ink-3">{msg("Bu kampta şu an")}</p>
       <ul className="mt-1.5 grid gap-1 text-[13px] sm:grid-cols-7 sm:gap-1.5 sm:text-center sm:text-[12px]">
         {WEEK_ORDER.map(dow => {
           const ids = mockExamDays.includes(dow) ? [] : (weekPlan[dow] ?? []);
@@ -326,8 +323,7 @@ function AdditionPreview({
     <div className="space-y-5">
       <section aria-labelledby="addition-branches">
         <h4 id="addition-branches" className="mb-2 text-[12.5px] font-semibold tracking-wide text-ink-3 uppercase">
-          Eklenecek branşlar
-        </h4>
+          {msg("\n          Eklenecek branşlar\n        ")}</h4>
         <ul className="space-y-2">
           {branches.map(branch => {
             const color = resolveColor(branch.colorTag, branch.subject);
@@ -341,11 +337,11 @@ function AdditionPreview({
                   </p>
                   <p className="tnum text-[12.5px] break-words text-ink-3">
                     {branch.title}
-                    {branch.channelName && ` · ${branch.channelName}`} · {branch.videos.length} video · {formatMinutes(totalMinutesOf(branch.videos))}
+                    {branch.channelName && ` · ${branch.channelName}`} {msg(" · ")}{branch.videos.length} {msg(" video · ")}{formatMinutes(totalMinutesOf(branch.videos))}
                   </p>
                   <p className="tnum mt-0.5 text-[12.5px] text-ink-2">
                     {weekdays && `${weekdaysLabel(weekdays.filter(d => !camp.schedule.mockExamDays.includes(d)))} · `}
-                    {end ? `bitiş ${formatShortDate(end)}` : 'plana girmedi'}
+                    {end ? `bitiş ${formatShortDate(end)}` : msg("plana girmedi")}
                   </p>
                 </div>
               </li>
@@ -368,23 +364,21 @@ function AdditionPreview({
         <div className="callout callout-info">
           <Forward className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />
           <p className="text-[13.5px] text-ink-2">
-            Kamp {formatLongDate(camp.schedule.startDate)} tarihinde başladı. Yeni branşların bugüne kadarki günlere düşecek{' '}
-            <span className="font-semibold text-ink">{carried} görevi</span> geciken olarak kalmaz; sırası bozulmadan{' '}
-            {formatLongDate(addDays(today, 1))} gününden itibaren planlanır.
-          </p>
+            {msg("\n            Kamp ")}{formatLongDate(camp.schedule.startDate)} {msg(" tarihinde başladı. Yeni branşların bugüne kadarki günlere düşecek")}{msg(" ")}
+            <span className="font-semibold text-ink">{carried} {msg(" görevi")}</span> {msg(" geciken olarak kalmaz; sırası bozulmadan")}{msg(" ")}
+            {formatLongDate(addDays(today, 1))} {msg(" gününden itibaren planlanır.\n          ")}</p>
         </div>
       )}
 
       <DeadlineSignal deadline={deadline} suggestion={suggestion} />
       {deadline.kind === 'late' && (
-        <p className="-mt-3 text-[12.5px] text-ink-3">Tempo burada değişmez; istersen ekledikten sonra Kamplar’daki “Tempoyu düzenle” ile ayarla.</p>
+        <p className="-mt-3 text-[12.5px] text-ink-3">{msg("Tempo burada değişmez; istersen ekledikten sonra Kamplar’daki “Tempoyu düzenle” ile ayarla.")}</p>
       )}
 
       {upcoming.length > 0 && (
         <section aria-labelledby="addition-days">
           <h4 id="addition-days" className="mb-2 text-[12.5px] font-semibold tracking-wide text-ink-3 uppercase">
-            Önümüzdeki günler
-          </h4>
+            {msg("\n            Önümüzdeki günler\n          ")}</h4>
           <PreviewWeeks plans={upcoming} capacity={after.capacityMinutes} colorOf={colorOf} today={today} isNew={item => newIds.has(item.playlistId)} />
         </section>
       )}

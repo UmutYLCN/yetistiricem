@@ -4,6 +4,8 @@ import { diffDays, toDateKey } from '../../lib/engine';
 import { formatHours } from '../../lib/format';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { CoverImage, SaveButton } from './CampCover';
+import { msg } from '../../lib/messages';
+
 
 /** Presentation-only examples have no real videos or duration totals to report. */
 export type CatalogPreviewEntry = Pick<CatalogEntry, 'id' | 'name' | 'description' | 'author' | 'subjects' | 'tags' | 'cover' | 'saveCount' | 'createdAt'> & {
@@ -37,7 +39,7 @@ export function CatalogCard({
 }) {
   const stats = 'preview' in entry ? null : entry;
   const label = entry.tags[0] ? `#${entry.tags[0]}` : entry.subjects[0];
-  const badge = own ? 'Senin' : isNew(entry.createdAt, today) ? 'Yeni' : null;
+  const badge = own ? msg('Senin') : isNew(entry.createdAt, today) ? msg('Yeni') : null;
   return (
     <li className="relative min-w-0">
       <button type="button" className="catalog-item group" onClick={() => onOpen(entry.id)}>
@@ -45,7 +47,7 @@ export function CatalogCard({
           {badge && <span className="cover-badge absolute top-2.5 left-2.5">{badge}</span>}
           {stats && (
             <span className="cover-badge tnum absolute bottom-2.5 left-2.5">
-              {stats.videoCount} video · {formatHours(stats.totalMinutes)}
+              {stats.videoCount} {msg(" video · ")}{formatHours(stats.totalMinutes)}
             </span>
           )}
         </CoverImage>

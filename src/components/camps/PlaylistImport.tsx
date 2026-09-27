@@ -17,6 +17,8 @@ import {
 import type { DraftVideo } from '../../utils/youtubeParser';
 import { inspectPlaylistLink } from '../../utils/youtubeParser';
 import type { PlaylistEntry, PlaylistInfo } from '../../utils/youtubePlaylist';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   fetcher: PlaylistFetch;
@@ -71,8 +73,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
     <div>
       <form onSubmit={submit} noValidate>
         <label className="field-label" htmlFor={`${uid}-link`}>
-          YouTube oynatma listesi bağlantısı
-        </label>
+          {msg("\n          YouTube oynatma listesi bağlantısı\n        ")}</label>
         <div className="flex gap-2 max-sm:flex-col">
           <input
             id={`${uid}-link`}
@@ -80,7 +81,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            placeholder="https://www.youtube.com/playlist?list=…"
+            placeholder={msg("https://www.youtube.com/playlist?list=…")}
             value={link}
             onChange={e => {
               setLink(e.target.value);
@@ -93,7 +94,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
           />
           <button type="submit" className="btn btn-secondary shrink-0" disabled={loading}>
             {loading ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Download aria-hidden="true" />}
-            {loading ? 'Getiriliyor…' : 'Listeyi getir'}
+            {loading ? msg("Getiriliyor…") : msg("Listeyi getir")}
           </button>
         </div>
         {problem ? (
@@ -102,9 +103,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
           </p>
         ) : (
           <p id={`${uid}-link-hint`} className="field-hint">
-            Yapıştırınca videolar adları ve gerçek süreleriyle gelir; eklemeden önce seçebilirsin. Herkese açık ve liste dışı
-            listeler okunur, gizli listeler okunamaz.
-          </p>
+            {msg("\n            Yapıştırınca videolar adları ve gerçek süreleriyle gelir; eklemeden önce seçebilirsin. Herkese açık ve liste dışı\n            listeler okunur, gizli listeler okunamaz.\n          ")}</p>
         )}
       </form>
 
@@ -114,8 +113,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
           <p className="pop-in mt-3 flex items-center gap-2 rounded-[10px] bg-forest-tint px-3.5 py-2.5 text-[13px] font-semibold text-forest-strong">
             <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
             <span className="min-w-0 break-words">
-              “{imported.title}” eklendi ({imported.count} video). Başka bir liste yapıştırabilirsin.
-            </span>
+              {msg("\n              “")}{imported.title}{msg("” eklendi (")}{imported.count} {msg(" video). Başka bir liste yapıştırabilirsin.\n            ")}</span>
           </p>
         )}
         {loading && <ReviewSkeleton message="Liste YouTube’dan okunuyor… Uzun listelerde birkaç saniye sürebilir." />}
@@ -123,8 +121,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
       )}
       {showResults && loading && (
         <button type="button" className="btn btn-ghost btn-sm mt-2" onClick={cancel}>
-          Getirmeyi durdur
-        </button>
+          {msg("\n          Getirmeyi durdur\n        ")}</button>
       )}
 
       {state.status === 'failed' && (
@@ -136,8 +133,7 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
             {FAILURE_TEXT[state.failure].retry && (
               <button type="button" className="btn btn-secondary btn-sm mt-2.5" onClick={() => void load(link)}>
                 <RotateCcw aria-hidden="true" />
-                Tekrar dene
-              </button>
+                {msg("\n                Tekrar dene\n              ")}</button>
             )}
           </div>
         </div>
@@ -149,9 +145,8 @@ export function PlaylistImport({ fetcher, knownIds, onImport, importLabel = defa
           heading={state.data.playlist.title || 'Adı olmayan liste'}
           meta={
             <>
-              {state.data.playlist.channelTitle && <>{state.data.playlist.channelTitle} · </>}
-              {state.data.entries.length} video
-            </>
+              {state.data.playlist.channelTitle && <>{state.data.playlist.channelTitle} {msg(" · ")}</>}
+              {state.data.entries.length} {msg(" video\n            ")}</>
           }
           link={{ href: state.data.playlist.url, label: 'Listeyi YouTube’da aç (yeni sekme)' }}
           entries={state.data.entries}
@@ -261,19 +256,17 @@ export function EntryReview({
 
       {truncated && (
         <p className="border-b border-line bg-warn-soft px-3.5 py-2 text-[12.5px] text-warn">
-          Liste YouTube’un sınırından uzun; yalnızca ilk {entries.length} kayıt okunabildi.
-        </p>
+          {msg("\n          Liste YouTube’un sınırından uzun; yalnızca ilk ")}{entries.length} {msg(" kayıt okunabildi.\n        ")}</p>
       )}
 
       {entries.length === 0 ? (
-        <p className="px-3.5 py-5 text-center text-[13px] text-ink-2">Okunacak video yok.</p>
+        <p className="px-3.5 py-5 text-center text-[13px] text-ink-2">{msg("Okunacak video yok.")}</p>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3.5 pt-2.5 pb-2">
             <p className="tnum mr-auto text-[13px] text-ink-2">
               <span className="font-semibold text-ink">
-                {chosen.length}/{selectable.length} video seçili
-              </span>
+                {chosen.length}{msg("/")}{selectable.length} {msg(" video seçili\n              ")}</span>
               {chosen.length > 0 && ` · ${formatMinutes(chosenMinutes)}`}
             </p>
             <div className="flex gap-1">
@@ -283,22 +276,20 @@ export function EntryReview({
                 onClick={() => setSelected(new Set(selectable.map(r => r.index)))}
                 disabled={selectable.length === 0 || chosen.length === selectable.length}
               >
-                Tümünü seç
-              </button>
+                {msg("\n                Tümünü seç\n              ")}</button>
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => setSelected(new Set())}
                 disabled={chosen.length === 0}
               >
-                Seçimi kaldır
-              </button>
+                {msg("\n                Seçimi kaldır\n              ")}</button>
             </div>
             {/* As a stage the add button leads, above the list, so it never hides below the fold. */}
             {stage && (
               <button type="button" className="btn btn-primary max-sm:w-full" onClick={importSelected} disabled={chosen.length === 0}>
                 <ListPlus aria-hidden="true" />
-                {chosen.length > 0 ? importLabel(chosen.length) : 'Eklemek için video seç'}
+                {chosen.length > 0 ? importLabel(chosen.length) : msg("Eklemek için video seç")}
               </button>
             )}
           </div>
@@ -318,14 +309,13 @@ export function EntryReview({
       <footer className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line bg-paper/50 px-3.5 py-3">
         <button type="button" className="btn btn-secondary btn-sm" onClick={importSelected} disabled={chosen.length === 0}>
           <ListPlus aria-hidden="true" />
-          {chosen.length > 0 ? importLabel(chosen.length) : 'Eklemek için video seç'}
+          {chosen.length > 0 ? importLabel(chosen.length) : msg("Eklemek için video seç")}
         </button>
         <p role="status" className="text-[12.5px] text-forest">
           {lastImport !== null && (
             <span className="inline-flex items-center gap-1.5 font-semibold">
               <CircleCheck className="size-4" aria-hidden="true" />
-              {lastImport} video, sırasıyla aşağıya eklendi.
-            </span>
+              {lastImport} {msg(" video, sırasıyla aşağıya eklendi.\n            ")}</span>
           )}
         </p>
       </footer>
@@ -359,7 +349,7 @@ function ReviewItem({ row, checked, onToggle }: { row: ReviewRow; checked: boole
         {video ? (
           <img
             src={video.thumbnailUrl}
-            alt=""
+            alt={msg("")}
             width={64}
             height={36}
             loading="lazy"
@@ -380,7 +370,7 @@ function ReviewItem({ row, checked, onToggle }: { row: ReviewRow; checked: boole
             {video?.channelTitle && <span className="break-words">{video.channelTitle}</span>}
             {label && (
               <>
-                {video?.channelTitle && <span className="max-sm:hidden"> · </span>}
+                {video?.channelTitle && <span className="max-sm:hidden"> {msg(" · ")}</span>}
                 <span
                   id={`${uid}-note`}
                   className={`font-medium max-sm:block ${row.status === 'in-list' || row.status === 'repeat' ? 'text-ink-2' : 'text-warn'}`}
@@ -391,7 +381,7 @@ function ReviewItem({ row, checked, onToggle }: { row: ReviewRow; checked: boole
             )}
           </span>
         </span>
-        <span className="tnum shrink-0 text-[13px] text-ink-2">{video ? formatClock(video.durationSeconds) : '—'}</span>
+        <span className="tnum shrink-0 text-[13px] text-ink-2">{video ? formatClock(video.durationSeconds) : msg("—")}</span>
       </label>
     </li>
   );

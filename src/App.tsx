@@ -73,6 +73,8 @@ import type { NoCampsView } from './components/views/Welcome';
 import { AllCampsPaused, NoBranchesYet, NoCampVideos, NoCampsYet, Welcome } from './components/views/Welcome';
 import { AddBranchWizard } from './components/wizard/AddBranchWizard';
 import { CampWizard } from './components/wizard/CampWizard';
+import { msg, translateTemplate } from './lib/messages';
+
 
 // Every dialog names the camp it edits: with several camps on screen a task may
 // belong to another camp than the one Kamplar manages.
@@ -471,9 +473,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         title: 'Demodan çıkılsın mı?',
         body: (
           <p>
-            Kendi planını kurmak için demodan çıkman gerekiyor{signedIn ? '' : ' ve giriş yapman gerekiyor'}. Demo verileri kaydedilmez ve
-            silinir{startInDemo ? '; kampını kendi planında “Yeni kamp” ile kurabilirsin' : ''}.
-          </p>
+            {msg("\n            Kendi planını kurmak için demodan çıkman gerekiyor")}{signedIn ? msg("") : msg(" ve giriş yapman gerekiyor")}{msg(". Demo verileri kaydedilmez ve\n            silinir")}{startInDemo ? msg("; kampını kendi planında “Yeni kamp” ile kurabilirsin") : msg("")}{msg(".\n          ")}</p>
         ),
         confirmLabel: signedIn ? 'Demodan çık ve kamp oluştur' : 'Demodan çık ve giriş yap',
       });
@@ -523,10 +523,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       body: (
         <>
           <p>
-            <span className="font-semibold text-ink">{branch.subject}</span> ve içindeki {branch.videos.length} video “{camp.name}”
-            planından çıkar{doneCount > 0 && `; ${doneCount} tamamlanma kaydı da silinir`}. Kalan görevler yeniden dağıtılır.
-          </p>
-          {!isDemo && <p>Bu işlem geri alınamaz. Emin değilsen önce Ayarlar’dan yedek indir.</p>}
+            <span className="font-semibold text-ink">{branch.subject}</span> {msg(" ve içindeki ")}{branch.videos.length} {msg(" video “")}{camp.name}{msg("”\n            planından çıkar")}{doneCount > 0 && `; ${doneCount} tamamlanma kaydı da silinir`}{msg(". Kalan görevler yeniden dağıtılır.\n          ")}</p>
+          {!isDemo && <p>{msg("Bu işlem geri alınamaz. Emin değilsen önce Ayarlar’dan yedek indir.")}</p>}
         </>
       ),
     });
@@ -540,17 +538,17 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     if (!target) return;
     const videos = target.branches.reduce((acc, b) => acc + b.videos.length, 0);
     const doneCount = countCompletedVideos(target.branches, data.completedMap);
+    const deletionDetails = `${msg(", ")}${target.branches.length}${msg(" branşı ve ")}${videos}${msg(" videosuyla silinir")}${doneCount > 0 ? translateTemplate('; {count} tamamlanma kaydı da gider', { count: doneCount }) : ''}${msg(". Diğer kampların etkilenmez.")}`;
     const ok = await confirm({
-      title: 'Kamp silinsin mi?',
+      title: msg('Kamp silinsin mi?'),
       tone: 'danger',
-      confirmLabel: 'Kampı sil',
+      confirmLabel: msg('Kampı sil'),
       body: (
         <>
           <p>
-            <span className="font-semibold text-ink">{target.name}</span>, {target.branches.length} branşı ve {videos} videosuyla silinir
-            {doneCount > 0 && `; ${doneCount} tamamlanma kaydı da gider`}. Diğer kampların etkilenmez.
+            <span className="font-semibold text-ink">{target.name}</span>{deletionDetails}
           </p>
-          {!isDemo && <p>Bu işlem geri alınamaz. Emin değilsen önce Ayarlar’dan yedek indir.</p>}
+          {!isDemo && <p>{msg("Bu işlem geri alınamaz. Emin değilsen önce Ayarlar’dan yedek indir.")}</p>}
         </>
       ),
     });
@@ -567,9 +565,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       confirmLabel: 'Duraklat',
       body: (
         <p>
-          <span className="font-semibold text-ink">{target.name}</span> Rotam’dan ve İlerleme’den çıkar. Branşları, ilerlemen ve temposu
-          olduğu gibi saklanır. Devam ettiğinde kalan görevler o günden itibaren yeniden dağıtılır.
-        </p>
+          <span className="font-semibold text-ink">{target.name}</span> {msg(" Rotam’dan ve İlerleme’den çıkar. Branşları, ilerlemen ve temposu\n          olduğu gibi saklanır. Devam ettiğinde kalan görevler o günden itibaren yeniden dağıtılır.\n        ")}</p>
       ),
     });
     if (!ok) return;
@@ -620,9 +616,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       confirmLabel: 'Yayından kaldır',
       body: (
         <p>
-          <span className="font-semibold text-ink">{entry.name}</span> Keşfet’ten kalkar. Kendi kampın ve daha önce ekleyenlerin
-          kampları olduğu gibi kalır.
-        </p>
+          <span className="font-semibold text-ink">{entry.name}</span> {msg(" Keşfet’ten kalkar. Kendi kampın ve daha önce ekleyenlerin\n          kampları olduğu gibi kalır.\n        ")}</p>
       ),
     });
     if (!ok) return;
@@ -646,9 +640,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
           title: 'Kaydedilmemiş değişiklikler var',
           body: (
             <p>
-              Hesabına şu an ulaşılamıyor. Çıkarsan son değişikliklerin bu cihazda saklanır ve buradan tekrar giriş yaptığında hesabına
-              kaydedilir.
-            </p>
+              {msg("\n              Hesabına şu an ulaşılamıyor. Çıkarsan son değişikliklerin bu cihazda saklanır ve buradan tekrar giriş yaptığında hesabına\n              kaydedilir.\n            ")}</p>
           ),
           confirmLabel: 'Yine de çıkış yap',
         });
@@ -706,12 +698,10 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
           </p>
           <ul className="tnum list-disc space-y-0.5 pl-5">
             <li>
-              {summary.camps} kamp, {summary.branches} branş, {summary.videos} video
-            </li>
-            <li>{summary.completed} tamamlanan video</li>
+              {summary.camps} {msg(" kamp, ")}{summary.branches} {msg(" branş, ")}{summary.videos} {msg(" video\n            ")}</li>
+            <li>{summary.completed} {msg(" tamamlanan video")}</li>
             <li>
-              {summary.shifts} ileri taşıma, {summary.notes} gün notu
-            </li>
+              {summary.shifts} {msg(" ileri taşıma, ")}{summary.notes} {msg(" gün notu\n            ")}</li>
           </ul>
           {warnings.map(w => (
             <p key={w} className="text-warn">
@@ -719,8 +709,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
             </p>
           ))}
           <p>
-            Şu anki {data.camps.length} kampın, ilerlemen ve notların bu yedekle <strong>değiştirilecek</strong>.
-          </p>
+            {msg("\n            Şu anki ")}{data.camps.length} {msg(" kampın, ilerlemen ve notların bu yedekle ")}<strong>{msg("değiştirilecek")}</strong>{msg(".\n          ")}</p>
         </>
       ),
     });
@@ -737,11 +726,9 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       body: (
         <>
           <p>
-            {data.camps.length} kamp, {countCompletedVideos(allBranches(data.camps), data.completedMap)} tamamlanan video,{' '}
-            {data.camps.reduce((acc, c) => acc + c.shiftEvents.length, 0)} ileri taşıma ve {Object.keys(data.dayNotes).length} gün notu
-            hesabından ve giriş yaptığın her cihazdan silinir.
-          </p>
-          <p className="font-semibold text-ink">Bu işlem geri alınamaz. Gerekirse önce yedek indir.</p>
+            {data.camps.length} {msg(" kamp, ")}{countCompletedVideos(allBranches(data.camps), data.completedMap)} {msg(" tamamlanan video,")}{msg(" ")}
+            {data.camps.reduce((acc, c) => acc + c.shiftEvents.length, 0)} {msg(" ileri taşıma ve ")}{Object.keys(data.dayNotes).length} {msg(" gün notu\n            hesabından ve giriş yaptığın her cihazdan silinir.\n          ")}</p>
+          <p className="font-semibold text-ink">{msg("Bu işlem geri alınamaz. Gerekirse önce yedek indir.")}</p>
         </>
       ),
     });
@@ -775,16 +762,15 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       actions={
         <div className="flex items-center justify-between gap-x-3 max-sm:w-full sm:justify-end">
           <div className="flex items-center gap-1">
-            <button type="button" className="icon-btn" onClick={() => selectDate(addDays(selectedDate, -1))} aria-label="Önceki gün">
+            <button type="button" className="icon-btn" onClick={() => selectDate(addDays(selectedDate, -1))} aria-label={msg("Önceki gün")}>
               <ChevronLeft aria-hidden="true" />
             </button>
             {!isToday && (
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectDate(today)}>
                 <CalendarCheck aria-hidden="true" />
-                Bugüne dön
-              </button>
+                {msg("\n                Bugüne dön\n              ")}</button>
             )}
-            <button type="button" className="icon-btn" onClick={() => selectDate(addDays(selectedDate, 1))} aria-label="Sonraki gün">
+            <button type="button" className="icon-btn" onClick={() => selectDate(addDays(selectedDate, 1))} aria-label={msg("Sonraki gün")}>
               <ChevronRight aria-hidden="true" />
             </button>
           </div>
@@ -859,7 +845,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         </div>
         {/* Side by side under the day below xl; from xl a column level with the week strip, under the overdue card if any. */}
         <aside
-          aria-label="Özet"
+          aria-label={msg("Özet")}
           className={`mt-2 grid min-w-0 content-start gap-4 sm:grid-cols-2 xl:col-start-2 xl:mt-0 xl:grid-cols-1 ${hasOverdue ? 'xl:row-start-2' : 'xl:row-start-1'}`}
         >
           <ProgressCard
@@ -995,7 +981,6 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     content = (
       <SettingsView
         account={account.state}
-        today={today}
         onRename={account.rename}
         onSaveProfile={account.saveProfile}
         onUploadAvatar={account.uploadAvatar}
@@ -1033,8 +1018,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   return (
     <div className="min-h-dvh lg:flex">
       <a href="#main" className="skip-link">
-        İçeriğe geç
-      </a>
+        {msg("\n        İçeriğe geç\n      ")}</a>
       <Sidebar
         view={view}
         onNavigate={navigate}
@@ -1063,28 +1047,24 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-dashed border-ink-3/60 bg-card px-4 py-3">
                   <Eye className="size-4 shrink-0 text-ink-2" aria-hidden="true" />
                   <p className="min-w-[12rem] flex-1 text-[14px] text-ink-2">
-                    <span className="font-semibold text-ink">Demo önizleme.</span> Örnek bir kamp; değişiklikler kaydedilmez, kendi
-                    verilerine dokunulmaz.
-                  </p>
+                    <span className="font-semibold text-ink">{msg("Demo önizleme.")}</span> {msg(" Örnek bir kamp; değişiklikler kaydedilmez, kendi\n                    verilerine dokunulmaz.\n                  ")}</p>
                   <button type="button" className="btn btn-secondary btn-sm" onClick={exitDemo}>
                     <LogOut aria-hidden="true" />
-                    Demodan çık
-                  </button>
+                    {msg("\n                    Demodan çık\n                  ")}</button>
                 </div>
               )}
               {!isDemo && hasLegacy && !legacyDismissed && (
                 <div className="callout callout-warn items-start">
                   <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
                   <div className="min-w-0 flex-1 text-[13.5px] text-ink-2">
-                    <p className="font-semibold text-ink">Eski sürümden kalan örnek veriler var.</p>
+                    <p className="font-semibold text-ink">{msg("Eski sürümden kalan örnek veriler var.")}</p>
                     <p className="mt-0.5">
-                      Bazı branşların video bağlantıları ve süreleri gerçek değil. İlerlemen korunuyor.{' '}
+                      {msg("\n                      Bazı branşların video bağlantıları ve süreleri gerçek değil. İlerlemen korunuyor.")}{msg(" ")}
                       <button type="button" className="font-semibold text-forest underline" onClick={() => setView('camps')}>
-                        Kamplara bak
-                      </button>
+                        {msg("\n                        Kamplara bak\n                      ")}</button>
                     </p>
                   </div>
-                  <button type="button" className="icon-btn -my-1.5 size-8" onClick={() => setLegacyDismissed(true)} aria-label="Uyarıyı kapat">
+                  <button type="button" className="icon-btn -my-1.5 size-8" onClick={() => setLegacyDismissed(true)} aria-label={msg("Uyarıyı kapat")}>
                     <X aria-hidden="true" />
                   </button>
                 </div>
@@ -1105,7 +1085,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
                       type="button"
                       className="icon-btn -my-1.5 size-8"
                       onClick={() => actions.dismissNotice(notice.id)}
-                      aria-label="Bildirimi kapat"
+                      aria-label={msg("Bildirimi kapat")}
                     >
                       <X aria-hidden="true" />
                     </button>

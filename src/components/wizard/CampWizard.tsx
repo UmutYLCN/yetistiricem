@@ -22,6 +22,8 @@ import { BranchSources } from './BranchSources';
 import { CampDatesFields, CampNameField, WorkloadNote } from './CampDetails';
 import { PlanPreview } from './PlanPreview';
 import { WizardStepper } from './WizardStepper';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   open: boolean;
@@ -137,14 +139,14 @@ export function CampWizard({ open, onClose, today, seed, habits, onCreate }: Pro
     <Dialog
       open={open}
       onClose={onClose}
-      title="Yeni kamp"
+      title={msg("Yeni kamp")}
       width={880}
       tall
       dismissOnBackdrop={false}
       subheader={
         <WizardStepper
           label="Kamp oluşturma adımları"
-          titles={STEPS.map(s => s.title)}
+          titles={STEPS.map(s => msg(s.title))}
           step={step}
           reached={reached}
           canVisit={s => s <= reached && ([0, 1, 2] as Step[]).every(p => p >= s || stepValid(p))}
@@ -154,28 +156,25 @@ export function CampWizard({ open, onClose, today, seed, habits, onCreate }: Pro
       footer={
         <>
           <p className="tnum mr-auto min-w-0 truncate text-[12.5px] text-ink-3 max-sm:hidden">
-            {draft.branches.length > 0 ? `${draft.branches.length} branş · ${videos} video · ${formatMinutes(minutes)}` : 'Taslak kapatınca da korunur.'}
+            {draft.branches.length > 0 ? `${draft.branches.length} branş · ${videos} video · ${formatMinutes(minutes)}` : msg("Taslak kapatınca da korunur.")}
           </p>
           {step > 0 ? (
             <button type="button" className="btn btn-secondary max-sm:flex-1" onClick={() => goTo((step - 1) as Step)}>
               <ArrowLeft aria-hidden="true" />
-              Geri
-            </button>
+              {msg("\n              Geri\n            ")}</button>
           ) : (
             <button type="button" className="btn btn-secondary max-sm:flex-1" onClick={onClose}>
-              Vazgeç
-            </button>
+              {msg("\n              Vazgeç\n            ")}</button>
           )}
           {step < 3 ? (
             <button type="button" className="btn btn-primary max-sm:flex-1" onClick={next}>
-              {step === 2 ? 'Önizle' : 'Devam'}
+              {step === 2 ? msg("Önizle") : msg("Devam")}
               <ArrowRight aria-hidden="true" />
             </button>
           ) : (
             <button type="button" className="btn btn-primary max-sm:flex-1" onClick={create}>
               <Plus aria-hidden="true" />
-              Kampı oluştur
-            </button>
+              {msg("\n              Kampı oluştur\n            ")}</button>
           )}
         </>
       }
@@ -211,8 +210,8 @@ export function CampWizard({ open, onClose, today, seed, habits, onCreate }: Pro
         {step === 3 && previewCamp && (
           <div className="space-y-4">
             <p className="text-[14px] text-ink-2">
-              <span className="font-semibold text-ink">{draft.name.trim()}</span> ·{' '}
-              {draft.rhythm.mode === 'manual' ? 'Branşlar günlere senin seçiminle yerleşti' : 'Otomatik dağıtım'}
+              <span className="font-semibold text-ink">{draft.name.trim()}</span> {msg(" ·")}{msg(" ")}
+              {draft.rhythm.mode === 'manual' ? msg("Branşlar günlere senin seçiminle yerleşti") : msg("Otomatik dağıtım")}
             </p>
             <PlanPreview camp={previewCamp} today={today} onUseHours={applyHours} onEditRhythm={() => goTo(2)} />
           </div>

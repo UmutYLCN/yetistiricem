@@ -5,6 +5,8 @@ import { withVideos } from '../../lib/camps';
 import { formatMinutes } from '../../lib/format';
 import { MAX_BRANCH_NAME } from '../../lib/studyCamp';
 import { PALETTE, SUBJECTS, resolveColor } from '../../lib/subjects';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   branch: SubjectPlaylist;
@@ -34,8 +36,7 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove, fres
         <span className="mt-1 w-1.5 shrink-0 self-stretch rounded-full" style={{ background: color.solid }} aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <label htmlFor={`${uid}-name`} className="sr-only">
-            Branş adı
-          </label>
+            {msg("\n            Branş adı\n          ")}</label>
           <input
             id={`${uid}-name`}
             className="branch-name-input"
@@ -54,11 +55,11 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove, fres
           </datalist>
           <p id={`${uid}-meta`} className="tnum mt-0.5 truncate text-[12.5px] text-ink-3">
             <span className="text-ink-2">{branch.title}</span>
-            {branch.channelName && !isDemo && <> · {branch.channelName}</>} · {branch.videos.length} video · {formatMinutes(minutes)}
+            {branch.channelName && !isDemo && <> {msg(" · ")}{branch.channelName}</>} {msg(" · ")}{branch.videos.length} {msg(" video · ")}{formatMinutes(minutes)}
           </p>
-          {isDemo && <span className="chip chip-demo mt-1.5">Demo şablon · bağlantısız</span>}
+          {isDemo && <span className="chip chip-demo mt-1.5">{msg("Demo şablon · bağlantısız")}</span>}
           {sharedName && !error && (
-            <p className="mt-1 text-[12px] text-ink-3">Aynı adda başka branş var; otomatik dağıtımda ikisi tek branş sayılır.</p>
+            <p className="mt-1 text-[12px] text-ink-3">{msg("Aynı adda başka branş var; otomatik dağıtımda ikisi tek branş sayılır.")}</p>
           )}
           {error && (
             <p id={`${uid}-error`} className="field-error">
@@ -88,8 +89,7 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove, fres
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div className="min-w-0">
               <label className="field-label" htmlFor={`${uid}-title`}>
-                Kaynak adı
-              </label>
+                {msg("\n                Kaynak adı\n              ")}</label>
               <input
                 id={`${uid}-title`}
                 className="input"
@@ -99,7 +99,7 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove, fres
               />
             </div>
             <fieldset>
-              <legend className="field-label">Renk</legend>
+              <legend className="field-label">{msg("Renk")}</legend>
               <div className="flex flex-wrap gap-1">
                 {PALETTE.map(option => {
                   const selected = option.key === color.key;
@@ -127,7 +127,7 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove, fres
 
           <div>
             <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <p className="text-[13px] font-semibold text-ink">Videolar, sırasıyla</p>
+              <p className="text-[13px] font-semibold text-ink">{msg("Videolar, sırasıyla")}</p>
               {branch.playlistUrl && (
                 <a
                   href={branch.playlistUrl}
@@ -135,9 +135,8 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove, fres
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-forest hover:underline"
                 >
-                  YouTube’da aç
-                  <ExternalLink className="size-3.5" aria-hidden="true" />
-                  <span className="sr-only">(yeni sekme)</span>
+                  {msg("\n                  YouTube’da aç\n                  ")}<ExternalLink className="size-3.5" aria-hidden="true" />
+                  <span className="sr-only">{msg("(yeni sekme)")}</span>
                 </a>
               )}
             </div>
@@ -159,7 +158,7 @@ export function BranchCard({ branch, error, sharedName, onChange, onRemove, fres
                   </button>
                 </li>
               ))}
-              {branch.videos.length === 0 && <li className="px-3 py-4 text-center text-[13px] text-ink-3">Video kalmadı.</li>}
+              {branch.videos.length === 0 && <li className="px-3 py-4 text-center text-[13px] text-ink-3">{msg("Video kalmadı.")}</li>}
             </ol>
           </div>
         </div>

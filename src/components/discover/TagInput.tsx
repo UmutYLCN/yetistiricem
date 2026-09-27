@@ -2,6 +2,8 @@ import { useId, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Plus, X } from 'lucide-react';
 import { MAX_TAGS, normalizeTag } from '../../lib/catalog';
+import { msg, translateTemplate } from '../../lib/messages';
+
 
 /**
  * Interest tags as "#chips": type a word and press Enter (or space / comma);
@@ -44,13 +46,12 @@ export function TagInput({ tags, onChange, suggestions, hideLabel = false }: { t
   return (
     <div>
       <label htmlFor={`${uid}-tag`} className={hideLabel ? 'visually-hidden' : 'field-label'}>
-        İlgi etiketleri
-      </label>
+        {msg("\n        İlgi etiketleri\n      ")}</label>
       <div className="flex min-h-[46px] flex-wrap items-center gap-1.5 rounded-[10px] border border-line-strong bg-field px-2 py-1.5 focus-within:border-forest focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-forest)_22%,transparent)]">
         {tags.map(tag => (
           <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-forest-soft py-1 pr-1 pl-2.5 text-[13px] font-medium text-forest-strong">
-            #{tag}
-            <button type="button" className="grid size-5 place-items-center rounded-full hover:bg-forest/20" onClick={() => onChange(tags.filter(t => t !== tag))} aria-label={`#${tag} etiketini çıkar`}>
+            {msg("\n            #")}{tag}
+            <button type="button" className="grid size-5 place-items-center rounded-full hover:bg-forest/20" onClick={() => onChange(tags.filter(t => t !== tag))} aria-label={translateTemplate('#{tag} etiketini çıkar', { tag })}>
               <X className="size-3" aria-hidden="true" />
             </button>
           </span>
@@ -59,7 +60,7 @@ export function TagInput({ tags, onChange, suggestions, hideLabel = false }: { t
           id={`${uid}-tag`}
           className="min-w-[8rem] flex-1 bg-transparent px-1.5 py-1 text-[15px] text-ink outline-none placeholder:text-ink-3"
           value={draft}
-          placeholder={full ? 'Etiketler tamam' : tags.length === 0 ? '#yks, #matematik, #yazılım…' : 'Bir etiket daha'}
+          placeholder={full ? msg("Etiketler tamam") : tags.length === 0 ? msg("#yks, #matematik, #yazılım…") : msg("Bir etiket daha")}
           disabled={full}
           maxLength={30}
           onChange={event => {
@@ -78,16 +79,15 @@ export function TagInput({ tags, onChange, suggestions, hideLabel = false }: { t
         </p>
       ) : (
         <p id={`${uid}-hint`} className="field-hint">
-          Kampını arayanlar seni bu etiketlerle bulur. Yazıp Enter’a bas; en fazla {MAX_TAGS} tane ({tags.length}/{MAX_TAGS}).
-        </p>
+          {msg("\n          Kampını arayanlar seni bu etiketlerle bulur. Yazıp Enter’a bas; en fazla ")}{MAX_TAGS} {msg(" tane (")}{tags.length}{msg("/")}{MAX_TAGS}{msg(").\n        ")}</p>
       )}
       {offered.length > 0 && !full && (
         <div className="mt-4">
-          <p className="text-[12.5px] font-medium text-ink-3">Öneriler</p>
+          <p className="text-[12.5px] font-medium text-ink-3">{msg("Öneriler")}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {offered.map(tag => (
               <button key={tag} type="button" className="filter-chip inline-flex items-center gap-1" onClick={() => add(tag)}>
-                <Plus className="size-3.5" aria-hidden="true" />#{tag}
+                <Plus className="size-3.5" aria-hidden="true" />{msg("#")}{tag}
               </button>
             ))}
           </div>

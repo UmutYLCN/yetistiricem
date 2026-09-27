@@ -7,6 +7,8 @@ import type { ProfileField, Stage, StudentProfile } from '../../lib/studentProfi
 import { AVATAR_SHAPES, MAX_BIO, MAX_PROFILE_TEXT, STAGE_OPTIONS, fieldsFor, gradeLabel, gradesFor, isAvatarShape, stageLabel } from '../../lib/studentProfile';
 import { ProfileAvatar, ShapeSvg } from './ProfileAvatar';
 import { SHAPE_ART } from './shapeArt';
+import { msg } from '../../lib/messages';
+
 
 const STAGE_ICONS: Record<Stage, LucideIcon> = {
   'high-school': School,
@@ -22,7 +24,7 @@ export function StageChip({ stage, className = '' }: { stage: Stage; className?:
   return (
     <p className={`chip chip-forest ${className}`}>
       <Icon aria-hidden="true" />
-      {stageLabel(stage)}
+      {msg(stageLabel(stage))}
     </p>
   );
 }
@@ -64,7 +66,7 @@ export function AvatarPicker({ value, name, onChange, onUpload, preview = true }
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
       {preview && <ProfileAvatar avatar={value} name={name} size={84} className="self-center sm:self-auto" />}
       <div className="min-w-0 flex-1">
-        <div role="radiogroup" aria-label="Profil resmi" className="grid grid-cols-8 gap-2">
+        <div role="radiogroup" aria-label={msg("Profil resmi")} className="grid grid-cols-8 gap-2">
           {AVATAR_SHAPES.map(shape => {
             const selected = value === shape;
             return (
@@ -73,8 +75,8 @@ export function AvatarPicker({ value, name, onChange, onUpload, preview = true }
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                aria-label={SHAPE_ART[shape].name}
-                title={SHAPE_ART[shape].name}
+                aria-label={msg(SHAPE_ART[shape].name)}
+                title={msg(SHAPE_ART[shape].name)}
                 onClick={() => {
                   setError(null);
                   onChange(shape);
@@ -105,13 +107,12 @@ export function AvatarPicker({ value, name, onChange, onUpload, preview = true }
           />
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={busy}>
             <ImageUp aria-hidden="true" />
-            {busy ? 'Hazırlanıyor…' : photo ? 'Başka fotoğraf seç' : 'Kendi fotoğrafını yükle'}
+            {busy ? msg("Hazırlanıyor…") : photo ? msg("Başka fotoğraf seç") : msg("Kendi fotoğrafını yükle")}
           </button>
           {value !== null && (
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange(null)}>
               <Trash2 aria-hidden="true" />
-              Resmi kaldır
-            </button>
+              {msg("\n              Resmi kaldır\n            ")}</button>
           )}
         </div>
         {error ? (
@@ -119,7 +120,7 @@ export function AvatarPicker({ value, name, onChange, onUpload, preview = true }
             {error}
           </p>
         ) : (
-          <p className="field-hint">Fotoğrafın kare olarak kırpılır. Profil resmin Keşfet’te kamplarının yanında görünür.</p>
+          <p className="field-hint">{msg("Fotoğrafın kare olarak kırpılır. Profil resmin Keşfet’te kamplarının yanında görünür.")}</p>
         )}
       </div>
     </div>
@@ -131,7 +132,7 @@ export function StagePicker({ value, onChange }: { value: Stage | null; onChange
   const uid = useId();
   return (
     <fieldset>
-      <legend className="field-label">Şu an ne yapıyorsun?</legend>
+      <legend className="field-label">{msg("Şu an ne yapıyorsun?")}</legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {STAGE_OPTIONS.map(option => {
           const Icon = STAGE_ICONS[option.stage];
@@ -143,8 +144,8 @@ export function StagePicker({ value, onChange }: { value: Stage | null; onChange
                 <Icon aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] leading-snug font-semibold text-ink">{option.label}</span>
-                <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-2">{option.hint}</span>
+                <span className="block text-[14px] leading-snug font-semibold text-ink">{msg(option.label)}</span>
+                <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-2">{msg(option.hint)}</span>
               </span>
               <span className="choice-card-check" aria-hidden="true">
                 {checked && <Check strokeWidth={3} />}
@@ -170,13 +171,13 @@ export function StageFields({ profile, onChange }: { profile: StudentProfile; on
           return (
             <div key={spec.field}>
               <label htmlFor={id} className="field-label">
-                {spec.label}
+                {msg(spec.label)}
               </label>
               <select id={id} className="input" value={profile.grade ?? ''} onChange={event => onChange('grade', event.target.value || null)}>
-                <option value="">Seç</option>
+                <option value="">{msg("Seç")}</option>
                 {gradesFor(profile.stage).map(grade => (
                   <option key={grade} value={grade}>
-                    {gradeLabel(grade)}
+                    {msg(gradeLabel(grade))}
                   </option>
                 ))}
               </select>
@@ -186,14 +187,14 @@ export function StageFields({ profile, onChange }: { profile: StudentProfile; on
         return (
           <div key={spec.field}>
             <label htmlFor={id} className="field-label">
-              {spec.label}
+              {msg(spec.label)}
             </label>
             <input
               id={id}
               className="input"
               value={profile[spec.field] ?? ''}
               maxLength={MAX_PROFILE_TEXT}
-              placeholder={spec.placeholder}
+              placeholder={msg(spec.placeholder)}
               autoComplete="off"
               onChange={event => onChange(spec.field, event.target.value)}
             />
@@ -211,7 +212,7 @@ export function BioField({ value, onChange }: { value: string | null; onChange: 
   return (
     <div>
       <label htmlFor={`${uid}-bio`} className="field-label">
-        Hakkında <span className="font-normal text-ink-3">(isteğe bağlı)</span>
+        {msg("\n        Hakkında ")}<span className="font-normal text-ink-3">{msg("(isteğe bağlı)")}</span>
       </label>
       <textarea
         id={`${uid}-bio`}
@@ -219,14 +220,14 @@ export function BioField({ value, onChange }: { value: string | null; onChange: 
         rows={3}
         value={value ?? ''}
         maxLength={MAX_BIO}
-        placeholder="Örn. 2027’de tıp kazanmak için çalışıyorum. Her gün 3 saat, hafta sonu deneme."
+        placeholder={msg("Örn. 2027’de tıp kazanmak için çalışıyorum. Her gün 3 saat, hafta sonu deneme.")}
         aria-describedby={`${uid}-bio-note`}
         onChange={event => onChange(event.target.value)}
       />
       <p id={`${uid}-bio-note`} className="field-hint flex justify-between gap-3">
-        <span>Hedeflerin, neye çalıştığın ya da kendine bir not.</span>
+        <span>{msg("Hedeflerin, neye çalıştığın ya da kendine bir not.")}</span>
         <span className={`tnum shrink-0 ${length >= MAX_BIO ? 'text-warn' : ''}`}>
-          {length}/{MAX_BIO}
+          {length}{msg("/")}{MAX_BIO}
         </span>
       </p>
     </div>

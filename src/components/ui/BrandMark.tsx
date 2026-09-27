@@ -1,3 +1,4 @@
+import { msg } from '../../lib/messages';
 /**
  * The app mark (also `public/favicon.svg`): a clock ring swept almost all the
  * way round, a check inside, and the orange "today" dot where the ring meets
@@ -18,7 +19,7 @@ export function BrandMark({ size = 32 }: { size?: number }) {
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={`font-semibold tracking-[-0.02em] text-ink ${className}`}>
-      yetişir<span className="text-forest">.</span>
+      {msg("\n      yetişir")}<span className="text-forest">{msg(".")}</span>
     </span>
   );
 }

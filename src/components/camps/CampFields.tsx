@@ -4,6 +4,8 @@ import { MAX_BRANCH_NAME } from '../../lib/studyCamp';
 import { PALETTE, SUBJECTS, defaultColorKey } from '../../lib/subjects';
 import type { CampFieldValues } from './campForm';
 import { MAX_SOURCE_NAME } from './campForm';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   values: CampFieldValues;
@@ -24,14 +26,13 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
         <label className="field-label" htmlFor={`${uid}-subject`}>
-          Branş adı
-        </label>
+          {msg("\n          Branş adı\n        ")}</label>
         <input
           id={`${uid}-subject`}
           className="input"
           maxLength={MAX_BRANCH_NAME}
           list={`${uid}-subjects`}
-          placeholder="ör. Matematik"
+          placeholder={msg("ör. Matematik")}
           value={values.subject}
           onChange={e => set({ subject: e.target.value })}
           aria-invalid={subjectError ? true : undefined}
@@ -49,20 +50,18 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
           </p>
         ) : (
           <p id={`${uid}-subject-hint`} className="field-hint">
-            Planda bu adla görünür.
-          </p>
+            {msg("\n            Planda bu adla görünür.\n          ")}</p>
         )}
       </div>
 
       <div>
         <label className="field-label" htmlFor={`${uid}-title`}>
-          Kaynak adı
-        </label>
+          {msg("\n          Kaynak adı\n        ")}</label>
         <input
           id={`${uid}-title`}
           className="input"
           maxLength={MAX_SOURCE_NAME}
-          placeholder="ör. TYT Matematik kampı"
+          placeholder={msg("ör. TYT Matematik kampı")}
           value={values.title}
           onChange={e => set({ title: e.target.value })}
           aria-invalid={titleError ? true : undefined}
@@ -76,7 +75,7 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
       </div>
 
       <fieldset className="sm:col-span-2">
-        <legend className="field-label">Renk</legend>
+        <legend className="field-label">{msg("Renk")}</legend>
         <div className="flex flex-wrap gap-1">
           {PALETTE.map(color => {
             const selected = color.key === activeColor;
@@ -100,13 +99,13 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
 
       <div>
         <label className="field-label" htmlFor={`${uid}-channel`}>
-          Kanal / kaynak <span className="font-normal text-ink-3">(isteğe bağlı)</span>
+          {msg("\n          Kanal / kaynak ")}<span className="font-normal text-ink-3">{msg("(isteğe bağlı)")}</span>
         </label>
         <input
           id={`${uid}-channel`}
           className="input"
           maxLength={80}
-          placeholder="Videoların kanalı"
+          placeholder={msg("Videoların kanalı")}
           value={values.channelName}
           onChange={e => set({ channelName: e.target.value })}
         />
@@ -114,13 +113,13 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
 
       <div>
         <label className="field-label" htmlFor={`${uid}-playlist`}>
-          Oynatma listesi <span className="font-normal text-ink-3">(isteğe bağlı)</span>
+          {msg("\n          Oynatma listesi ")}<span className="font-normal text-ink-3">{msg("(isteğe bağlı)")}</span>
         </label>
         <input
           id={`${uid}-playlist`}
           className="input"
           inputMode="url"
-          placeholder="https://www.youtube.com/playlist?list=…"
+          placeholder={msg("https://www.youtube.com/playlist?list=…")}
           value={values.playlistUrl}
           onChange={e => set({ playlistUrl: e.target.value })}
           aria-invalid={playlistError ? true : undefined}
@@ -132,8 +131,7 @@ export function CampFields({ values, onChange, errors, showErrors }: Props) {
           </p>
         ) : (
           <p id={`${uid}-playlist-hint`} className="field-hint">
-            Kaynağa dönmek için saklanır. Videoları listeden almak için “Oynatma listesi” ile içe aktar.
-          </p>
+            {msg("\n            Kaynağa dönmek için saklanır. Videoları listeden almak için “Oynatma listesi” ile içe aktar.\n          ")}</p>
         )}
       </div>
     </div>

@@ -4,6 +4,8 @@ import type { ApiResult, PasswordSignUpResult } from '../../lib/catalogApi';
 import { MAX_DISPLAY_NAME, displayNameProblem } from '../../lib/catalog';
 import { SignInForm } from '../auth/SignInForm';
 import { Dialog } from '../ui/Dialog';
+import { msg } from '../../lib/messages';
+
 
 interface SignInProps {
   open: boolean;
@@ -20,7 +22,7 @@ export function SignInDialog({ open, onClose, onSignIn, onSignUp, onGoogle }: Si
       open={open}
       onClose={onClose}
       width={440}
-      title="Giriş yap"
+      title={msg("Giriş yap")}
       description="Kamp yayınlamak ve kendi planını kurmak için giriş yapman gerekir."
     >
       {open && <SignInForm onSignIn={onSignIn} onSignUp={onSignUp} onGoogle={onGoogle} />}
@@ -69,24 +71,21 @@ export function RenameDialog({ open, current, onClose, onSave }: RenameProps) {
       open={open}
       onClose={onClose}
       width={420}
-      title="Görünen adın"
+      title={msg("Görünen adın")}
       description="Yayınladığın kamplarda bu ad görünür."
       dismissOnBackdrop={false}
       footer={
         <>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Vazgeç
-          </button>
+            {msg("\n            Vazgeç\n          ")}</button>
           <button type="submit" form={`${uid}-form`} className="btn btn-primary" disabled={busy}>
-            Kaydet
-          </button>
+            {msg("\n            Kaydet\n          ")}</button>
         </>
       }
     >
       <form id={`${uid}-form`} onSubmit={event => void save(event)} noValidate>
         <label htmlFor={`${uid}-name`} className="field-label">
-          Ad
-        </label>
+          {msg("\n          Ad\n        ")}</label>
         <input
           id={`${uid}-name`}
           className="input"

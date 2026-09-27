@@ -7,6 +7,8 @@ import type { StudentProfile } from '../../lib/studentProfile';
 import { EMPTY_PROFILE } from '../../lib/studentProfile';
 import { Dialog } from '../ui/Dialog';
 import { AvatarPicker, BioField, StageFields, StagePicker } from './ProfileForm';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   open: boolean;
@@ -79,9 +81,9 @@ export function OnboardingDialog({ open, displayName, profile, onRename, onSave,
         if (!busy) void finish(true);
       }}
       width={600}
-      eyebrow={`Adım ${step + 1} / ${STEPS.length}`}
-      title={title}
-      description={description}
+      eyebrow={`${msg('Adım')} ${step + 1} / ${STEPS.length}`}
+      title={msg(title)}
+      description={msg(description)}
       dismissOnBackdrop={false}
       subheader={
         <div className="flex gap-1.5" aria-hidden="true">
@@ -95,15 +97,13 @@ export function OnboardingDialog({ open, displayName, profile, onRename, onSave,
           {step > 0 ? (
             <button type="button" className="btn btn-ghost mr-auto" onClick={() => setStep(step - 1)} disabled={busy}>
               <ArrowLeft aria-hidden="true" />
-              Geri
-            </button>
+              {msg("\n              Geri\n            ")}</button>
           ) : (
             <button type="button" className="btn btn-ghost mr-auto" onClick={() => void finish(true)} disabled={busy}>
-              Şimdilik geç
-            </button>
+              {msg("\n              Şimdilik geç\n            ")}</button>
           )}
           <button type="submit" form={`${uid}-form`} className="btn btn-primary" disabled={busy || (step === 1 && draft.stage === null)}>
-            {last ? (busy ? 'Kaydediliyor…' : 'Başlayalım') : 'Devam'}
+            {last ? (busy ? msg("Kaydediliyor…") : msg("Başlayalım")) : msg("Devam")}
             {!last && <ArrowRight aria-hidden="true" />}
           </button>
         </>
@@ -115,8 +115,7 @@ export function OnboardingDialog({ open, displayName, profile, onRename, onSave,
             <AvatarPicker value={draft.avatar} name={name} onChange={avatar => setDraft(d => ({ ...d, avatar }))} onUpload={onUploadAvatar} />
             <div>
               <label htmlFor={`${uid}-name`} className="field-label">
-                Adın
-              </label>
+                {msg("\n                Adın\n              ")}</label>
               <input
                 id={`${uid}-name`}
                 className="input"
@@ -136,8 +135,7 @@ export function OnboardingDialog({ open, displayName, profile, onRename, onSave,
                 </p>
               ) : (
                 <p id={`${uid}-name-note`} className="field-hint">
-                  Keşfet’te yayınladığın kamplarda bu ad görünür; e-postan gösterilmez.
-                </p>
+                  {msg("\n                  Keşfet’te yayınladığın kamplarda bu ad görünür; e-postan gösterilmez.\n                ")}</p>
               )}
             </div>
           </>

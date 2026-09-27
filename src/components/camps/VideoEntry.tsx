@@ -9,6 +9,8 @@ import { PlaylistImport } from './PlaylistImport';
 import type { SourceKind } from './SourcePicker';
 import { SourcePicker } from './SourcePicker';
 import { VideoLinksImport } from './VideoLinksImport';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   drafts: DraftVideo[];
@@ -65,9 +67,9 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error, onPla
       {drafts.length > 0 ? (
         <div className="mt-4">
           <div className="mb-2 flex items-baseline justify-between gap-3">
-            <p className="text-[13px] font-semibold text-ink">Eklenecek videolar</p>
+            <p className="text-[13px] font-semibold text-ink">{msg("Eklenecek videolar")}</p>
             <p className="tnum text-[12.5px] text-ink-3">
-              {drafts.length} video · {formatMinutes(total)}
+              {drafts.length} {msg(" video · ")}{formatMinutes(total)}
             </p>
           </div>
           <ol className="max-h-[260px] overflow-y-auto rounded-[10px] border border-line">
@@ -81,7 +83,7 @@ export function VideoEntry({ drafts, onChange, existingIds, offset, error, onPla
                   <span className="block truncate text-[12px] text-ink-3">
                     {draft.youtubeId ? (
                       <>
-                        {draft.channelName && `${draft.channelName} · `}youtu.be/{draft.youtubeId}
+                        {draft.channelName && `${draft.channelName} · `}{msg("youtu.be/")}{draft.youtubeId}
                       </>
                     ) : (
                       'Elle eklenen konu · bağlantısız'

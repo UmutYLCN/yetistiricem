@@ -16,6 +16,8 @@ import type { SourceKind } from '../camps/SourcePicker';
 import { SourcePicker } from '../camps/SourcePicker';
 import { VideoLinksImport } from '../camps/VideoLinksImport';
 import { FetchingStage } from './FetchingStage';
+import { msg } from '../../lib/messages';
+
 
 const NEW_BRANCH = '__new__';
 
@@ -123,7 +125,7 @@ export function SourceComposer({ branches, onChange, campYoutubeIds = [], usedCo
   if (mode === 'playlist' && pState.status === 'loading') {
     stage = (
       <FetchingStage
-        title="Liste YouTube’dan okunuyor…"
+        title={msg("Liste YouTube’dan okunuyor…")}
         detail="Videoların adları, sırası ve gerçek süreleri geliyor. Uzun listelerde birkaç saniye sürebilir."
         onCancel={playlist.cancel}
       />
@@ -138,9 +140,8 @@ export function SourceComposer({ branches, onChange, campYoutubeIds = [], usedCo
           heading={info.title || 'Adı olmayan liste'}
           meta={
             <>
-              {info.channelTitle && <>{info.channelTitle} · </>}
-              {pState.data.entries.length} video
-            </>
+              {info.channelTitle && <>{info.channelTitle} {msg(" · ")}</>}
+              {pState.data.entries.length} {msg(" video\n            ")}</>
           }
           link={{ href: info.url, label: 'Listeyi YouTube’da aç (yeni sekme)' }}
           entries={pState.data.entries}
@@ -157,7 +158,7 @@ export function SourceComposer({ branches, onChange, campYoutubeIds = [], usedCo
   } else if (mode === 'videos' && vState.status === 'loading') {
     stage = (
       <FetchingStage
-        title="Videolar YouTube’dan okunuyor…"
+        title={msg("Videolar YouTube’dan okunuyor…")}
         detail="Başlıklar, kanallar ve gerçek süreler geliyor."
         onCancel={videoFetch.reset}
       />
@@ -189,8 +190,7 @@ export function SourceComposer({ branches, onChange, campYoutubeIds = [], usedCo
   return (
     <section aria-labelledby={`${uid}-title`}>
       <h3 id={`${uid}-title`} className="sr-only">
-        Kaynak ekle
-      </h3>
+        {msg("\n        Kaynak ekle\n      ")}</h3>
       {stage}
       <div hidden={stage !== null}>
         <SourcePicker value={mode} onChange={setMode} idBase={uid} label="Kaynak türü" />
@@ -204,14 +204,12 @@ export function SourceComposer({ branches, onChange, campYoutubeIds = [], usedCo
             {targets.length > 0 && (
               <div className="mb-3.5 max-w-sm">
                 <label className="field-label" htmlFor={`${uid}-target`}>
-                  Nereye eklensin?
-                </label>
+                  {msg("\n                  Nereye eklensin?\n                ")}</label>
                 <select id={`${uid}-target`} className="input" value={targetBranch ? target : NEW_BRANCH} onChange={e => setTarget(e.target.value)}>
-                  <option value={NEW_BRANCH}>Yeni branş</option>
+                  <option value={NEW_BRANCH}>{msg("Yeni branş")}</option>
                   {targets.map(b => (
                     <option key={b.id} value={b.id}>
-                      {b.subject || 'Adsız branş'} ({b.videos.length} video)
-                    </option>
+                      {b.subject || 'Adsız branş'} {msg(" (")}{b.videos.length} {msg(" video)\n                    ")}</option>
                   ))}
                 </select>
               </div>

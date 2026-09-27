@@ -8,6 +8,8 @@ import { formatMinutes } from '../../lib/format';
 import { useConfirm } from '../ui/ConfirmDialog';
 import { BranchCard } from './BranchCard';
 import { SourceComposer } from './SourceComposer';
+import { msg } from '../../lib/messages';
+
 
 interface Props {
   branches: SubjectPlaylist[];
@@ -54,9 +56,7 @@ export function BranchSources({ branches, onChange, errors, showErrors, campYout
         title: 'Branş kaldırılsın mı?',
         body: (
           <p>
-            <span className="font-semibold text-ink">{branch.subject || 'Bu branş'}</span> ve {branch.videos.length} videosu taslaktan
-            çıkar. Listeyi yeniden ekleyerek geri getirebilirsin.
-          </p>
+            <span className="font-semibold text-ink">{branch.subject || 'Bu branş'}</span> {msg(" ve ")}{branch.videos.length} {msg(" videosu taslaktan\n            çıkar. Listeyi yeniden ekleyerek geri getirebilirsin.\n          ")}</p>
         ),
         confirmLabel: 'Branşı kaldır',
         tone: 'danger',
@@ -76,8 +76,7 @@ export function BranchSources({ branches, onChange, errors, showErrors, campYout
         {branches.length > 0 && (
           <button type="button" className="btn btn-ghost btn-sm -ml-2" onClick={() => show('list')}>
             <ArrowLeft aria-hidden="true" />
-            Branşlarına dön ({branches.length})
-          </button>
+            {msg("\n            Branşlarına dön (")}{branches.length}{msg(")\n          ")}</button>
         )}
         <SourceComposer
           branches={branches}
@@ -105,20 +104,18 @@ export function BranchSources({ branches, onChange, errors, showErrors, campYout
         <p className="pop-in flex items-center gap-2.5 rounded-[12px] bg-forest-tint px-4 py-3 text-[13.5px] text-ink-2" role="status">
           <CircleCheck className="size-5 shrink-0 text-forest" aria-hidden="true" />
           <span className="min-w-0">
-            <span className="font-semibold text-ink">“{fresh.name || 'Yeni branş'}” eklendi</span> · {fresh.videos} video. İstersen başka bir branş
-            daha ekle ya da Devam ile ilerle.
-          </span>
+            <span className="font-semibold text-ink">{msg("“")}{fresh.name || 'Yeni branş'}{msg("” eklendi")}</span> {msg(" · ")}{fresh.videos} {msg(" video. İstersen başka bir branş\n            daha ekle ya da Devam ile ilerle.\n          ")}</span>
         </p>
       )}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <h3 id="branch-list-title" className="text-[15px] font-semibold text-ink">
-          {adding ? 'Eklenecek branşlar' : 'Branşların'}
+          {adding ? msg("Eklenecek branşlar") : msg("Branşların")}
         </h3>
         <p className="tnum text-[12.5px] text-ink-3">
-          {branches.length} branş · {videos} video · {formatMinutes(minutes)}
+          {branches.length} {msg(" branş · ")}{videos} {msg(" video · ")}{formatMinutes(minutes)}
         </p>
       </div>
-      <p className="text-[12.5px] text-ink-3">Adına dokunarak branşı yeniden adlandır; ok ile videolarını ve rengini gör.</p>
+      <p className="text-[12.5px] text-ink-3">{msg("Adına dokunarak branşı yeniden adlandır; ok ile videolarını ve rengini gör.")}</p>
       <ul className="space-y-2">
         {branches.map(branch => (
           <BranchCard
@@ -137,10 +134,9 @@ export function BranchSources({ branches, onChange, errors, showErrors, campYout
           <Plus className="size-5" aria-hidden="true" />
         </span>
         <span className="min-w-0">
-          <span className="block text-[15px] font-semibold text-ink">Başka branş ekle</span>
+          <span className="block text-[15px] font-semibold text-ink">{msg("Başka branş ekle")}</span>
           <span className="block text-[13px] text-ink-2">
-            Bir kamp birçok branş tutar: Matematik, Fizik, Türkçe… Her oynatma listesi ya da konu listesi ayrı bir branş olur.
-          </span>
+            {msg("\n            Bir kamp birçok branş tutar: Matematik, Fizik, Türkçe… Her oynatma listesi ya da konu listesi ayrı bir branş olur.\n          ")}</span>
         </span>
       </button>
     </section>

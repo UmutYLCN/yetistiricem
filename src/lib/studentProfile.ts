@@ -254,7 +254,7 @@ export function authorHeadline(author: Pick<PublicAuthor, 'stage' | 'department'
   switch (author.stage) {
     case 'high-school':
     case 'exam-prep':
-      if (author.department) parts.push(`Hedef: ${author.department}`);
+      if (author.department) parts.push(author.department);
       break;
     case 'university':
       if (author.department) parts.push(author.department);
@@ -286,11 +286,11 @@ export function profileFacts(profile: StudentProfile): ProfileFact[] {
     case 'high-school':
       push('grade', p.grade && gradeLabel(p.grade));
       push('school', p.school);
-      push('target', p.department && `Hedef: ${p.department}`);
+      push('target', p.department);
       break;
     case 'exam-prep':
-      push('target', p.department && `Hedef: ${p.department}`);
-      push('school', p.school && `Hedef: ${p.school}`);
+      push('target', p.department);
+      push('school', p.school);
       break;
     case 'university':
       push('school', p.school);

@@ -1,4 +1,6 @@
 import { X } from 'lucide-react';
+import { msg } from '../../lib/messages';
+
 
 const ROWS = [
   { tone: 'var(--color-study-indigo)', width: 72, time: '42:18' },
@@ -48,8 +50,7 @@ export function FetchingStage({ title, detail, onCancel }: { title: string; deta
       <p className="mx-auto mt-1.5 max-w-[26rem] text-[13.5px] leading-relaxed text-ink-2">{detail}</p>
       <button type="button" className="btn btn-ghost btn-sm mt-4" onClick={onCancel}>
         <X aria-hidden="true" />
-        Vazgeç
-      </button>
+        {msg("\n        Vazgeç\n      ")}</button>
     </div>
   );
 }

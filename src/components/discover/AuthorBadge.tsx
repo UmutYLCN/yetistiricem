@@ -1,6 +1,8 @@
 import type { PublicAuthor } from '../../lib/studentProfile';
 import { authorHeadline } from '../../lib/studentProfile';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
+import { msg } from '../../lib/messages';
+
 
 /** A publisher's picture and name. */
 export function AuthorBadge({ name, avatar = null, size = 'md' }: { name: string; avatar?: string | null; size?: 'sm' | 'md' }) {
@@ -16,8 +18,8 @@ export function AuthorBadge({ name, avatar = null, size = 'md' }: { name: string
 export function AuthorCard({ author, published }: { author: PublicAuthor; published: string }) {
   const headline = authorHeadline(author);
   return (
-    <section className="card p-5" aria-label="Kampı hazırlayan">
-      <p className="eyebrow">Hazırlayan</p>
+    <section className="card p-5" aria-label={msg("Kampı hazırlayan")}>
+      <p className="eyebrow">{msg("Hazırlayan")}</p>
       <div className="mt-3 flex items-center gap-3">
         <ProfileAvatar avatar={author.avatar} name={author.name} size={48} />
         <div className="min-w-0 flex-1">
@@ -26,7 +28,7 @@ export function AuthorCard({ author, published }: { author: PublicAuthor; publis
         </div>
       </div>
       {author.bio && <p className="mt-3.5 text-[13.5px] leading-relaxed break-words whitespace-pre-line text-ink-2">{author.bio}</p>}
-      <p className="mt-3.5 border-t border-line pt-3 text-[12px] text-ink-3">{published} yayınlandı</p>
+      <p className="mt-3.5 border-t border-line pt-3 text-[12px] text-ink-3">{published} {msg(" yayınlandı")}</p>
     </section>
   );
 }

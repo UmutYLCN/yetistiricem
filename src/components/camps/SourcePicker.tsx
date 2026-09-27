@@ -2,6 +2,8 @@ import { useRef } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { Link2, ListVideo, PencilLine, Play } from 'lucide-react';
 import { resolveColor } from '../../lib/subjects';
+import { msg } from '../../lib/messages';
+
 
 export type SourceKind = 'playlist' | 'videos' | 'manual';
 
@@ -50,14 +52,14 @@ function VideosArt() {
         style={thumb(PLUM)}
       >
         <PlayDot />
-        <span className="tnum absolute right-1 bottom-1 rounded-[4px] bg-paper/85 px-1 text-[8.5px] leading-[13px] font-semibold text-ink">24:10</span>
+        <span className="tnum absolute right-1 bottom-1 rounded-[4px] bg-paper/85 px-1 text-[8.5px] leading-[13px] font-semibold text-ink">{msg("24:10")}</span>
       </span>
       <span
         className="absolute top-[26%] right-[10%] h-[56%] w-[50%] rotate-[5deg] rounded-[8px] border border-line-strong shadow-[var(--shadow-pop)] max-sm:top-[22%] max-sm:right-[18%] max-sm:w-[64%]"
         style={thumb(INK)}
       >
         <PlayDot />
-        <span className="tnum absolute right-1 bottom-1 rounded-[4px] bg-paper/85 px-1 text-[8.5px] leading-[13px] font-semibold text-ink">41:05</span>
+        <span className="tnum absolute right-1 bottom-1 rounded-[4px] bg-paper/85 px-1 text-[8.5px] leading-[13px] font-semibold text-ink">{msg("41:05")}</span>
       </span>
       <span className="absolute top-[9%] left-[5%] grid size-6 place-items-center rounded-[7px] bg-forest text-on-fill shadow-[0_0_14px_-2px_var(--color-forest)]">
         <Link2 className="size-3.5" />
@@ -76,8 +78,7 @@ function ManualArt() {
             <span className={`size-2 shrink-0 rounded-[3px] ${i === 0 ? 'bg-forest' : 'border border-control'}`} />
             <span className="h-1 min-w-0 flex-1 rounded-full bg-line-strong" style={{ maxWidth: `${width}%` }} />
             <span className="tnum ml-auto shrink-0 rounded-full bg-sunk px-1 text-[8px] leading-3 font-semibold whitespace-nowrap text-ink-3 max-sm:hidden">
-              {[40, 35, 50][i]} dk
-            </span>
+              {[40, 35, 50][i]} {msg(" dk\n            ")}</span>
           </span>
         ))}
       </span>
@@ -136,8 +137,8 @@ export function SourcePicker({ value, onChange, idBase, label }: { value: Source
               {option.art}
             </span>
             <span className="px-1">
-              <span className="block text-[14px] leading-tight font-semibold text-ink">{option.title}</span>
-              <span className="mt-1 block text-[12.5px] leading-snug text-ink-3 max-sm:hidden">{option.body}</span>
+              <span className="block text-[14px] leading-tight font-semibold text-ink">{msg(option.title)}</span>
+              <span className="mt-1 block text-[12.5px] leading-snug text-ink-3 max-sm:hidden">{msg(option.body)}</span>
             </span>
           </button>
         );

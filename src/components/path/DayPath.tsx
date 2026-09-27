@@ -6,6 +6,8 @@ import type { PathPoint, PathStop, StopState } from '../../lib/dayPath';
 import { bendPath, isWalked, pathGeometry } from '../../lib/dayPath';
 import { formatMinutes } from '../../lib/format';
 import { criticalLabel, isCriticallyPostponed } from '../../lib/postpone';
+import { msg } from '../../lib/messages';
+
 
 /** How a stop is labelled: its branch colour, "Branch" (or "Camp · Branch") and whether it has a video to play. */
 export interface StopLook {
@@ -101,26 +103,25 @@ function StopButton({
           </span>
           {state === 'next' && isToday && (
             <span className="path-bubble" aria-hidden="true">
-              Sıradaki
-            </span>
+              {msg("\n              Sıradaki\n            ")}</span>
           )}
         </span>
         <span className="path-label">
           <span className="visually-hidden">
-            {index + 1}. görev{STATE_TEXT[state]}:{' '}
+            {index + 1}{msg(". görev")}{STATE_TEXT[state]}{msg(":")}{msg(" ")}
           </span>
           <span className="flex max-w-full min-w-0 items-center gap-1.5 text-[12px] font-semibold">
             <span className="min-w-0 truncate" style={{ color: look.color }}>
               {look.tag}
             </span>
             <span className={`shrink-0 ${state === 'missed' ? 'text-danger' : 'text-ink-3'}`}>
-              · {state === 'missed' ? 'yetişmedi' : formatMinutes(item.durationMinutes)}
+              {msg("\n              · ")}{state === 'missed' ? msg("yetişmedi") : formatMinutes(item.durationMinutes)}
             </span>
             {isCriticallyPostponed(item) && (
               <span className="tnum inline-flex shrink-0 items-center gap-0.5 text-danger">
                 <Flame className="size-3" aria-hidden="true" />
                 <span aria-hidden="true">{item.postponeCount}</span>
-                <span className="visually-hidden">, {criticalLabel(item.postponeCount ?? 0)}</span>
+                <span className="visually-hidden">{msg(", ")}{criticalLabel(item.postponeCount ?? 0)}</span>
               </span>
             )}
           </span>
@@ -221,7 +222,7 @@ export function DayPath({ stops, look, isToday, minutes, doneMinutes, onOpen }: 
                     ? `${stops.length} görev · ${formatMinutes(minutes)}`
                     : `${stops.length - doneCount} görev · ~${formatMinutes(minutes - doneMinutes)} kaldı`}
                 </span>
-                <span className={`path-label-title ${reached ? 'text-warn' : 'text-ink-2'}`}>{reached ? 'Gün tamam!' : 'Günün sonu'}</span>
+                <span className={`path-label-title ${reached ? 'text-warn' : 'text-ink-2'}`}>{reached ? msg("Gün tamam!") : msg("Günün sonu")}</span>
               </span>
             </div>
           </div>

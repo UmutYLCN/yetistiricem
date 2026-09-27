@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Check, Info, X } from 'lucide-react';
+import { msg } from '../../lib/messages';
+
 
 export interface ToastOptions {
   message: string;
@@ -76,7 +78,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               type="button"
               className="rounded-lg p-2 text-ink-3 hover:bg-ink/10 hover:text-ink"
               onClick={() => setToast(null)}
-              aria-label="Bildirimi kapat"
+              aria-label={msg("Bildirimi kapat")}
             >
               <X className="size-4" aria-hidden="true" />
             </button>
