@@ -11,7 +11,8 @@ import {
   campIdOf,
   campLabelsOf,
   campOverview,
-  resolveCampScope,
+  combinesCamps,
+  runningCamps,
   shiftEventsByCamp,
   summarizeAllCampsDay,
 } from './lib/allCamps';
@@ -25,7 +26,7 @@ import { progressInsights } from './lib/insights';
 import { formatDayTitle, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
 import { indexCamps, indexPlans, summarizeDay, weeksOverview } from './lib/planView';
-import { withAddedBranches, withAppendedVideos } from './lib/plannerOps';
+import { withAddedBranches, withAppendedVideos, withResumed } from './lib/plannerOps';
 import type { SyncNotification } from './lib/playlistSync';
 import { draftFromPending, syncNotifications, syncTargets } from './lib/playlistSync';
 import { allBranches, defaultSchedule } from './lib/studyCamp';
@@ -66,14 +67,15 @@ import { ToastProvider, useToast } from './components/ui/Toast';
 import { CampsView } from './components/views/CampsView';
 import { ProgressView } from './components/views/ProgressView';
 import { SettingsView } from './components/views/SettingsView';
+import { SettingsDialog } from './components/settings/SettingsDialog';
 import { OnboardingDialog } from './components/profile/OnboardingDialog';
 import type { NoCampsView } from './components/views/Welcome';
-import { NoBranchesYet, NoCampVideos, NoCampsYet, Welcome } from './components/views/Welcome';
+import { AllCampsPaused, NoBranchesYet, NoCampVideos, NoCampsYet, Welcome } from './components/views/Welcome';
 import { AddBranchWizard } from './components/wizard/AddBranchWizard';
 import { CampWizard } from './components/wizard/CampWizard';
 
-// Every dialog names the camp it edits: in "Tüm Kamplar" a task may belong to
-// another camp than the one Kamplar manages.
+// Every dialog names the camp it edits: with several camps on screen a task may
+// belong to another camp than the one Kamplar manages.
 type OpenDialog =
   | { kind: 'editBranch'; campId: string; branchId: string }
   | { kind: 'addVideos'; campId: string; branchId: string }
@@ -117,7 +119,7 @@ interface PlannerProps {
 
 function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account, userId }: PlannerProps) {
   const today = useToday();
-  const { data, realData, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
+  const { data, realData, isDemo, selectedDate, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
   // The account's plan is saved to the cloud as it changes (a demo page holds no account plan).
   const sync = useCloudSync(realData, startInDemo ? null : userId);
   const notify = useToast();
@@ -130,6 +132,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   /** The task playing in focus mode (its id and day in the plan shown). */
   const [focus, setFocus] = useState<{ itemId: string; date: string } | null>(null);
   const [signInOpen, setSignInOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [discoverId, setDiscoverId] = useState<string | null>(null);
   const [catalogVersion, setCatalogVersion] = useState(0);
@@ -171,39 +174,50 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   const { checking: syncChecking } = usePlaylistSync(data.camps, data.playlistSync, today, !isDemo, actions);
   const notifications = useMemo(() => (isDemo ? [] : syncNotifications(data.camps, data.playlistSync)), [isDemo, data.camps, data.playlistSync]);
 
-  // The open camp: the one Kamplar manages, always a real camp. The plan
-  // screens show it, or with "Tüm Kamplar" every camp with a plan, each laid
-  // out with its own tempo and shift events and merged by date.
+  // The open camp: the one Kamplar manages, always a real camp (it may be
+  // paused). The plan screens show the running camps: one alone, or two and
+  // more merged by date, each laid out with its own tempo and shift events.
   const camp = activeCampOf(data);
-  const scope = resolveCampScope(data.camps.length, campScope);
   const branches = useMemo(() => camp?.branches ?? [], [camp]);
+  const running = useMemo(() => runningCamps(data.camps), [data.camps]);
+  const combined = combinesCamps(running.length);
+  const planCamp = combined ? null : (running[0] ?? null);
   const emptyCamp = useMemo(() => ({ branches: [], schedule: defaultSchedule(today), shiftEvents: [] }), [today]);
   const schedule = useMemo(
-    () => buildCampSchedule(camp ?? emptyCamp, { completedMap: data.completedMap, today }),
-    [camp, emptyCamp, data.completedMap, today]
+    () => buildCampSchedule(planCamp ?? emptyCamp, { completedMap: data.completedMap, today }),
+    [planCamp, emptyCamp, data.completedMap, today]
   );
   const prefs = schedule.preferences;
-  const campIndex = useMemo(() => indexPlans(schedule.plans, today), [schedule.plans, today]);
-  const campBranches = useMemo(() => indexCamps(branches), [branches]);
-  const campStats = useMemo(() => {
-    const total = branches.reduce((acc, p) => acc + p.videos.length, 0);
-    return calculateStats(schedule.plans, total, countCompletedVideos(branches, data.completedMap));
-  }, [schedule.plans, branches, data.completedMap]);
+  const planBranches = useMemo(() => planCamp?.branches ?? [], [planCamp]);
+  const singleIndex = useMemo(() => indexPlans(schedule.plans, today), [schedule.plans, today]);
+  const singleBranches = useMemo(() => indexCamps(planBranches), [planBranches]);
+  const singleStats = useMemo(() => {
+    const total = planBranches.reduce((acc, p) => acc + p.videos.length, 0);
+    return calculateStats(schedule.plans, total, countCompletedVideos(planBranches, data.completedMap));
+  }, [schedule.plans, planBranches, data.completedMap]);
 
-  // What the plan screens show (one camp, or every camp together).
+  // Kamplar lists the open camp's branches, shown on the plan screens or not.
+  const managedSchedule = useMemo(
+    () => (camp && camp === planCamp ? schedule : buildCampSchedule(camp ?? emptyCamp, { completedMap: data.completedMap, today })),
+    [camp, planCamp, schedule, emptyCamp, data.completedMap, today]
+  );
+  const campIndex = useMemo(() => indexPlans(managedSchedule.plans, today), [managedSchedule.plans, today]);
+  const campBranches = useMemo(() => indexCamps(branches), [branches]);
+
+  // What the plan screens show (one camp, or every running camp together).
   const allPlan = useMemo(
-    () => (scope === 'all' ? buildAllCampsPlan(data.camps, { completedMap: data.completedMap, today }) : null),
-    [scope, data.camps, data.completedMap, today]
+    () => (combined ? buildAllCampsPlan(running, { completedMap: data.completedMap, today }) : null),
+    [combined, running, data.completedMap, today]
   );
   const shownCamps: ScopedCamp[] = useMemo(
-    () => allPlan?.camps ?? (camp ? [{ camp, result: schedule }] : []),
-    [allPlan, camp, schedule]
+    () => allPlan?.camps ?? (planCamp ? [{ camp: planCamp, result: schedule }] : []),
+    [allPlan, planCamp, schedule]
   );
   const campLabels = useMemo(() => (allPlan ? campLabelsOf(allPlan.camps) : undefined), [allPlan]);
-  const index = allPlan?.index ?? campIndex;
-  const stats = allPlan?.stats ?? campStats;
+  const index = allPlan?.index ?? singleIndex;
+  const stats = allPlan?.stats ?? singleStats;
   const allBranchInfo = useMemo(() => (allPlan ? indexCamps(allPlan.camps.flatMap(s => s.camp.branches)) : null), [allPlan]);
-  const camps = allBranchInfo ?? campBranches;
+  const camps = allBranchInfo ?? singleBranches;
   const oversizedIds = useMemo(
     () =>
       new Set(
@@ -212,20 +226,21 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     [shownCamps]
   );
   const weekDays = useMemo(() => {
-    if (!allPlan) return weekKeys(selectedDate).map(date => summarizeDay(date, campIndex, prefs));
+    if (!allPlan) return weekKeys(selectedDate).map(date => summarizeDay(date, singleIndex, prefs));
     const campPrefs = allPlan.camps.map(s => s.result.preferences);
     return weekKeys(selectedDate).map(date => summarizeAllCampsDay(date, allPlan.index, campPrefs));
-  }, [allPlan, selectedDate, campIndex, prefs]);
+  }, [allPlan, selectedDate, singleIndex, prefs]);
   const insights = useMemo(
     () => (view === 'progress' ? progressInsights(shownCamps, data.completedMap, data.completionDates, today) : null),
     [view, shownCamps, data.completedMap, data.completionDates, today]
   );
   const hasCamp = camp !== null;
-  const hasBranches = branches.length > 0;
-  // "Tüm Kamplar" with no camp holding a video yet.
+  // Every camp is paused: the plan screens have nothing to show until one resumes.
+  const allPaused = hasCamp && running.length === 0;
+  const hasBranches = planBranches.length > 0;
+  // Several running camps, none holding a video yet.
   const noCampPlans = allPlan !== null && allPlan.camps.length === 0;
   const hasLegacy = allBranches(data.camps).some(b => isLegacyKind(classifyCamp(b)));
-  const campOptions = useMemo(() => data.camps.map(c => ({ id: c.id, name: c.name })), [data.camps]);
 
   // Focus mode reads the task from the plan shown, so it always has the current completion.
   const canFocus = (item: DailyPlanItem) => focusableVideoId(item, camps.get(item.playlistId)?.kind ?? 'manual') !== null;
@@ -236,7 +251,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     const info = camps.get(item.playlistId);
     const videoId = focusableVideoId(item, info?.kind ?? 'manual');
     if (!videoId) return null;
-    const campId = campIdOf(item) ?? camp?.id;
+    const campId = campIdOf(item) ?? planCamp?.id;
     const owner = data.camps.find(c => c.id === campId);
     return {
       item,
@@ -270,27 +285,14 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     if (campId) setDialog({ kind: 'tempo', campId });
   };
 
-  const openAddBranches = () => {
-    if (camp) setDialog({ kind: 'addBranches', campId: camp.id });
+  const addBranchesTo = (campId: string | undefined) => {
+    if (campId) setDialog({ kind: 'addBranches', campId });
   };
+  const openAddBranches = () => addBranchesTo(camp?.id);
+  // From the plan screens: the camp they show (Kamplar's own button adds to the open camp).
+  const addToShownCamp = () => addBranchesTo(planCamp?.id ?? camp?.id);
 
-  // Shows one camp on the plan screens (and makes it the open camp).
-  const selectCamp = (campId: string) => {
-    if (campId === camp?.id && scope === 'camp') return;
-    actions.setCampScope('camp');
-    actions.setActiveCamp(campId);
-    const next = data.camps.find(c => c.id === campId);
-    if (next) notify({ message: `Açık kamp: “${next.name}”.`, tone: 'info' });
-  };
-
-  // A view choice only: the open camp stays the one Kamplar manages.
-  const selectAllCamps = () => {
-    if (scope === 'all') return;
-    actions.setCampScope('all');
-    notify({ message: 'Tüm kampların birlikte gösteriliyor.', tone: 'info' });
-  };
-
-  // Kamplar under "Tüm Kamplar": pick the camp to manage without leaving the combined view.
+  // Kamplar: pick the camp to manage; the plan screens keep showing every camp.
   const manageCamp = (campId: string) => actions.setActiveCamp(campId);
 
   const handleToggle = (item: DailyPlanItem, done: boolean) => {
@@ -443,10 +445,10 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         detail: (me.profile && profileSummary(me.profile)) ?? me.email ?? 'Profil',
         avatar: me.profile?.avatar ?? null,
       }
-    : { name: isDemo ? 'Demo' : 'Misafir', detail: 'Ayarlar', avatar: null };
+    : { name: isDemo ? 'Demo' : 'Misafir', detail: 'Profil', avatar: null };
 
   const handleEditLink = (item: DailyPlanItem) => {
-    const campId = campIdOf(item) ?? camp?.id;
+    const campId = campIdOf(item) ?? planCamp?.id;
     if (campId) setDialog({ kind: 'editVideo', campId, branchId: item.playlistId, videoId: item.videoId });
   };
 
@@ -555,6 +557,38 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     if (!ok) return;
     actions.removeCamp(campId);
     notify({ message: `“${target.name}” silindi.`, tone: 'info' });
+  };
+
+  const handlePauseCamp = async (campId: string) => {
+    const target = data.camps.find(c => c.id === campId);
+    if (!target || target.pausedAt) return;
+    const ok = await confirm({
+      title: 'Kamp duraklatılsın mı?',
+      confirmLabel: 'Duraklat',
+      body: (
+        <p>
+          <span className="font-semibold text-ink">{target.name}</span> Rotam’dan ve İlerleme’den çıkar. Branşları, ilerlemen ve temposu
+          olduğu gibi saklanır. Devam ettiğinde kalan görevler o günden itibaren yeniden dağıtılır.
+        </p>
+      ),
+    });
+    if (!ok) return;
+    actions.pauseCamp(campId);
+    notify({ message: `“${target.name}” duraklatıldı. Hazır olduğunda Kamplar’dan devam edebilirsin.`, tone: 'info' });
+  };
+
+  const handleResumeCamp = (campId: string) => {
+    const target = data.camps.find(c => c.id === campId);
+    if (!target?.pausedAt) return;
+    const { carried } = withResumed(target, { completedMap: data.completedMap, today });
+    actions.resumeCamp(campId);
+    notify({
+      message:
+        carried > 0
+          ? `“${target.name}” yeniden başladı; kalan ${carried} görev bugünden itibaren sırayla planlandı.`
+          : `“${target.name}” yeniden başladı.`,
+      tone: 'info',
+    });
   };
 
   const handleImportCamp = async (shared: SharedCamp, source: 'kesfet' | 'link' | 'mcp' | 'mcp-kesfet') => {
@@ -738,7 +772,6 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     <PageHeader
       eyebrow={<span className={isToday ? 'text-accent' : ''}>{relativeDayLabel(selectedDate, today)}</span>}
       title={formatDayTitle(selectedDate)}
-      subtitle={campLabels && `Tüm kamplar · ${campLabels.size} kamp birlikte`}
       actions={
         <div className="flex items-center justify-between gap-x-3 max-sm:w-full sm:justify-end">
           <div className="flex items-center gap-1">
@@ -761,18 +794,25 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     />
   );
   const firstStart = allPlan ? (shownCamps.map(s => s.result.preferences.startDate).sort()[0] ?? prefs.startDate) : prefs.startDate;
-  // "Tüm Kamplar" before any camp has a video: nothing to combine yet.
+  // Several running camps before any has a video: nothing to combine yet.
+  const emptyTarget = camp && !camp.pausedAt ? camp : running[0];
   const noPlansInCamps = (title: string) => (
     <div className="mx-auto max-w-[920px]">
-      <PageHeader title={title} subtitle="Tüm kamplar" />
-      <NoCampVideos campName={camp?.name} onAddBranches={openAddBranches} onOpenCamps={() => setView('camps')} />
+      <PageHeader title={title} />
+      <NoCampVideos campName={emptyTarget?.name} onAddBranches={() => addBranchesTo(emptyTarget?.id)} onOpenCamps={() => setView('camps')} />
+    </div>
+  );
+  const pausedPage = (title: string) => (
+    <div className="mx-auto max-w-[920px]">
+      <PageHeader title={title} />
+      <AllCampsPaused count={data.camps.length} onOpenCamps={() => setView('camps')} />
     </div>
   );
   const noPlanYet = (title: string, emptyView: NoCampsView) => (
     <div className="mx-auto max-w-[920px]">
       <PageHeader title={title} />
       {camp ? (
-        <NoBranchesYet onAddBranches={openAddBranches} />
+        <NoBranchesYet onAddBranches={addToShownCamp} />
       ) : (
         <NoCampsYet view={emptyView} onAddCamp={openNewCamp} onStartDemo={startDemo} />
       )}
@@ -783,6 +823,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   if (view === 'today') {
     content = !hasCamp ? (
       <Welcome onAddCamp={openNewCamp} onStartDemo={startDemo} />
+    ) : allPaused ? (
+      pausedPage('Bugün')
     ) : noCampPlans ? (
       noPlansInCamps('Bugün')
     ) : (
@@ -811,7 +853,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
             onShift={handleShift}
             onEditLink={handleEditLink}
             onFocus={openFocus}
-            onAddBranches={openAddBranches}
+            onAddBranches={addToShownCamp}
             campLabels={campLabels}
           />
         </div>
@@ -824,7 +866,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
             stats={stats}
             prefs={prefs}
             today={today}
-            targetEndDate={campLabels ? null : camp.schedule.targetEndDate}
+            targetEndDate={campLabels ? null : (planCamp?.schedule.targetEndDate ?? null)}
             campGoals={campLabels && [...campLabels.values()]}
           />
           <WeekCard days={weekDays} selectedDate={selectedDate} today={today} onSelect={selectDate} />
@@ -833,7 +875,9 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       </div>
     );
   } else if (view === 'path') {
-    content = noCampPlans ? (
+    content = allPaused ? (
+      pausedPage('Günün yolu')
+    ) : noCampPlans ? (
       noPlansInCamps('Günün yolu')
     ) : allPlan || hasBranches ? (
       <div>
@@ -852,7 +896,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         onShiftOverdue={() => handleShift(addDays(today, -1))}
         onEditLink={handleEditLink}
         onFocus={openFocus}
-        onAddBranches={openAddBranches}
+        onAddBranches={addToShownCamp}
         campLabels={campLabels}
       />
       </div>
@@ -860,9 +904,16 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       noPlanYet('Günün yolu', 'path')
     );
   } else if (view === 'progress') {
-    content = noCampPlans ? (
+    const progressScope = allPlan
+      ? ({ kind: 'all', camps: allPlan.camps.map(s => campOverview(s, data.completedMap)) } as const)
+      : planCamp && hasBranches
+        ? ({ kind: 'camp', camp: planCamp, prefs, issues: schedule.issues } as const)
+        : null;
+    content = allPaused ? (
+      pausedPage('İlerleme')
+    ) : noCampPlans ? (
       noPlansInCamps('İlerleme')
-    ) : (allPlan || hasBranches) && camp && insights ? (
+    ) : progressScope && insights ? (
       <div className="mx-auto max-w-[920px]">
         <ProgressView
           stats={stats}
@@ -870,11 +921,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
           index={index}
           camps={camps}
           weeks={weeksOverview(index)}
-          scope={
-            allPlan
-              ? { kind: 'all', camps: allPlan.camps.map(s => campOverview(s, data.completedMap)) }
-              : { kind: 'camp', camp, prefs, issues: schedule.issues }
-          }
+          scope={progressScope}
           insights={insights}
           onShiftOverdue={() => handleShift(addDays(today, -1))}
           onOpenWeek={monday => {
@@ -925,14 +972,16 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         completedMap={data.completedMap}
         today={today}
         isDemo={isDemo}
-        showsAllCamps={scope === 'all'}
+        showsAllCamps={combined}
         onAddCamp={openNewCamp}
         onStartDemo={startDemo}
-        onSelectCamp={scope === 'all' ? manageCamp : selectCamp}
+        onSelectCamp={manageCamp}
         onEditTempo={() => openTempo()}
         onRenameCamp={campId => setDialog({ kind: 'rename', campId })}
         onPublishCamp={campId => setDialog({ kind: 'publish', campId })}
         onDeleteCamp={handleDeleteCamp}
+        onPauseCamp={campId => void handlePauseCamp(campId)}
+        onResumeCamp={handleResumeCamp}
         onAddBranches={openAddBranches}
         onEditBranch={branchId => camp && setDialog({ kind: 'editBranch', campId: camp.id, branchId })}
         onAddVideos={branchId => camp && setDialog({ kind: 'addVideos', campId: camp.id, branchId })}
@@ -990,11 +1039,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         view={view}
         onNavigate={navigate}
         onAddCamp={openNewCamp}
-        camps={campOptions}
-        activeCampId={camp?.id ?? null}
-        scope={scope}
-        onSelectCamp={selectCamp}
-        onSelectAll={selectAllCamps}
+        campCount={data.camps.length}
+        onOpenSettings={() => setSettingsOpen(true)}
         isDemo={isDemo}
         bell={bell}
         profile={profile}
@@ -1004,11 +1050,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
           view={view}
           onNavigate={navigate}
           onAddCamp={openNewCamp}
-          camps={campOptions}
-          activeCampId={camp?.id ?? null}
-          scope={scope}
-          onSelectCamp={selectCamp}
-          onSelectAll={selectAllCamps}
+          campCount={data.camps.length}
+          onOpenSettings={() => setSettingsOpen(true)}
           isDemo={isDemo}
           bell={bell}
           profile={profile}
@@ -1144,6 +1187,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
           onPublished={() => setCatalogVersion(v => v + 1)}
         />
       )}
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <SignInDialog
         open={signInOpen && account.state.status !== 'signed-in'}
         onClose={() => setSignInOpen(false)}

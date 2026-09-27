@@ -1,8 +1,5 @@
-import { useId } from 'react';
 import type { ComponentType, ReactNode, SVGProps } from 'react';
 import { ChartColumn, Compass, Library, Plus, Route, Settings } from 'lucide-react';
-import type { CampScope } from '../../lib/allCamps';
-import { offersAllCamps } from '../../lib/allCamps';
 import { LANDING_PATH } from '../../lib/routes';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
@@ -23,25 +20,17 @@ const PRIMARY_NAV: NavItem[] = [
   { view: 'discover', label: 'Keşfet', icon: Compass },
 ];
 
-export interface CampOption {
-  id: string;
-  name: string;
-}
-
 interface NavProps {
   view: View;
   onNavigate: (view: View) => void;
   onAddCamp: () => void;
-  camps: CampOption[];
-  activeCampId: string | null;
-  /** `all`: the plan screens combine every camp ("Tüm Kamplar"). */
-  scope: CampScope;
-  onSelectCamp: (campId: string) => void;
-  onSelectAll: () => void;
+  campCount: number;
+  /** Opens the Ayarlar window (the gear next to the profile). */
+  onOpenSettings: () => void;
   isDemo: boolean;
   /** The notification bell, top right of the navigation. */
   bell?: ReactNode;
-  /** Who is signed in; the profile entry opens Ayarlar. */
+  /** Who is signed in; the profile entry opens the profile page. */
   profile: Profile;
 }
 
@@ -53,68 +42,7 @@ export interface Profile {
   avatar: string | null;
 }
 
-export const ALL_CAMPS_LABEL = 'Tüm Kamplar';
-
-// Option values; a camp id is prefixed so no id can pass for "all".
-const ALL_VALUE = 'all';
-const campValue = (id: string) => `camp:${id}`;
-
-/**
- * What the plan screens show: with two or more camps a picker of "Tüm
- * Kamplar" and each camp, with one camp its name.
- */
-export function CampSwitcher({
-  camps,
-  activeCampId,
-  scope,
-  onSelectCamp,
-  onSelectAll,
-  compact = false,
-}: Pick<NavProps, 'camps' | 'activeCampId' | 'scope' | 'onSelectCamp' | 'onSelectAll'> & { compact?: boolean }) {
-  const uid = useId();
-  const active = camps.find(c => c.id === activeCampId) ?? camps[0];
-  if (!active) return null;
-  const showAll = scope === 'all' && offersAllCamps(camps.length);
-  if (camps.length === 1) {
-    return compact ? (
-      <p className="font-display min-w-0 truncate text-[15px] text-ink">{active.name}</p>
-    ) : (
-      <p className="font-display truncate text-[15px] leading-snug text-ink" title={active.name}>
-        {active.name}
-      </p>
-    );
-  }
-  return (
-    <>
-      <label htmlFor={`${uid}-camp`} className="sr-only">
-        Gösterilen kamp
-      </label>
-      <select
-        id={`${uid}-camp`}
-        className={`input camp-select ${compact ? 'camp-select-compact' : ''}`}
-        value={showAll ? ALL_VALUE : campValue(active.id)}
-        onChange={e => {
-          const value = e.target.value;
-          if (value === ALL_VALUE) onSelectAll();
-          else {
-            const camp = camps.find(c => campValue(c.id) === value);
-            if (camp) onSelectCamp(camp.id);
-          }
-        }}
-      >
-        <option value={ALL_VALUE}>{ALL_CAMPS_LABEL}</option>
-        {camps.map(c => (
-          <option key={c.id} value={campValue(c.id)}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-    </>
-  );
-}
-
-export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell, profile }: NavProps) {
-  const campCount = camps.length;
+export function Sidebar({ view, onNavigate, onAddCamp, campCount, onOpenSettings, isDemo, bell, profile }: NavProps) {
   const item = ({ view: target, label, icon: Icon }: NavItem) => {
     const active = view === target || (target === 'today' && view === 'path');
     return (
@@ -156,20 +84,6 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
         {bell}
       </div>
 
-      {/* With several camps, switch the open one here (the plan screens show it). */}
-      {campCount > 1 && (
-        <div className="mt-5">
-          <CampSwitcher
-            camps={camps}
-            activeCampId={activeCampId}
-            scope={scope}
-            onSelectCamp={onSelectCamp}
-            onSelectAll={onSelectAll}
-            compact
-          />
-        </div>
-      )}
-
       <button type="button" className={`btn mt-5 w-full ${campCount > 0 ? 'btn-secondary' : 'btn-primary'}`} onClick={onAddCamp}>
         <Plus aria-hidden="true" />
         {isDemo ? 'Kendi planını kur' : 'Yeni kamp'}
@@ -179,13 +93,13 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
         <ul className="space-y-1">{PRIMARY_NAV.map(item)}</ul>
       </nav>
 
-      <div className="border-t border-line pt-4">
+      <div className="flex items-center gap-1 border-t border-line pt-4">
         <button
           type="button"
           onClick={() => onNavigate('settings')}
           aria-current={view === 'settings' ? 'page' : undefined}
-          aria-label={`${profile.name}: profil ve ayarlar`}
-          className={`group flex w-full items-center gap-3 rounded-[10px] px-2 py-2 text-left transition-colors ${
+          aria-label={`${profile.name}: profil`}
+          className={`flex min-w-0 flex-1 items-center gap-3 rounded-[10px] px-2 py-2 text-left transition-colors ${
             view === 'settings' ? 'bg-sunk ring-1 ring-line-strong' : 'hover:bg-sunk/60'
           }`}
         >
@@ -194,36 +108,22 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
             <span className="block truncate text-[14px] font-semibold text-ink">{profile.name}</span>
             <span className="block truncate text-[12px] text-ink-3">{profile.detail}</span>
           </span>
-          <Settings
-            className={`size-4 shrink-0 transition-colors ${view === 'settings' ? 'text-forest' : 'text-ink-3 group-hover:text-ink-2'}`}
-            aria-hidden="true"
-          />
+        </button>
+        <button type="button" className="icon-btn shrink-0" onClick={onOpenSettings} aria-label="Ayarlar" title="Ayarlar">
+          <Settings aria-hidden="true" />
         </button>
       </div>
     </aside>
   );
 }
 
-export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell, profile }: NavProps) {
+export function MobileTopBar({ view, onNavigate, onAddCamp, onOpenSettings, isDemo, bell, profile }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/80 px-4 backdrop-blur-md lg:hidden">
-      <a href={LANDING_PATH} className="-m-1 shrink-0 rounded-[9px] p-1" aria-label="Yetişir ana sayfası">
+      <a href={LANDING_PATH} className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-[9px] p-1" aria-label="Yetişir ana sayfası">
         <BrandMark size={28} />
+        <Wordmark className="text-[16px]" />
       </a>
-      <div className="min-w-0 flex-1">
-        {camps.length > 0 ? (
-          <CampSwitcher
-            camps={camps}
-            activeCampId={activeCampId}
-            scope={scope}
-            onSelectCamp={onSelectCamp}
-            onSelectAll={onSelectAll}
-            compact
-          />
-        ) : (
-          <Wordmark className="text-[16px]" />
-        )}
-      </div>
       {bell}
       <button
         type="button"
@@ -233,11 +133,14 @@ export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId,
       >
         <Plus aria-hidden="true" />
       </button>
+      <button type="button" className="icon-btn shrink-0" onClick={onOpenSettings} aria-label="Ayarlar">
+        <Settings aria-hidden="true" />
+      </button>
       <button
         type="button"
         className={`icon-btn shrink-0 ${view === 'settings' ? 'bg-sunk' : ''}`}
         onClick={() => onNavigate('settings')}
-        aria-label={`${profile.name}: profil ve ayarlar`}
+        aria-label={`${profile.name}: profil`}
         aria-current={view === 'settings' ? 'page' : undefined}
       >
         <ProfileAvatar avatar={profile.avatar} name={profile.name} size={28} />

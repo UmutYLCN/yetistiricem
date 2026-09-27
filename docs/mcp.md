@@ -21,7 +21,7 @@ Bağlayıcıyı eklediğinde tarayıcıda Yetişir'in onay sayfası (`/oauth/con
 | Araç | Ne yapar |
 | --- | --- |
 | `get_my_progress` | Her kampın ilerlemesi (tamamlanan/toplam, kalan saat, geciken, bugünkü görevler, tahmini bitiş ve hedef tarih), seri, son 7 gün, çalışılan saat, planlı gününde bitirme oranı, erteleme sayısı ve nedenleri, odak modu, son gün notları. |
-| `get_my_plan` | Bugünden (ya da verilen günden) en çok 14 günün görevleri, tüm kamplar birlikte; önce gecikenler. |
+| `get_my_plan` | Bugünden (ya da verilen günden) en çok 14 günün görevleri, duraklatılmamış tüm kamplar birlikte; önce gecikenler. |
 | `get_camp_format` | Kamp JSON'unun şeması, sınırları ve örneği. |
 | `send_camp` | Kamp JSON'unu ve YouTube verilerini kontrol eder; yalnızca özel bir onay taslağı oluşturur. `dryRun` ile taslak oluşturmadan bitiş tarihini gösterir. Kamp, öğrenci `/app?draft=<id>` bağlantısındaki tüm listeyi görüp **Planıma ekle** dediğinde kaydedilir. |
 | `read_youtube_playlist`, `read_youtube_videos` | Oynatma listesi ya da videoların gerçek başlık, id ve süreleri; uygulamanın atladıkları nedeniyle. |

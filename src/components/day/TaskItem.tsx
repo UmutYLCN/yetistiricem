@@ -18,7 +18,7 @@ interface Props {
   compact?: boolean;
   /** Extra context shown before the title, e.g. the day in "next up" lists. */
   showCamp?: boolean;
-  /** "Tüm Kamplar": the task's study camp; the label then reads "Camp · Branch" (no source list). */
+  /** Listed under its camp's heading: the label shows the branch only (the camp name is for screen readers). */
   campName?: string;
 }
 
@@ -47,12 +47,12 @@ export function TaskItem({ item, camp, oversized, onToggle, onEditLink, onFocus,
       <div className="min-w-0 flex-1">
         {showCamp &&
           (campName ? (
-            // Combined view: "Camp · Branch", wrapping under the dot on narrow screens.
+            // Under the camp's heading: the branch only, wrapping under the dot on narrow screens.
             <p className="mb-0.5 flex min-w-0 items-start gap-1.5 text-[12px] font-semibold">
               <SubjectDot color={color} className="mt-[5px]" />
-              <span className="min-w-0 break-words">
-                <span className="text-ink-2">{campName}</span> <span className="font-medium text-ink-3">·</span>{' '}
-                <span style={{ color }}>{item.subject}</span>
+              <span className="min-w-0 break-words" style={{ color }}>
+                <span className="sr-only">{campName} · </span>
+                {item.subject}
               </span>
             </p>
           ) : (

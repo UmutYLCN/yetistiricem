@@ -2,6 +2,7 @@ import type { CampOrigin, CampSchedule, PlanMode, RhythmPreset, ShiftEvent, Stud
 import {
   defaultPreferences,
   inspectPreferences,
+  isDateKey,
   normalizeDateKey,
   normalizeShiftEvents,
   sanitizeWeekPlan,
@@ -345,6 +346,7 @@ export function normalizeCamps(raw: unknown, today: string = todayKey()): CampsN
       schedule,
       shiftEvents: normalizeShiftEvents(item.shiftEvents),
       ...(isCampOrigin(item.origin) ? { origin: item.origin } : {}),
+      ...(isDateKey(item.pausedAt) ? { pausedAt: item.pausedAt } : {}),
     });
   }
   return result;

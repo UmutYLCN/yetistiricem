@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   Check,
-  ChevronDown,
   CircleCheck,
   Compass,
   Focus,
@@ -236,7 +235,7 @@ function CatalogPreview({ preview }: { preview: LandingPreview }) {
   }));
   return (
     <div className="preview-frame max-h-none text-left [mask-image:none]" aria-hidden="true" inert>
-      <AppPreviewLayout camp={preview.camp} view="discover">
+      <AppPreviewLayout view="discover">
         <PageHeader
           title="Keşfet"
           actions={
@@ -327,9 +326,7 @@ export function DiscoverShowcase({ preview }: { preview: LandingPreview }) {
           </div>
           <ArrowRight className="all-camps-arrow" />
           <div className="sketch-panel all-camps-today">
-            <span className="art-meta">
-              Tüm Kamplar <ChevronDown className="ml-auto" />
-            </span>
+            <span className="art-meta">Bugün · tüm kamplar</span>
             <strong>{formatMinutes(preview.prefs.dailyStudyHours * 60 + 30)}</strong>
             <span>Örnek günlük hedef</span>
             <div className="flex gap-1">

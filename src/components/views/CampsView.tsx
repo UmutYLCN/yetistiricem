@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, CloudOff, Compass, ExternalLink, Gauge, Globe, ListVideo, Pencil, Play, Plus, RefreshCw, Trash2, TriangleAlert, Upload } from 'lucide-react';
+import { ChevronDown, CloudOff, Compass, ExternalLink, Gauge, Globe, ListVideo, Pause, Pencil, Play, Plus, RefreshCw, Trash2, TriangleAlert, Upload } from 'lucide-react';
 import type { StudyCamp } from '../../types';
 import type { CatalogEntry } from '../../lib/catalog';
 import type { CampInfo, PlanIndex } from '../../lib/planView';
@@ -24,8 +24,8 @@ interface Props {
   today: string;
   isDemo: boolean;
   /**
-   * The plan screens show "Tüm Kamplar". Choosing a camp here then only picks
-   * the camp to manage below; the combined view stays.
+   * The plan screens show several camps together. Choosing a camp here then
+   * only picks the camp to manage below; the combined view stays.
    */
   showsAllCamps: boolean;
   onAddCamp: () => void;
@@ -36,6 +36,10 @@ interface Props {
   /** "Keşfet’te yayınla" (also updates a camp that is already live). */
   onPublishCamp: (campId: string) => void;
   onDeleteCamp: (campId: string) => void;
+  /** Takes the camp off the plan screens, keeping all of it. */
+  onPauseCamp: (campId: string) => void;
+  /** Puts a paused camp back, its route laid out again from today. */
+  onResumeCamp: (campId: string) => void;
   /** The student's live Keşfet entries by their camp id; null while unknown (signed out, demo, loading). */
   publications: ReadonlyMap<string, CatalogEntry> | null;
   onUnpublishCamp: (entry: CatalogEntry) => void;
@@ -73,6 +77,8 @@ export function CampsView({
   onRenameCamp,
   onPublishCamp,
   onDeleteCamp,
+  onPauseCamp,
+  onResumeCamp,
   publications,
   onUnpublishCamp,
   onViewPublication,
@@ -97,7 +103,7 @@ export function CampsView({
         subtitle={
           allCamps.length > 0
             ? showsAllCamps
-              ? `${allCamps.length} kamp · her birinin kendi branşları ve temposu var · Rotam ve İlerleme hepsini birlikte gösteriyor`
+              ? `${allCamps.length} kamp · her birinin kendi branşları ve temposu var · Rotam ve İlerleme ${allCamps.some(c => c.pausedAt) ? 'duraklatılmayanları' : 'hepsini'} birlikte gösteriyor`
               : `${allCamps.length} kamp · her birinin kendi branşları ve temposu var`
             : undefined
         }
@@ -123,8 +129,12 @@ export function CampsView({
               const hasVideos = total > 0;
               const imported = isImportedCamp(camp);
               const published = publications?.get(camp.id) ?? null;
+              const paused = Boolean(camp.pausedAt);
               const menu: MenuItem[] = [
                 { label: 'Adını değiştir', icon: <Pencil aria-hidden="true" />, onSelect: () => onRenameCamp(camp.id) },
+                paused
+                  ? { label: 'Devam et', icon: <Play aria-hidden="true" />, onSelect: () => onResumeCamp(camp.id) }
+                  : { label: 'Kampı duraklat', icon: <Pause aria-hidden="true" />, onSelect: () => onPauseCamp(camp.id) },
                 ...(published
                   ? [
                       { label: 'Keşfet’te gör', icon: <Compass aria-hidden="true" />, onSelect: () => onViewPublication(published) },
@@ -159,6 +169,7 @@ export function CampsView({
                         </button>
                       )}
                     </h2>
+                    {paused && <span className="chip mt-0.5 shrink-0">Duraklatıldı</span>}
                     {active && <span className="chip chip-forest mt-0.5 shrink-0">{showsAllCamps ? 'Seçili' : 'Açık kamp'}</span>}
                     <Menu label={`${camp.name}: kamp seçenekleri`} items={menu} className="relative z-10 -mt-1.5 -mr-2 shrink-0" />
                   </div>
@@ -167,8 +178,8 @@ export function CampsView({
                     {camp.schedule.targetEndDate && ` · hedef ${formatShortDate(camp.schedule.targetEndDate)}`}
                   </p>
                   <p className="mt-1.5 text-[13px] text-ink-2">{tempoSummary(camp.schedule)}</p>
-                  {showsAllCamps && !hasVideos && (
-                    <p className="mt-1.5 text-[12.5px] text-ink-3">Henüz video yok; branş eklenince Tüm Kamplar görünümüne katılır.</p>
+                  {!paused && showsAllCamps && !hasVideos && (
+                    <p className="mt-1.5 text-[12.5px] text-ink-3">Henüz video yok; branş eklenince planına katılır.</p>
                   )}
                   <div className="mt-3 flex items-center gap-3">
                     <div className="flex-1">
@@ -178,6 +189,17 @@ export function CampsView({
                       {done}/{total}
                     </span>
                   </div>
+                  {camp.pausedAt && (
+                    <div className="relative z-10 mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[10px] bg-sunk px-3 py-2.5">
+                      <p className="min-w-0 flex-1 text-[12.5px] text-ink-2">
+                        {formatShortDate(camp.pausedAt)} tarihinden beri duraklatıldı; Rotam’da görünmüyor.
+                      </p>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => onResumeCamp(camp.id)}>
+                        <Play aria-hidden="true" />
+                        Devam et
+                      </button>
+                    </div>
+                  )}
                   {(published || origin) && (
                     <p className="mt-3 text-[12.5px] text-ink-3">
                       {published ? (
@@ -196,7 +218,7 @@ export function CampsView({
           </ul>
 
           <PageHeader
-            eyebrow={showsAllCamps ? 'Seçili kamp' : 'Açık kamp'}
+            eyebrow={`${showsAllCamps ? 'Seçili kamp' : 'Açık kamp'}${activeCamp.pausedAt ? ' · duraklatıldı' : ''}`}
             title={`${activeCamp.name} branşları`}
             subtitle={`${camps.length} branş · ${index.items.length} görev · plan ${formatLongDate(activeCamp.schedule.startDate)} tarihinde ${activeCamp.schedule.startDate > today ? 'başlıyor' : 'başladı'}`}
             actions={

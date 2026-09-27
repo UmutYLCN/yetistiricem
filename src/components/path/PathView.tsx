@@ -32,7 +32,7 @@ interface Props {
   /** Plays the task in focus mode (tasks with a video only). */
   onFocus?: (item: DailyPlanItem) => void;
   onAddBranches: () => void;
-  /** "Tüm Kamplar": the camps on screen; each stop then names its camp. */
+  /** Several camps on screen: each stop then names its camp. */
   campLabels?: Map<string, CampLabel>;
 }
 

@@ -9,7 +9,6 @@ import {
   formatLongDate,
   formatMinutes,
   formatPercent,
-  formatSpeed,
   formatWeekRange,
 } from '../../lib/format';
 import type { DaySummary } from '../../lib/planView';
@@ -26,7 +25,7 @@ export function ProgressCard({
   prefs: UserPreferences;
   today: string;
   targetEndDate: string | null;
-  /** "Tüm Kamplar": totals over these camps, and each camp's own daily goal. */
+  /** Several camps: totals over these camps, and each camp's own daily goal. */
   campGoals?: CampLabel[];
 }) {
   const finished = stats.totalVideos > 0 && stats.completedVideos === stats.totalVideos;
@@ -89,17 +88,15 @@ export function ProgressCard({
                       {goal.name}
                     </span>
                     <span className="tnum shrink-0 font-semibold text-ink">
-                      {formatMinutes(goal.dailyMinutes)} · {formatSpeed(goal.playbackSpeed)}
+                      {formatMinutes(goal.dailyMinutes)}
                     </span>
                   </li>
                 ))}
               </ul>
               {campGoals.length > 1 && (
                 <p className="tnum mt-2 flex justify-between gap-3 border-t border-dashed border-line pt-2">
-                  <span className="min-w-0 text-ink-2">
-                    {campGoals.map(goal => formatMinutes(goal.dailyMinutes)).join(' + ')} =
-                  </span>
-                  <span className="shrink-0 font-semibold text-ink">toplam {formatMinutes(sumGoals(campGoals))}</span>
+                  <span className="text-ink-2">Toplam</span>
+                  <span className="shrink-0 font-semibold text-ink">{formatMinutes(sumGoals(campGoals))}</span>
                 </p>
               )}
             </dd>
@@ -108,7 +105,7 @@ export function ProgressCard({
           <div className="flex justify-between gap-3">
             <dt className="text-ink-2">Günlük hedef</dt>
             <dd className="tnum font-semibold text-ink">
-              {formatMinutes(prefs.dailyStudyHours * 60)} · {formatSpeed(prefs.playbackSpeed)}
+              {formatMinutes(prefs.dailyStudyHours * 60)}
             </dd>
           </div>
         )}

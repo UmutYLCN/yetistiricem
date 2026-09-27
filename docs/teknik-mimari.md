@@ -43,7 +43,7 @@ Temel kayıtlar localStorage içindedir:
 
 - `yt_camps`: kamp, branş, tempo ve kaydırma geçmişi.
 - `yt_active_camp`: Kamplar sayfasında yönetilen gerçek kamp.
-- `yt_camp_scope`: plan ekranında tek kamp veya Tüm Kamplar seçimi.
+- `yt_camp_scope`: artık kullanılmıyor (eski tek kamp / Tüm Kamplar seçimi); okunmaz, yazılmaz, sıfırlama temizler.
 - `yt_completed`: tamamlanan video kimlikleri.
 - `yt_day_notes`: eski sürüm uyumluluğu için saklanan gün notları; arayüzde gün notları gösterilmez.
 - `yt_selected_date`: seçili takvim günü.

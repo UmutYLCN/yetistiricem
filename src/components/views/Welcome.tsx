@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { CalendarRange, CircleCheck, Eye, ListVideo, Plus } from 'lucide-react';
+import { CalendarRange, CircleCheck, Eye, ListVideo, Play, Plus } from 'lucide-react';
 import { EmptyState, FeaturedIcon } from '../ui/EmptyState';
 import { BranchesArt, CampsArt, PathArt, ProgressArt, WelcomeArt } from './EmptyArt';
 
@@ -150,7 +150,7 @@ export function NoBranchesYet({ onAddBranches }: { onAddBranches: () => void }) 
   );
 }
 
-/** "Tüm Kamplar" before any camp has a video. `campName`: the open camp, offered for adding branches. */
+/** Several camps before any has a video. `campName`: the open camp, offered for adding branches. */
 export function NoCampVideos({ campName, onAddBranches, onOpenCamps }: { campName?: string; onAddBranches: () => void; onOpenCamps: () => void }) {
   return (
     <EmptyPage
@@ -169,7 +169,25 @@ export function NoCampVideos({ campName, onAddBranches, onOpenCamps }: { campNam
         </>
       }
     >
-      Tüm Kamplar, video içeren kampları tarihe göre birlikte gösterir. Bir kampa branş ekle; o kamp kendi temposuyla buraya katılır.
+      Plan ekranları video içeren kampları tarihe göre birlikte gösterir. Bir kampa branş ekle; o kamp kendi temposuyla buraya katılır.
+    </EmptyPage>
+  );
+}
+
+/** Every camp is paused: nothing on the plan screens until one resumes. */
+export function AllCampsPaused({ count, onOpenCamps }: { count: number; onOpenCamps: () => void }) {
+  return (
+    <EmptyPage
+      art={<CampsArt />}
+      title={count > 1 ? 'Tüm kampların duraklatıldı' : 'Kampın duraklatıldı'}
+      actions={
+        <button type="button" className="btn btn-primary" onClick={onOpenCamps}>
+          <Play aria-hidden="true" />
+          Kamplara git
+        </button>
+      }
+    >
+      Hazır olduğunda Kamplar’dan “Devam et” de; kalan görevler o günden itibaren yeniden dağıtılır. İlerlemen yerinde duruyor.
     </EmptyPage>
   );
 }

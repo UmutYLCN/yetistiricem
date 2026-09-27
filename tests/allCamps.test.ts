@@ -11,7 +11,8 @@ import {
   dayGoals,
   everyCampOff,
   mergeDailyPlans,
-  resolveCampScope,
+  combinesCamps,
+  runningCamps,
   shiftEventsByCamp,
   sumGoals,
   summarizeAllCampsDay,
@@ -349,13 +350,10 @@ test('shifting in the combined view writes each camp its own event and leaves th
   assert.deepEqual(shiftEventsByCamp(sources(data, today), '2026-09-20', today), [], 'nothing to carry, no event');
 });
 
-test('the view scope: all camps by default from two camps, a camp choice sticks, fewer camps fall back', () => {
-  assert.equal(resolveCampScope(0, null), 'camp');
-  assert.equal(resolveCampScope(1, null), 'camp');
-  assert.equal(resolveCampScope(1, 'all'), 'camp', 'nothing to combine with one camp');
-  assert.equal(resolveCampScope(2, null), 'all', 'no choice yet: combined');
-  assert.equal(resolveCampScope(3, 'all'), 'all');
-  assert.equal(resolveCampScope(2, 'camp'), 'camp', 'a single-camp choice is kept');
+test('the plan screens combine running camps from two on; paused and video-less camps stay out', () => {
+  assert.equal(combinesCamps(0), false);
+  assert.equal(combinesCamps(1), false, 'nothing to combine with one camp');
+  assert.equal(combinesCamps(2), true);
 
   const { data, tyt, ayt } = twoCamps();
   const empty = createStudyCamp({ name: 'Boş', branches: [], schedule: tyt.schedule });
@@ -364,8 +362,13 @@ test('the view scope: all camps by default from two camps, a camp choice sticks,
   const plan = buildAllCampsPlan([empty, noVideos], { completedMap: {}, today: TODAY });
   assert.deepEqual([plan.camps, plan.plans, plan.stats.totalVideos], [[], [], 0]);
 
+  const paused = { ...ayt, pausedAt: TODAY };
+  assert.deepEqual(runningCamps([tyt, paused]).map(c => c.name), ['TYT']);
+  assert.deepEqual(campsWithPlans([tyt, paused]).map(c => c.name), ['TYT']);
+  assert.deepEqual(buildAllCampsPlan([tyt, paused], { completedMap: {}, today: TODAY }).camps.map(s => s.camp.name), ['TYT']);
+
   // Deleting down to one camp leaves a real open camp and a one-camp view.
   const left = ops.removeCamp(data, tyt.id);
   assert.equal(left.activeCampId, ayt.id);
-  assert.equal(resolveCampScope(left.camps.length, 'all'), 'camp');
+  assert.equal(combinesCamps(runningCamps(left.camps).length), false);
 });

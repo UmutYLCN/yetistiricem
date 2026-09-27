@@ -7,6 +7,7 @@ import * as ops from '../src/lib/plannerOps.ts';
 import { DEFAULT_AUTO_RHYTHM, createStudyCamp, normalizeCamps, scheduleFromAuto, scheduleFromManual } from '../src/lib/studyCamp.ts';
 import { dayOfWeek } from '../src/utils/date.ts';
 import { buildCampSchedule } from '../src/utils/roadmapEngine.ts';
+import { campsWithPlans, runningCamps } from '../src/lib/allCamps.ts';
 import { dateById, deepFreeze, layout, playlist, repeat } from './helpers.ts';
 
 const base = { startDate: '2026-09-21', targetEndDate: null, playbackSpeed: 1, practiceMultiplier: 0.2 };
@@ -190,4 +191,40 @@ test('a camp that has not started yet needs no carried tasks', () => {
   const { data, a } = twoCamps();
   const next = ops.addBranches(data, a.id, [playlist('bio', repeat(3, 30), 'Biyoloji')], { today: '2026-09-01' });
   assert.deepEqual(next.camps[0].shiftEvents, []);
+});
+
+test('pausing keeps a camp whole and off the plan; resuming lays its open tasks out again from today', () => {
+  const { data, a, b } = twoCamps();
+  const paused = ops.pauseCamp(deepFreeze(data), a.id, '2026-09-23');
+  const pa = paused.camps.find(c => c.id === a.id)!;
+  assert.equal(pa.pausedAt, '2026-09-23');
+  assert.deepEqual({ ...pa, pausedAt: undefined }, { ...a, pausedAt: undefined }, 'nothing else changes');
+  assert.deepEqual(runningCamps(paused.camps).map(c => c.id), [b.id]);
+  assert.deepEqual(campsWithPlans(paused.camps).map(c => c.id), [b.id]);
+  assert.equal(ops.pauseCamp(paused, a.id, '2026-09-25').camps[0].pausedAt, '2026-09-23', 'pausing again keeps the first day');
+
+  // Stored and loaded back.
+  assert.equal(normalizeCamps(snapshot(paused.camps)).camps[0].pausedAt, '2026-09-23');
+  assert.equal(normalizeCamps([{ ...snapshot(a), pausedAt: 'yesterday' }]).camps[0].pausedAt, undefined);
+
+  // Resumed a week later: every open task of the past days starts today, in order; done ones stay put.
+  const today = '2026-09-30';
+  const before = buildCampSchedule(pa, { completedMap: data.completedMap, today }).plans;
+  const open = before.filter(p => p.date < today).flatMap(p => p.items.filter(i => !i.completed).map(i => i.id));
+  assert.ok(open.length > 0);
+  const resumed = ops.resumeCamp(paused, a.id, today);
+  const ra = resumed.camps.find(c => c.id === a.id)!;
+  assert.equal('pausedAt' in ra, false);
+  assert.deepEqual(ra.shiftEvents.at(-1), { date: '2026-09-29', resumeDate: today, itemIds: open, origin: 'resumed' });
+  const after = buildCampSchedule(ra, { completedMap: data.completedMap, today }).plans;
+  const dates = dateById(after);
+  assert.ok(open.every(id => dates.get(id)! >= today), 'nothing open is left behind');
+  assert.equal(after.filter(p => p.date < today).flatMap(p => p.items).every(i => i.completed), true);
+  const dayOfVideo = (plans: typeof after, videoId: string) => plans.find(p => p.items.some(i => i.videoId === videoId))?.date;
+  assert.equal(dayOfVideo(after, 'mat-1'), dayOfVideo(before, 'mat-1'), 'a done task keeps its day');
+  const first = after.find(p => p.items.length > 0 && p.date >= today)!;
+  assert.equal(first.items[0].id, open[0], 'the first open task comes first');
+  assert.equal(normalizeCamps(snapshot(resumed.camps)).camps[0].shiftEvents.at(-1)?.origin, 'resumed');
+  assert.deepEqual(resumed.camps.find(c => c.id === b.id), b, 'the other camp is untouched');
+  assert.deepEqual(ops.resumeCamp(resumed, a.id, today).camps, resumed.camps, 'a running camp is not resumed again');
 });

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CampSchedule, StudyCamp, SubjectPlaylist } from '../types/index.ts';
-import type { CampScope, CampShift } from '../lib/allCamps';
+import type { CampShift } from '../lib/allCamps';
 import { STORAGE_KEYS } from '../lib/engine';
 import { buildDemoData } from '../lib/demo';
 import * as ops from '../lib/plannerOps';
@@ -30,9 +30,6 @@ interface StoreState {
   demo: PlannerData | null;
   realSelected: string;
   demoSelected: string;
-  /** "Tüm Kamplar" or one camp; null until the user picks (see `resolveCampScope`). */
-  realScope: CampScope | null;
-  demoScope: CampScope | null;
 }
 
 /** Saves `value` under `key` whenever it changes after the first load. */
@@ -59,8 +56,6 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
       demo: startInDemo ? buildDemoData(today) : null,
       realSelected: initial.selectedDate,
       demoSelected: today,
-      realScope: initial.campScope,
-      demoScope: null,
     };
   });
   const [notices, setNotices] = useState<Notice[]>(() => loadPlannerOnce().notices);
@@ -91,7 +86,6 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
   usePersist(PROGRESS_KEYS.playlistSync, state.real.playlistSync, reportSaveFailure, serializePlaylistSync);
   usePersist(UI_KEYS.dayNotes, state.real.dayNotes, reportSaveFailure);
   usePersist(UI_KEYS.selectedDate, state.realSelected, reportSaveFailure);
-  usePersist(UI_KEYS.campScope, state.realScope, reportSaveFailure);
 
   const update = useCallback((fn: (data: PlannerData) => PlannerData) => {
     setState(s => (s.demo ? { ...s, demo: fn(s.demo) } : { ...s, real: fn(s.real) }));
@@ -101,9 +95,6 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
     () => ({
       setSelectedDate: (date: string) =>
         setState(s => (s.demo ? { ...s, demoSelected: date } : { ...s, realSelected: date })),
-
-      /** A view choice only; the active (managed) camp does not change. */
-      setCampScope: (scope: CampScope) => setState(s => (s.demo ? { ...s, demoScope: scope } : { ...s, realScope: scope })),
 
       /** A tick records today as the day the video was done. */
       setCompleted: (videoId: string, done: boolean) => update(d => ops.setCompleted(d, videoId, done, today)),
@@ -116,6 +107,8 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
       createCamp: (camp: StudyCamp) => update(d => ops.createCamp(d, camp)),
       setActiveCamp: (campId: string) => update(d => ops.setActiveCamp(d, campId)),
       renameCamp: (campId: string, name: string) => update(d => ops.renameCamp(d, campId, name)),
+      pauseCamp: (campId: string) => update(d => ops.pauseCamp(d, campId, today)),
+      resumeCamp: (campId: string) => update(d => ops.resumeCamp(d, campId, today)),
       setCampSchedule: (campId: string, schedule: CampSchedule) => update(d => ops.setCampSchedule(d, campId, schedule)),
       removeCamp: (campId: string) => update(d => ops.removeCamp(d, campId)),
       addBranches: (campId: string, branches: SubjectPlaylist[], options: { weekdays?: number[]; today: string }) =>
@@ -132,11 +125,11 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
       /** Deletes every saved key and starts empty. */
       reset: (todayKeyNow: string) => {
         clearAllStorage();
-        setState(s => ({ ...s, demo: null, real: emptyData(), realSelected: todayKeyNow, realScope: null }));
+        setState(s => ({ ...s, demo: null, real: emptyData(), realSelected: todayKeyNow }));
       },
 
       startDemo: (todayKeyNow: string) =>
-        setState(s => ({ ...s, demo: buildDemoData(todayKeyNow), demoSelected: todayKeyNow, demoScope: null })),
+        setState(s => ({ ...s, demo: buildDemoData(todayKeyNow), demoSelected: todayKeyNow })),
 
       exitDemo: () => setState(s => ({ ...s, demo: null })),
 
@@ -151,7 +144,6 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
     realData: state.real,
     isDemo,
     selectedDate: isDemo ? state.demoSelected : state.realSelected,
-    campScope: isDemo ? state.demoScope : state.realScope,
     notices,
     storageAvailable,
     seedPreferences,

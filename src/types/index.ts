@@ -63,10 +63,11 @@ export interface ShiftEvent {
   /**
    * Made by the app, so not a postponement: `branch-added` when branches
    * joined a running camp (`withAddedBranches`), `videos-added` when new
-   * playlist videos were appended to a branch (`withAppendedVideos`).
+   * playlist videos were appended to a branch (`withAppendedVideos`),
+   * `resumed` when a paused camp was resumed (`withResumed`).
    * Missing = the user's own shift.
    */
-  origin?: 'branch-added' | 'videos-added';
+  origin?: 'branch-added' | 'videos-added' | 'resumed';
 }
 
 /**
@@ -108,6 +109,11 @@ export interface StudyCamp {
    * student's own work and cannot be published under their name.
    */
   origin?: CampOrigin;
+  /**
+   * The local day the student paused the camp. A paused camp keeps all its
+   * data but leaves the plan screens until it is resumed (`withResumed`).
+   */
+  pausedAt?: string;
 }
 
 export interface DailyPlanItem {

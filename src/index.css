@@ -1,12 +1,19 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------------
-   Yetişir design tokens (dark only)
+   Yetişir design tokens (dark by default, light as an override)
    Near-black surfaces in steps (paper → card → sunk), hairline borders and
    white text in three strengths. Primary actions are white; green marks
    progress and done states, orange "today" and heads-ups (mock days, target
    forecasts), red tasks left undone and destructive actions. Names are
    roles: `paper` is the page, `ink` the main text.
+
+   The values below are dark mode's, and also the fallback (no JS, no
+   preference). Light mode redefines the same custom properties further
+   down, once for `@media (prefers-color-scheme: light)` and once for an
+   explicit `[data-theme="light"]` override (`src/lib/theme.ts`,
+   `yt_theme`); components only ever reach for `var(--color-*)`, never a
+   raw hex, so both places repaint them automatically.
    ------------------------------------------------------------------------ */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -30,6 +37,9 @@
   --color-ink-3: #80848c;
   /* Text and glyphs on the bright fills (ink, forest, accent). */
   --color-on-fill: #08090a;
+  /* Where `ink` itself is the fill (btn-primary, a hovered path label): the
+     subtle "further toward the opposite end of the scale" nudge on hover. */
+  --color-ink-hover: #fff;
 
   --color-forest: #3ecf8e;
   --color-forest-strong: #72dfae;
@@ -49,6 +59,189 @@
   --radius-card: 14px;
   --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.03), 0 1px 2px rgb(0 0 0 / 0.5);
   --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.07), 0 24px 48px -12px rgb(0 0 0 / 0.75), 0 4px 14px rgb(0 0 0 / 0.45);
+}
+
+/* Branch palette (`src/lib/subjects.ts`): a camp stores a palette key
+   (`colorTag`), never a colour, so redefining these repaints every camp,
+   dark or light, with no data migration. `solid` is text-on-card (AA) and
+   the dot/bar/node fill; `soft` its quiet background tint. Not in `@theme`:
+   these don't need Tailwind utilities, only the `var()` lookups in
+   subjects.ts. The light values live further down with the rest. */
+:root {
+  --palette-ink-solid: #8fa0f8;
+  --palette-ink-soft: #212432;
+  --palette-forest-solid: #6fcf8a;
+  --palette-forest-soft: #1c2b23;
+  --palette-clay-solid: #f2916c;
+  --palette-clay-soft: #2f221f;
+  --palette-ochre-solid: #e3b341;
+  --palette-ochre-soft: #2d2719;
+  --palette-plum-solid: #cc9ae6;
+  --palette-plum-soft: #292330;
+  --palette-teal-solid: #3cc6c0;
+  --palette-teal-soft: #15292a;
+  --palette-rose-solid: #f58ea7;
+  --palette-rose-soft: #2f2227;
+  --palette-olive-solid: #b3c46a;
+  --palette-olive-soft: #26291e;
+  --palette-slate-solid: #9aa5b1;
+  --palette-slate-soft: #222528;
+}
+
+/* Light mode's values, kept apart from the reassignment gates below so
+   those stay a short, mechanical list instead of two full copies. Solids
+   are darker than their dark-mode counterparts (AA text on a white card,
+   same reasoning the comment above gives for the dark ones); softs are
+   pale tints instead of near-black ones. */
+:root {
+  --light-color-paper: #f7f7f8;
+  --light-color-card: #ffffff;
+  --light-color-sunk: #eef0f2;
+  --light-color-field: #ffffff;
+  --light-color-line: #e5e7ea;
+  --light-color-line-strong: #d5d8dd;
+  --light-color-control: #888d96;
+
+  --light-color-ink: #101113;
+  --light-color-ink-2: #52555c;
+  --light-color-ink-3: #6b6e76;
+  --light-color-on-fill: #ffffff;
+  --light-color-ink-hover: #000000;
+
+  --light-color-forest: #0f8a5f;
+  --light-color-forest-strong: #0b6b45;
+  --light-color-forest-soft: #e3f3ea;
+  --light-color-forest-tint: #edf8f1;
+
+  --light-color-accent: #c2540d;
+  --light-color-accent-strong: #96400a;
+  --light-color-accent-soft: #fdeade;
+
+  --light-color-danger: #c22b30;
+  --light-color-danger-soft: #fbe4e5;
+  --light-color-warn: #92660a;
+  --light-color-warn-soft: #fbf1d9;
+
+  --light-shadow-card: 0 1px 2px rgb(0 0 0 / 0.05), 0 1px 0 rgb(0 0 0 / 0.03);
+  --light-shadow-pop: 0 0 0 1px rgb(0 0 0 / 0.06), 0 24px 48px -12px rgb(0 0 0 / 0.16), 0 4px 14px rgb(0 0 0 / 0.08);
+
+  --light-palette-ink-solid: #4a5fd1;
+  --light-palette-ink-soft: #e7eaff;
+  --light-palette-forest-solid: #1f8a52;
+  --light-palette-forest-soft: #e3f7e9;
+  --light-palette-clay-solid: #c1552c;
+  --light-palette-clay-soft: #fbe8de;
+  --light-palette-ochre-solid: #93650f;
+  --light-palette-ochre-soft: #f8ecd2;
+  --light-palette-plum-solid: #8a4fc2;
+  --light-palette-plum-soft: #f1e6fa;
+  --light-palette-teal-solid: #167e79;
+  --light-palette-teal-soft: #dcf5f3;
+  --light-palette-rose-solid: #c23f63;
+  --light-palette-rose-soft: #fbe4ea;
+  --light-palette-olive-solid: #6b7a2e;
+  --light-palette-olive-soft: #eef2de;
+  --light-palette-slate-solid: #55606b;
+  --light-palette-slate-soft: #e7eaed;
+}
+
+@media (prefers-color-scheme: light) {
+  /* An explicit dark override (below) still wins over the OS here. */
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --color-paper: var(--light-color-paper);
+    --color-card: var(--light-color-card);
+    --color-sunk: var(--light-color-sunk);
+    --color-field: var(--light-color-field);
+    --color-line: var(--light-color-line);
+    --color-line-strong: var(--light-color-line-strong);
+    --color-control: var(--light-color-control);
+    --color-ink: var(--light-color-ink);
+    --color-ink-2: var(--light-color-ink-2);
+    --color-ink-3: var(--light-color-ink-3);
+    --color-on-fill: var(--light-color-on-fill);
+    --color-ink-hover: var(--light-color-ink-hover);
+    --color-forest: var(--light-color-forest);
+    --color-forest-strong: var(--light-color-forest-strong);
+    --color-forest-soft: var(--light-color-forest-soft);
+    --color-forest-tint: var(--light-color-forest-tint);
+    --color-accent: var(--light-color-accent);
+    --color-accent-strong: var(--light-color-accent-strong);
+    --color-accent-soft: var(--light-color-accent-soft);
+    --color-danger: var(--light-color-danger);
+    --color-danger-soft: var(--light-color-danger-soft);
+    --color-warn: var(--light-color-warn);
+    --color-warn-soft: var(--light-color-warn-soft);
+    --shadow-card: var(--light-shadow-card);
+    --shadow-pop: var(--light-shadow-pop);
+    --palette-ink-solid: var(--light-palette-ink-solid);
+    --palette-ink-soft: var(--light-palette-ink-soft);
+    --palette-forest-solid: var(--light-palette-forest-solid);
+    --palette-forest-soft: var(--light-palette-forest-soft);
+    --palette-clay-solid: var(--light-palette-clay-solid);
+    --palette-clay-soft: var(--light-palette-clay-soft);
+    --palette-ochre-solid: var(--light-palette-ochre-solid);
+    --palette-ochre-soft: var(--light-palette-ochre-soft);
+    --palette-plum-solid: var(--light-palette-plum-solid);
+    --palette-plum-soft: var(--light-palette-plum-soft);
+    --palette-teal-solid: var(--light-palette-teal-solid);
+    --palette-teal-soft: var(--light-palette-teal-soft);
+    --palette-rose-solid: var(--light-palette-rose-solid);
+    --palette-rose-soft: var(--light-palette-rose-soft);
+    --palette-olive-solid: var(--light-palette-olive-solid);
+    --palette-olive-soft: var(--light-palette-olive-soft);
+    --palette-slate-solid: var(--light-palette-slate-solid);
+    --palette-slate-soft: var(--light-palette-slate-soft);
+  }
+}
+
+/* An explicit override (`yt_theme`, `src/lib/theme.ts`) always wins, dark or
+   light, regardless of what the OS prefers. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-paper: var(--light-color-paper);
+  --color-card: var(--light-color-card);
+  --color-sunk: var(--light-color-sunk);
+  --color-field: var(--light-color-field);
+  --color-line: var(--light-color-line);
+  --color-line-strong: var(--light-color-line-strong);
+  --color-control: var(--light-color-control);
+  --color-ink: var(--light-color-ink);
+  --color-ink-2: var(--light-color-ink-2);
+  --color-ink-3: var(--light-color-ink-3);
+  --color-on-fill: var(--light-color-on-fill);
+  --color-ink-hover: var(--light-color-ink-hover);
+  --color-forest: var(--light-color-forest);
+  --color-forest-strong: var(--light-color-forest-strong);
+  --color-forest-soft: var(--light-color-forest-soft);
+  --color-forest-tint: var(--light-color-forest-tint);
+  --color-accent: var(--light-color-accent);
+  --color-accent-strong: var(--light-color-accent-strong);
+  --color-accent-soft: var(--light-color-accent-soft);
+  --color-danger: var(--light-color-danger);
+  --color-danger-soft: var(--light-color-danger-soft);
+  --color-warn: var(--light-color-warn);
+  --color-warn-soft: var(--light-color-warn-soft);
+  --shadow-card: var(--light-shadow-card);
+  --shadow-pop: var(--light-shadow-pop);
+  --palette-ink-solid: var(--light-palette-ink-solid);
+  --palette-ink-soft: var(--light-palette-ink-soft);
+  --palette-forest-solid: var(--light-palette-forest-solid);
+  --palette-forest-soft: var(--light-palette-forest-soft);
+  --palette-clay-solid: var(--light-palette-clay-solid);
+  --palette-clay-soft: var(--light-palette-clay-soft);
+  --palette-ochre-solid: var(--light-palette-ochre-solid);
+  --palette-ochre-soft: var(--light-palette-ochre-soft);
+  --palette-plum-solid: var(--light-palette-plum-solid);
+  --palette-plum-soft: var(--light-palette-plum-soft);
+  --palette-teal-solid: var(--light-palette-teal-solid);
+  --palette-teal-soft: var(--light-palette-teal-soft);
+  --palette-rose-solid: var(--light-palette-rose-solid);
+  --palette-rose-soft: var(--light-palette-rose-soft);
+  --palette-olive-solid: var(--light-palette-olive-solid);
+  --palette-olive-soft: var(--light-palette-olive-soft);
+  --palette-slate-solid: var(--light-palette-slate-solid);
+  --palette-slate-soft: var(--light-palette-slate-soft);
 }
 
 @layer base {
@@ -173,7 +366,7 @@
     box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.14);
   }
   .btn-primary:hover:not(:disabled) {
-    background: #fff;
+    background: var(--color-ink-hover);
   }
 
   .btn-secondary {
@@ -1000,7 +1193,7 @@
     border-radius: 14px;
     border: 1px solid var(--color-line-strong);
     background: linear-gradient(180deg, var(--color-sunk), var(--color-card));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 10px 24px -10px rgb(0 0 0 / 0.7);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-ink) 5%, transparent), 0 10px 24px -10px rgb(0 0 0 / 0.7);
     color: var(--color-ink-2);
   }
   .featured-icon-tile svg {
@@ -1025,12 +1218,12 @@
   .featured-icon-forest .featured-icon-tile {
     color: var(--color-forest);
     border-color: color-mix(in srgb, var(--color-forest) 38%, var(--color-line-strong));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 0 28px -8px color-mix(in srgb, var(--color-forest) 55%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-ink) 5%, transparent), 0 0 28px -8px color-mix(in srgb, var(--color-forest) 55%, transparent);
   }
   .featured-icon-accent .featured-icon-tile {
     color: var(--color-accent);
     border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-line-strong));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 0 28px -8px color-mix(in srgb, var(--color-accent) 50%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-ink) 5%, transparent), 0 0 28px -8px color-mix(in srgb, var(--color-accent) 50%, transparent);
   }
 
   /* Ways to add videos: illustrated cards (a tab list) --------------------------- */
@@ -1193,7 +1386,7 @@
   .path-island[data-state="locked"] .path-node {
     box-shadow:
       inset 0 0 0 1px var(--color-line-strong),
-      inset 0 2px 0 rgb(255 255 255 / 0.05),
+      inset 0 2px 0 color-mix(in srgb, var(--color-ink) 5%, transparent),
       0 var(--lift) 0 var(--lip),
       0 calc(var(--lift) + 12px) 22px -8px rgb(0 0 0 / 0.85);
   }
@@ -1229,7 +1422,7 @@
   }
   .path-island[data-state="open"] .path-glow,
   .path-island[data-state="locked"] .path-glow {
-    background: radial-gradient(closest-side, rgb(255 255 255 / 0.05), transparent);
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--color-ink) 5%, transparent), transparent);
   }
   /* Where the path waits: a ring around the stop and a bubble over it. */
   .path-island[data-state="next"]::before {
@@ -1300,7 +1493,7 @@
     transition: color 120ms ease;
   }
   .path-stop:hover .path-label-title {
-    color: #fff;
+    color: var(--color-ink-hover);
   }
   @media (max-width: 519px) {
     .path-label-title {
@@ -1617,15 +1810,15 @@
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+      linear-gradient(to right, color-mix(in srgb, var(--color-ink) 4.5%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--color-ink) 4.5%, transparent) 1px, transparent 1px);
     background-size: 56px 56px;
     background-position: center top;
     mask-image: radial-gradient(ellipse 72% 52% at 50% 0%, #000 25%, transparent 78%);
   }
 
   .text-gradient {
-    background: linear-gradient(180deg, #fff 30%, rgb(255 255 255 / 0.6));
+    background: linear-gradient(180deg, var(--color-ink) 30%, color-mix(in srgb, var(--color-ink) 60%, transparent));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -1672,15 +1865,15 @@
     max-width: 100%;
     padding: 4px 12px 4px 4px;
     border-radius: 999px;
-    border: 1px solid rgb(255 255 255 / 0.1);
-    background: rgb(255 255 255 / 0.03);
+    border: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+    background: color-mix(in srgb, var(--color-ink) 3%, transparent);
     font-size: 13px;
     color: var(--color-ink-2);
     transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
   }
   .announce:hover {
-    border-color: rgb(255 255 255 / 0.2);
-    background: rgb(255 255 255 / 0.05);
+    border-color: color-mix(in srgb, var(--color-ink) 20%, transparent);
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
     color: var(--color-ink);
   }
   .announce-badge {
@@ -1706,9 +1899,9 @@
     overflow: hidden;
     max-height: 700px;
     border-radius: 18px;
-    border: 1px solid rgb(255 255 255 / 0.1);
+    border: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
     background: var(--color-paper);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 50px 100px -30px rgb(0 0 0 / 0.9);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-ink) 6%, transparent), 0 50px 100px -30px rgb(0 0 0 / 0.9);
     mask-image: linear-gradient(to bottom, #000 68%, transparent 98%);
   }
   .preview-frame::before {

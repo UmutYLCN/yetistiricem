@@ -4,7 +4,10 @@ import '@fontsource-variable/inter/opsz.css'
 import './index.css'
 import { hasAuthCallback } from './lib/authKey.ts'
 import { APP_PATH, isAppPath, isConsentPath, isDocsPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest, takeMcpDraftRequest } from './lib/routes.ts'
+import { initTheme } from './lib/theme.ts'
 import { Root } from './Root.tsx'
+
+initTheme()
 
 const inApp = isAppPath(window.location.pathname)
 const inConsent = isConsentPath(window.location.pathname)

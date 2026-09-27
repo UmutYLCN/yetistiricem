@@ -119,8 +119,10 @@ export function CampWizard() {
       </p>
       <H2 id="birden-fazla-kamp">Birden fazla kamp</H2>
       <p>
-        İki ya da daha fazla kampın olduğunda Rotam ve İlerleme ekranları <strong>Tüm Kamplar</strong> görünümünü açar: görevler
-        tek akışta, her biri kamp ve branş adıyla. Her kamp kendi temposuyla planlanır; bir kampı değiştirmek diğerini etkilemez.
+        İki ya da daha fazla kampın olduğunda Rotam ve İlerleme ekranları tüm kampları birlikte gösterir: görevler tek akışta, her
+        biri kamp ve branş adıyla. Her kamp kendi temposuyla planlanır; bir kampı değiştirmek diğerini etkilemez. Bir kampa ara
+        vermek istersen Kamplar’da kartın menüsünden <strong>Kampı duraklat</strong> de: kamp saklanır ama Rotam’dan ve İlerleme’den
+        çıkar. <strong>Devam et</strong> dediğinde geride kalan görevler o günden itibaren sırayla yeniden dağıtılır; bu erteleme sayılmaz.
       </p>
     </>
   );
@@ -584,6 +586,7 @@ export function Account() {
       <p>
         Kenar çubuğunun altındaki profil satırı <strong>Profil ve ayarlar</strong> sayfasını açar: profil resmin, görünen adın (Keşfet’te
         yayınladığın kamplarda görünür), okul ve bölüm bilgilerin, Hakkında yazın, yapay zekâ bağlantıların, verilerin ve en altta çıkış.
+        Yanındaki dişli <strong>Ayarlar</strong> penceresini açar: açık, koyu ya da cihazını izleyen görünüm buradan seçilir.
       </p>
       <p>
         İlk girişte birkaç kısa soru sorulur: sekiz çizim arasından bir profil resmi (ya da kendi fotoğrafın), şu an ne yaptığın (lise,

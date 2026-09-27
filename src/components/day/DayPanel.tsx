@@ -3,13 +3,11 @@ import type { ReactNode } from 'react';
 import { CircleCheck, Forward, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import type { CampDaySummary, CampLabel } from '../../lib/allCamps';
-import { dayGoals } from '../../lib/allCamps';
 import { addDays } from '../../lib/engine';
 import { formatDayTitle, formatLongDate, formatMinutes } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
 import { groupByBranch } from '../../lib/planView';
 import { linkStateOf } from '../../lib/camps';
-import { Meter } from '../ui/Bits';
 import { CampDayTypeRows } from './CampDayTypes';
 import { DayEmpty } from './DayEmpty';
 import { TaskItem } from './TaskItem';
@@ -105,7 +103,7 @@ export function DayPanel({
   onAddBranches,
   campLabels,
 }: Props) {
-  const { date, plan, total, done, minutes, doneMinutes } = summary;
+  const { date, plan, total, done } = summary;
   const items = groupByBranch(plan?.items ?? []);
   const open = total - done;
   const isPast = date < today;
@@ -114,7 +112,6 @@ export function DayPanel({
   const allCamps = campLabels !== undefined;
   const parts = summary.camps ?? [];
   const offCamps = parts.filter(p => p.total === 0);
-  const goals = allCamps ? dayGoals(summary, campLabels) : null;
 
   let body: ReactNode;
   if (allCamps && items.length > 0) {
@@ -180,34 +177,6 @@ export function DayPanel({
       tabIndex={-1}
       className="card overflow-hidden focus-visible:outline-offset-4"
     >
-      {total > 0 && (
-        <div className="border-b border-line px-4 pt-4 pb-3.5 sm:px-5">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-[14px] text-ink-2">
-              <span className="font-semibold text-ink">{total} görev</span> · ~{formatMinutes(minutes)} çalışma
-              {allCamps && <span className="whitespace-nowrap"> · {formatMinutes(doneMinutes)} tamamlandı</span>}
-            </p>
-            <p className="tnum text-[13px] font-semibold text-ink-2">
-              {done}/{total}
-            </p>
-          </div>
-          <div className="mt-2.5">
-            <Meter value={doneMinutes} max={minutes} label="Günün ilerlemesi (süreye göre)" />
-          </div>
-          {goals && goals.goals.length > 0 && (
-            <p className="tnum mt-2 text-[12.5px] text-ink-3">
-              Günlük hedef: {goals.goals.map(g => `${g.name} ${formatMinutes(g.dailyMinutes)}`).join(' + ')}
-              {goals.goals.length > 1 && (
-                <>
-                  {' = '}
-                  <span className="font-semibold whitespace-nowrap text-ink-2">toplam {formatMinutes(goals.totalMinutes)}</span>
-                </>
-              )}
-            </p>
-          )}
-        </div>
-      )}
-
       {(isPast && open > 0) || hasSample || (total > 0 && open === 0) ? (
         <div className="space-y-2 border-b border-line px-4 py-3 sm:px-5">
           {isPast && open > 0 && (

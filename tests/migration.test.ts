@@ -230,7 +230,7 @@ test('several camps load with their own branches, schedules and shift events', (
   });
 });
 
-test('the "Tüm Kamplar" choice is its own key and never stands in for the active camp', () => {
+test('the retired camp scope key is ignored, never stands in for the active camp, and a reset clears it', () => {
   const second: StudyCamp = {
     id: 'camp-ayt',
     name: 'AYT',
@@ -243,21 +243,18 @@ test('the "Tüm Kamplar" choice is its own key and never stands in for the activ
   const camps = JSON.stringify(campStore([first, second]));
   withStorage({ [CAMP_KEYS.camps]: camps, [CAMP_KEYS.activeCamp]: JSON.stringify('camp-ayt'), [UI_KEYS.campScope]: JSON.stringify('all') }, () => {
     const loaded = loadPlanner();
-    assert.equal(loaded.campScope, 'all');
+    assert.equal('campScope' in loaded, false, 'the old view choice is not read');
     assert.equal(loaded.data.activeCampId, 'camp-ayt', 'the managed camp stays a real camp');
   });
   withStorage({ [CAMP_KEYS.camps]: camps, [CAMP_KEYS.activeCamp]: JSON.stringify('all') }, () => {
     const loaded = loadPlanner();
     assert.equal(loaded.data.activeCampId, first.id, '"all" is not a camp id');
-    assert.equal(loaded.campScope, null, 'no choice made yet');
-  });
-  withStorage({ [CAMP_KEYS.camps]: camps, [UI_KEYS.campScope]: JSON.stringify('camp-ayt') }, () => {
-    assert.equal(loadPlanner().campScope, null, 'only "all" or "camp" is a scope');
   });
   withStorage({ [CAMP_KEYS.camps]: camps, [UI_KEYS.campScope]: JSON.stringify('camp') }, store => {
-    assert.equal(loadPlanner().campScope, 'camp');
+    loadPlanner();
+    assert.equal(store.has(UI_KEYS.campScope), true, 'loading leaves it alone');
     clearAllStorage();
-    assert.equal(store.has(UI_KEYS.campScope), false, 'reset clears the choice');
+    assert.equal(store.has(UI_KEYS.campScope), false, 'reset clears the old choice');
   });
 });
 

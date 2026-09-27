@@ -6,6 +6,7 @@ import { buildLandingPreview } from '../../lib/landingPreview';
 import { hasSavedSignIn } from '../../lib/authKey';
 import { APP_PATH, DEMO_APP_PATH, DOCS_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
+import { ThemeIconToggle } from '../ui/ThemeToggle';
 import { Features } from './Features';
 import { AiSection, AskSection, HowItWorks } from './Stories';
 import { ProductPreview } from './ProductPreview';
@@ -94,6 +95,7 @@ function SiteHeader() {
           <a href={DOCS_PATH}>Belgeler</a>
         </nav>
         <div className="landing-header-actions">
+          <ThemeIconToggle />
           <button
             id="landing-menu-toggle"
             type="button"

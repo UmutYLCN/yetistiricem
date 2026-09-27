@@ -49,7 +49,7 @@ export function ProductPreview({ base }: { base: LandingPreview }) {
 
   return (
     <div ref={frameRef} className="preview-frame text-left" aria-hidden="true" inert>
-      <AppPreviewLayout camp={camp} view="today">
+      <AppPreviewLayout view="today">
         <div className="grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0">
             <p className={`eyebrow mb-1.5 ${isToday ? 'text-accent' : ''}`}>{relativeDayLabel(day.date, today)}</p>

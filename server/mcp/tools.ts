@@ -347,8 +347,12 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
         guard(async () => {
           const { data } = await loadAccountPlan(account, deps);
           const o = progressOverview(data, deps.today());
+          const paused = o.pausedCamps.length ? `Paused by the student (not on their plan until resumed): ${o.pausedCamps.map(c => `"${c.name}" since ${c.pausedSince}`).join(', ')}.` : null;
           if (o.camps.length === 0) {
-            return { text: `The student has no camp with videos yet${o.emptyCamps.length ? ` (empty: ${o.emptyCamps.join(', ')})` : ''}.`, structured: o };
+            return {
+              text: [`The student has no camp with videos yet${o.emptyCamps.length ? ` (empty: ${o.emptyCamps.join(', ')})` : ''}.`, ...(paused ? [paused] : [])].join('\n'),
+              structured: o,
+            };
           }
           const h = o.habits;
           const lines = [
@@ -360,6 +364,7 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
                 `  Branches: ${c.branches.map(b => `${b.subject} ${b.done}/${b.total}`).join(', ')}.`,
               ].join('\n')
             ),
+            ...(paused ? [paused] : []),
             `Streak: ${h.streak.current} day(s) (best ${h.streak.best}); today ${h.streak.todayDone ? 'done' : h.streak.todayIsStudyDay ? 'not done yet' : 'not a study day'}.`,
             `Last 7 days: ${h.lastSevenDays.join(', ')}.`,
             `Studied: ${h.studied.last7Days.videos} video(s) / ${h.studied.last7Days.hours} h in 7 days, ${h.studied.last30Days.hours} h in 30 days.`,
@@ -374,7 +379,7 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
     {
       name: 'get_my_plan',
       title: 'My plan',
-      description: `The signed-in student's tasks day by day, every camp together, for up to ${MAX_PLAN_DAYS} days from \`from\` (default today). From today, overdue tasks are listed first.`,
+      description: `The signed-in student's tasks day by day, every running (not paused) camp together, for up to ${MAX_PLAN_DAYS} days from \`from\` (default today). From today, overdue tasks are listed first.`,
       inputSchema: {
         type: 'object',
         properties: {

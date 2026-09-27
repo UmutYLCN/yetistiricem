@@ -54,6 +54,33 @@ export function setActiveCamp(data: PlannerData, campId: string): PlannerData {
   return data.camps.some(c => c.id === campId) ? { ...data, activeCampId: campId } : data;
 }
 
+/** Pauses a camp: it keeps everything but leaves the plan screens until resumed. */
+export function pauseCamp(data: PlannerData, campId: string, today: string): PlannerData {
+  return mapCamp(data, campId, c => (c.pausedAt ? c : { ...c, pausedAt: today }));
+}
+
+/**
+ * `camp` resumed on `today`: its route is laid out again from today. Every
+ * task left open on a past day (the paused days' and any older ones) is
+ * carried to today onward, in order, with one app-made event
+ * (`origin: 'resumed'`, not a postponement). Today's own tasks follow them.
+ * `carried` counts the carried tasks.
+ */
+export function withResumed(camp: StudyCamp, options: { completedMap?: Record<string, boolean>; today: string }): { camp: StudyCamp; carried: number } {
+  const next: StudyCamp = { ...camp };
+  delete next.pausedAt;
+  const { today, completedMap = {} } = options;
+  const { plans } = buildCampSchedule(next, { completedMap, today });
+  const itemIds = plans.filter(plan => plan.date < today).flatMap(plan => plan.items.filter(item => !item.completed).map(item => item.id));
+  if (itemIds.length === 0) return { camp: next, carried: 0 };
+  const shift: ShiftEvent = { date: addDays(today, -1), resumeDate: today, itemIds, origin: 'resumed' };
+  return { camp: { ...next, shiftEvents: [...next.shiftEvents, shift] }, carried: itemIds.length };
+}
+
+export function resumeCamp(data: PlannerData, campId: string, today: string): PlannerData {
+  return mapCamp(data, campId, c => (c.pausedAt ? withResumed(c, { completedMap: data.completedMap, today }).camp : c));
+}
+
 export function renameCamp(data: PlannerData, campId: string, name: string): PlannerData {
   return mapCamp(data, campId, c => ({ ...c, name }));
 }

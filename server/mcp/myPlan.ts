@@ -22,9 +22,10 @@ const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', '
 const round = (n: number, digits = 1) => Math.round(n * 10 ** digits) / 10 ** digits;
 const hours = (minutes: number) => round(minutes / 60);
 
+/** Camps the plan screens show: running ones with videos (a paused camp waits in Kamplar). */
 function sourcesOf(data: PlannerData, today: string): InsightSource[] {
   return data.camps
-    .filter(camp => camp.branches.some(b => b.videos.length > 0))
+    .filter(camp => !camp.pausedAt && camp.branches.some(b => b.videos.length > 0))
     .map(camp => ({ camp, result: buildCampSchedule(camp, { today, completedMap: data.completedMap }) }));
 }
 
@@ -88,7 +89,8 @@ export function progressOverview(data: PlannerData, today: string) {
   return {
     today,
     camps: sources.map(source => campSummary(source, today)),
-    emptyCamps: data.camps.filter(c => !sources.some(s => s.camp.id === c.id)).map(c => c.name),
+    emptyCamps: data.camps.filter(c => !c.pausedAt && !sources.some(s => s.camp.id === c.id)).map(c => c.name),
+    pausedCamps: data.camps.flatMap(c => (c.pausedAt ? [{ name: c.name, pausedSince: c.pausedAt }] : [])),
     habits: {
       streak: { current: insights.streak.current, best: insights.streak.best, todayDone: insights.streak.todayDone, todayIsStudyDay: insights.streak.todayIsStudyDay },
       lastSevenDays: insights.chain.map(d => `${d.date} ${d.state}`),

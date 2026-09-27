@@ -11,36 +11,26 @@ import { dayKindFor, daySummaryOf, indexPlans, planKind } from './planView.ts';
 // combined, and a shift is stored on the camp that owns the tasks.
 
 /**
- * What the plan screens show. `all` is a view scope, never a camp id: the camp
- * that Kamplar manages (`activeCampId`) is always a real camp.
+ * Camps on the plan screens: every camp that is not paused. With two or more
+ * they are combined; with one it is shown alone. The camp that Kamplar manages
+ * (`activeCampId`) is always a real camp, never "all", and may be paused.
  */
-export type CampScope = 'all' | 'camp';
-
-export function isCampScope(value: unknown): value is CampScope {
-  return value === 'all' || value === 'camp';
+export function runningCamps(camps: readonly StudyCamp[]): StudyCamp[] {
+  return camps.filter(c => !c.pausedAt);
 }
 
-/** "Tüm Kamplar" is offered once there are two camps to combine. */
-export function offersAllCamps(campCount: number): boolean {
+export function combinesCamps(campCount: number): boolean {
   return campCount >= 2;
 }
 
 /**
- * The scope in effect. With two or more camps the view is combined unless the
- * user picked one camp (`stored === 'camp'`); with fewer there is nothing to
- * combine, so a stored `all` falls back to the one camp without being lost.
- */
-export function resolveCampScope(campCount: number, stored: CampScope | null): CampScope {
-  return offersAllCamps(campCount) && stored !== 'camp' ? 'all' : 'camp';
-}
-
-/**
- * Camps the combined view includes: the ones with a plan, i.e. at least one
- * video (the same rule that shows "Bu kampta branş yok" for a single camp).
- * Finished and not yet started camps take part with their own dates.
+ * Camps the combined view includes: running ones with a plan, i.e. at least
+ * one video (the same rule that shows "Bu kampta branş yok" for a single
+ * camp). Finished and not yet started camps take part with their own dates;
+ * paused ones stay out until resumed.
  */
 export function campsWithPlans(camps: readonly StudyCamp[]): StudyCamp[] {
-  return camps.filter(c => c.branches.some(b => b.videos.length > 0));
+  return runningCamps(camps).filter(c => c.branches.some(b => b.videos.length > 0));
 }
 
 // ---------------------------------------------------------------------------
