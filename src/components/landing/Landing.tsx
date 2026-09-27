@@ -95,9 +95,6 @@ function SiteHeader({ signedIn }: { signedIn: boolean }) {
           <a href={DOCS_PATH}>Belgeler</a>
         </nav>
         <div className="landing-header-actions">
-          <a href={DEMO_APP_PATH} className="landing-nav-demo">
-            Demoyu dene
-          </a>
           <a href={APP_PATH} className="landing-nav-cta">
             {accountLabel(signedIn, false)}
             <ArrowRight aria-hidden="true" />

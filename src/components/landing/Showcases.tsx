@@ -1,12 +1,26 @@
-import { ArrowRight, Check, ChevronDown, CircleCheck, Compass, Focus, Layers, ListVideo, Search, ShieldCheck, X } from 'lucide-react';
-import { DEMO_TEMPLATES } from '../../data/demoTemplates';
-import type { CatalogEntry } from '../../lib/catalog';
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  CircleCheck,
+  Compass,
+  Focus,
+  Layers,
+  ListVideo,
+  Search,
+  ShieldCheck,
+  Upload,
+  X,
+} from 'lucide-react';
+import { addDays } from '../../lib/engine';
 import { formatHours, formatMinutes, formatSpeed } from '../../lib/format';
 import type { LandingPreview } from '../../lib/landingPreview';
 import { DEMO_APP_PATH, discoverReturnUrl } from '../../lib/routes';
 import { CatalogCard } from '../discover/CatalogCard';
+import type { CatalogPreviewEntry } from '../discover/CatalogCard';
 import { FocusCompletion } from '../focus/FocusCompletion';
-import { Sidebar } from '../layout/Navigation';
+import { PageHeader } from '../layout/PageHeader';
+import { AppPreviewLayout } from './AppPreviewLayout';
 import { BrandMark } from '../ui/BrandMark';
 import { Skeleton, Thumbnail } from './Illustrations';
 
@@ -14,8 +28,8 @@ const noop = () => {};
 
 export function FocusShowcase({ preview }: { preview: LandingPreview }) {
   const items = preview.day.plan?.items ?? [];
-  const item = items.find((task) => !task.completed) ?? items[0];
-  const next = items.find((task) => task.id !== item?.id && !task.completed) ?? null;
+  const item = items.find(task => !task.completed) ?? items[0];
+  const next = items.find(task => task.id !== item?.id && !task.completed) ?? null;
   return (
     <div id="focus" className="focus-showcase landing-chapter" role="group" aria-labelledby="focus-heading">
       <div className="showcase-heading">
@@ -131,68 +145,93 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
   );
 }
 
+// Fictional names and course ideas for this inert showcase, never published or imported.
+const CATALOG_EXAMPLES = [
+  {
+    id: 'python',
+    name: 'Sıfırdan Python',
+    authorName: 'Deniz Arslan',
+    description: 'İlk satır koddan küçük projelere. Temelleri öğren, her adımda pratiğe dök.',
+    subjects: ['Python', 'Programlama'],
+  },
+  {
+    id: 'english',
+    name: 'İngilizce konuşma rutini',
+    authorName: 'Ece Demir',
+    description: 'Dinleme, telaffuz ve günlük konuşma. Her gün biraz daha rahat ifade et.',
+    subjects: ['İngilizce', 'Konuşma pratiği'],
+  },
+  {
+    id: 'design',
+    name: 'Figma ile arayüz tasarımı',
+    authorName: 'Selin Kaya',
+    description: 'Tipografi, renk ve bileşenler. İlk ekranından etkileşimli prototipine.',
+    subjects: ['Figma', 'UI tasarımı'],
+  },
+  {
+    id: 'data',
+    name: 'Excel ile veri analizi',
+    authorName: 'Mert Aydın',
+    description: 'Dağınık tablolardan anlaşılır raporlara. Formüller, grafikler ve veriyle düşünme.',
+    subjects: ['Excel', 'Veri analizi'],
+  },
+  {
+    id: 'photography',
+    name: 'Fotoğrafçılığa ilk adım',
+    authorName: 'İpek Yılmaz',
+    description: 'Işığı gör, kadrajını kur. Manuel ayarlardan kendi görsel hikâyene.',
+    subjects: ['Fotoğrafçılık'],
+  },
+  {
+    id: 'spanish',
+    name: 'İspanyolca: günlük pratik',
+    authorName: 'Can Erdem',
+    description: 'Kelimeler, kısa diyaloglar ve dinleme. Yeni bir dile kendi hızında alış.',
+    subjects: ['İspanyolca'],
+  },
+];
+
 function CatalogPreview({ preview }: { preview: LandingPreview }) {
-  const entries: CatalogEntry[] = DEMO_TEMPLATES.map((template) => ({
-    id: template.id,
-    authorId: 'sample',
-    authorName: 'Örnek öğrenci',
-    sourceCampId: template.id,
-    name: template.title,
-    description: 'Demo şablonu · Konuları sırayla incele, kendi ritmine göre planla.',
-    subjects: [template.subject],
-    branchCount: 1,
-    videoCount: template.videos.length,
-    totalMinutes: template.totalDurationMinutes,
-    createdAt: `${preview.today}T12:00:00`,
-    updatedAt: `${preview.today}T12:00:00`,
+  const entries: CatalogPreviewEntry[] = CATALOG_EXAMPLES.map((example, index) => ({
+    ...example,
+    preview: true,
+    createdAt: `${addDays(preview.today, -index)}T12:00:00`,
   }));
   return (
-    <div className="discovery-window" aria-hidden="true" inert>
-      <div className="discovery-window-bar">
-        <div className="window-dots">
-          <i />
-          <i />
-          <i />
-        </div>
-        <span>yetişir / keşfet</span>
-        <span className="art-sample-label">Örnek kamplar</span>
-      </div>
-      <div className="discovery-app">
-        <div className="discovery-sidebar">
-          <Sidebar
-            view="discover"
-            onNavigate={noop}
-            onAddCamp={noop}
-            camps={[{ id: preview.camp.id, name: preview.camp.name }]}
-            activeCampId={preview.camp.id}
-            scope="camp"
-            onSelectCamp={noop}
-            onSelectAll={noop}
-            isDemo
-            profile={{ name: 'Demo', detail: 'Ayarlar' }}
-          />
-        </div>
-        <div className="discovery-content">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[24px] font-semibold tracking-tight">Keşfet</p>
-              <p className="mt-1 text-[12px] text-ink-3">Birlikte hazırlanmış rotalar. Sana ait bir tempo.</p>
-            </div>
-            <span className="art-flat-action max-sm:hidden">
-              Kampını yayınla <ArrowRight />
+    <div className="preview-frame max-h-none text-left [mask-image:none]" aria-hidden="true" inert>
+      <AppPreviewLayout camp={preview.camp} view="discover">
+        <PageHeader
+          title="Keşfet"
+          subtitle="Öğrencilerin yayınladığı kamplar. İçine bak, beğenirsen kendi planına ekle."
+          actions={
+            <span className="chip chip-demo" title="Kamp ve kişi adları bu tanıtım için kurgulanmıştır.">
+              Örnek kamplar
             </span>
+          }
+        />
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-0 basis-56 flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
+            <input
+              className="input pl-9"
+              type="search"
+              placeholder="Kamp, branş ya da kişi ara"
+              aria-label="Kamplarda ara"
+              readOnly
+              tabIndex={-1}
+            />
           </div>
-          <div className="discovery-search">
-            <Search />
-            <span>Kamp, branş ya da kişi ara</span>
-          </div>
-          <ul className="discovery-grid">
-            {entries.map((entry) => (
-              <CatalogCard key={entry.id} entry={entry} today={preview.today} own={false} onOpen={noop} />
-            ))}
-          </ul>
+          <button type="button" className="btn btn-secondary" tabIndex={-1}>
+            <Upload />
+            Kampını yayınla
+          </button>
         </div>
-      </div>
+        <ul className="grid gap-3 md:grid-cols-2">
+          {entries.map(entry => (
+            <CatalogCard key={entry.id} entry={entry} today={preview.today} own={false} onOpen={noop} />
+          ))}
+        </ul>
+      </AppPreviewLayout>
     </div>
   );
 }
@@ -241,7 +280,7 @@ export function DiscoverShowcase({ preview }: { preview: LandingPreview }) {
             {[
               { name: 'Yoğun kampım', hours: preview.prefs.dailyStudyHours, tone: 0 },
               { name: 'Günlük alışkanlığım', hours: 0.5, tone: 1 },
-            ].map((camp) => (
+            ].map(camp => (
               <div key={camp.name} className={`sketch-panel sketch-tone-${camp.tone}`}>
                 <span className="all-camp-color" />
                 <span>{camp.name}</span>

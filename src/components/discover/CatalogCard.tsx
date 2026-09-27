@@ -6,13 +6,18 @@ import { AuthorBadge } from './AuthorBadge';
 
 const SHOWN_SUBJECTS = 4;
 
+/** Presentation-only examples have no real videos or duration totals to report. */
+export type CatalogPreviewEntry = Pick<CatalogEntry, 'id' | 'name' | 'description' | 'authorName' | 'subjects' | 'createdAt'> & {
+  preview: true;
+};
+
 export function CatalogCard({
   entry,
   today,
   own,
   onOpen,
 }: {
-  entry: CatalogEntry;
+  entry: CatalogEntry | CatalogPreviewEntry;
   today: string;
   own: boolean;
   onOpen: (id: string) => void;
@@ -31,7 +36,7 @@ export function CatalogCard({
         </span>
         {entry.description && <span className="mt-2.5 line-clamp-2 text-[13.5px] leading-relaxed text-ink-2">{entry.description}</span>}
         <span className="mt-3 flex flex-wrap gap-1.5">
-          {entry.subjects.slice(0, SHOWN_SUBJECTS).map((subject) => (
+          {entry.subjects.slice(0, SHOWN_SUBJECTS).map(subject => (
             <span key={subject} className="chip">
               <span className="size-1.5 rounded-full" style={{ background: resolveColor(undefined, subject).solid }} aria-hidden="true" />
               {subject}
@@ -39,9 +44,11 @@ export function CatalogCard({
           ))}
           {more > 0 && <span className="chip">+{more}</span>}
         </span>
-        <span className="tnum mt-3 text-[12.5px] text-ink-3">
-          {entry.branchCount} branş · {entry.videoCount} video · {formatHours(entry.totalMinutes)}
-        </span>
+        {!('preview' in entry) && (
+          <span className="tnum mt-3 text-[12.5px] text-ink-3">
+            {entry.branchCount} branş · {entry.videoCount} video · {formatHours(entry.totalMinutes)}
+          </span>
+        )}
       </button>
     </li>
   );
