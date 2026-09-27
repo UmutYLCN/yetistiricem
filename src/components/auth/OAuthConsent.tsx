@@ -170,7 +170,7 @@ export default function OAuthConsent() {
         </div>
       </section>
       <p className="mt-5 text-center text-[12.5px] leading-relaxed text-ink-3">
-        Bağlantıyı istediğin zaman yapay zekâ uygulamasının bağlayıcı ayarlarından kaldırabilirsin.
+        Bağlantıyı istediğin zaman Yetişir’de Profil ve ayarlar → Yapay zekâ bağlantıları bölümünden kaldırabilirsin.
       </p>
       <div className="mt-4 flex justify-center">
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => void account.signOut()} disabled={busy !== null}>

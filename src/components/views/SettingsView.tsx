@@ -3,9 +3,11 @@ import { Download, Eye, Gauge, LogOut, RotateCcw, Upload } from 'lucide-react';
 import type { AccountState } from '../../hooks/useAccount';
 import { AuthorBadge } from '../discover/AuthorBadge';
 import { PageHeader } from '../layout/PageHeader';
+import { AiConnections } from '../settings/AiConnections';
 
 interface Props {
   account: AccountState;
+  today: string;
   onRename: () => void;
   onSignOut: () => void;
   isDemo: boolean;
@@ -19,13 +21,13 @@ interface Props {
 }
 
 /** App-level options. Each camp's tempo is edited from the camp itself. */
-export function SettingsView({ account, onRename, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo, onOpenCamps }: Props) {
+export function SettingsView({ account, today, onRename, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo, onOpenCamps }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
   return (
     <div className="mx-auto max-w-[760px] space-y-5">
-      <PageHeader title="Ayarlar" subtitle={isDemo ? 'Demo açık: buradaki değişiklikler kaydedilmez.' : 'Uygulama ve verilerin.'} />
+      <PageHeader title="Profil ve ayarlar" subtitle={isDemo ? 'Demo açık: buradaki değişiklikler kaydedilmez.' : 'Hesabın, yapay zekâ bağlantıların ve verilerin.'} />
 
       {account.status === 'signed-in' && (
         <section className="card flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 sm:px-6" aria-labelledby={`${uid}-account`}>
@@ -50,6 +52,8 @@ export function SettingsView({ account, onRename, onSignOut, isDemo, campCount, 
           </div>
         </section>
       )}
+
+      {account.status === 'signed-in' && <AiConnections today={today} />}
 
       <section className="callout callout-info items-start" aria-labelledby={`${uid}-tempo`}>
         <Gauge className="mt-0.5 size-4 shrink-0 text-forest" aria-hidden="true" />

@@ -1,6 +1,9 @@
 import type { RoadmapStats, StudyCamp, UserPreferences } from '../types/index.ts';
 import { buildDemoData } from './demo.ts';
-import { addDays, buildCampSchedule, calculateStats, countCompletedVideos } from './engine.ts';
+import type { DeadlineStatus } from './engine.ts';
+import { addDays, assessDeadline, buildCampSchedule, calculateStats, countCompletedVideos } from './engine.ts';
+import type { ProgressInsights } from './insights.ts';
+import { progressInsights } from './insights.ts';
 import { weekKeys } from './format.ts';
 import type { CampInfo, DaySummary, PlanIndex } from './planView.ts';
 import { indexCamps, indexPlans, summarizeDay } from './planView.ts';
@@ -21,6 +24,10 @@ export interface LandingPreview {
   stats: RoadmapStats;
   prefs: UserPreferences;
   branches: Map<string, CampInfo>;
+  /** The Progress page's habits for the demo (its sample ticks are dated). */
+  insights: ProgressInsights;
+  /** The demo camp against its target date: the "yetişir mi?" answer. */
+  deadline: DeadlineStatus;
 }
 
 /** `alsoDone`: videos to show as completed on top of the demo's own progress. */
@@ -36,6 +43,7 @@ export function buildLandingPreview(today: string, alsoDone: readonly string[] =
   const shownDate =
     Array.from({ length: 7 }, (_, offset) => addDays(today, offset)).find(date => summarizeDay(date, index, prefs).total > 0) ?? today;
   const totalVideos = camp.branches.reduce((acc, b) => acc + b.videos.length, 0);
+  const stats = calculateStats(schedule.plans, totalVideos, countCompletedVideos(camp.branches, completedMap));
   const week = weekKeys(shownDate).map(date => summarizeDay(date, index, prefs));
   const nextWeek = weekKeys(addDays(shownDate, 7)).map(date => summarizeDay(date, index, prefs));
   const planned = (days: DaySummary[]) => days.filter(d => d.total > 0).length;
@@ -47,8 +55,14 @@ export function buildLandingPreview(today: string, alsoDone: readonly string[] =
     week,
     rhythmWeek: planned(nextWeek) > planned(week) ? nextWeek : week,
     index,
-    stats: calculateStats(schedule.plans, totalVideos, countCompletedVideos(camp.branches, completedMap)),
+    stats,
     prefs,
     branches: indexCamps(camp.branches),
+    insights: progressInsights([{ camp, result: schedule }], completedMap, data.completionDates, today),
+    deadline: assessDeadline({
+      finishDate: stats.estimatedFinishDate || null,
+      targetEndDate: camp.schedule.targetEndDate,
+      unscheduledCount: schedule.unscheduledItems.length,
+    }),
   };
 }

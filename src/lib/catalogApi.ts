@@ -289,3 +289,36 @@ export function answerConsent(authorizationId: string, approve: boolean): Promis
     return error || !redirectUrl ? { ok: false, error: CONSENT_FAILED } : { ok: true, data: redirectUrl };
   });
 }
+
+/** An AI client the student approved (Supabase OAuth grant). */
+export interface AiConnection {
+  clientId: string;
+  name: string;
+  site: string;
+  /** ISO timestamp. */
+  grantedAt: string;
+}
+
+export function listAiConnections(): Promise<ApiResult<AiConnection[]>> {
+  return runAuth(async client => {
+    const { data, error } = await client.auth.oauth.listGrants();
+    if (error) return { ok: false, error: 'Bağlı yapay zekâ uygulamaları okunamadı. Biraz sonra tekrar dene.' };
+    return {
+      ok: true,
+      data: (data ?? []).map(grant => ({
+        clientId: grant.client.id,
+        name: grant.client.name?.trim() || 'Adsız uygulama',
+        site: hostOf(grant.client.uri ?? ''),
+        grantedAt: grant.granted_at,
+      })),
+    };
+  });
+}
+
+/** Ends an AI client's access: its consent and sessions go; it has to ask again. */
+export function revokeAiConnection(clientId: string): Promise<ApiResult<null>> {
+  return runAuth(async client => {
+    const { error } = await client.auth.oauth.revokeGrant({ clientId });
+    return error ? { ok: false, error: 'Bağlantı kaldırılamadı. Biraz sonra tekrar dene.' } : { ok: true, data: null };
+  });
+}

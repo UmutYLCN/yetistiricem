@@ -884,6 +884,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
     content = (
       <SettingsView
         account={account.state}
+        today={today}
         onRename={() => setRenameOpen(true)}
         onSignOut={() => void handleSignOut()}
         isDemo={isDemo}

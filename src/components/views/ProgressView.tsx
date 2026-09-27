@@ -238,12 +238,12 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, insight
         <div className="callout callout-danger flex-wrap items-center">
           <TriangleAlert className="size-4 shrink-0 text-danger" aria-hidden="true" />
           <p className="min-w-[14rem] flex-1 text-[14px] text-ink-2">
-            <span className="font-semibold text-ink">{index.overdue.length} görev geride kaldı.</span> Yeniden planlarsan{' '}
+            <span className="font-semibold text-ink">{index.overdue.length} görev geride kaldı.</span> Ritmini güncellersen{' '}
             {formatLongDate(addDays(today, 1))} gününden itibaren dağıtılır.
           </p>
           <button type="button" className="btn btn-sm btn-secondary" onClick={onShiftOverdue}>
             <Forward aria-hidden="true" />
-            Yeniden planla
+            Ritmi güncelle
           </button>
         </div>
       )}

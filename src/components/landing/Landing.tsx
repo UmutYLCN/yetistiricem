@@ -7,7 +7,6 @@ import {
   Eye,
   GraduationCap,
   Languages,
-  ListChecks,
   MessageCircleQuestion,
   PencilRuler,
   Plus,
@@ -20,11 +19,13 @@ import { hasSavedSignIn } from '../../lib/authKey';
 import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
 import { Features } from './Features';
+import { AiSection, AskSection, HowItWorks } from './Stories';
 import { ProductPreview } from './ProductPreview';
 
 const SECTIONS = [
   { id: 'ozellikler', label: 'Özellikler' },
   { id: 'nasil-calisir', label: 'Nasıl çalışır' },
+  { id: 'yapay-zeka', label: 'Yapay zekâ' },
   { id: 'sss', label: 'SSS' },
 ];
 
@@ -34,26 +35,6 @@ const GOALS = [
   { label: 'Sertifika hazırlığı', icon: BadgeCheck },
   { label: 'Mesleki gelişim', icon: BriefcaseBusiness },
   { label: 'Kendi konun', icon: PencilRuler },
-];
-
-// The steps of the camp wizard (see docs/urun-rehberi.md).
-const STEPS = [
-  {
-    title: 'Kaynaklarını ekle',
-    body: 'YouTube oynatma listesi, video bağlantıları ya da YouTube dışındaki dersler için elle yazdığın konular. Her liste kendi branşı olur.',
-  },
-  {
-    title: 'Kampını tanımla',
-    body: 'Kampına bir ad ver ve başlangıç tarihini seç. Hedef bitiş tarihi isteğe bağlı.',
-  },
-  {
-    title: 'Ritmini seç',
-    body: 'Videoları çalışma günlerine otomatik dağıt ya da branşları haftanın günlerine kendin yerleştir.',
-  },
-  {
-    title: 'Önizle ve başla',
-    body: 'Takvimdeki dağılımı ve tahmini bitişi gör, kaydet. Sonra her gün izlediğini işaretle.',
-  },
 ];
 
 const FAQ = [
@@ -71,7 +52,19 @@ const FAQ = [
   },
   {
     q: 'Bir gün geride kalırsam ne olur?',
-    a: 'Plan sen istemedikçe değişmez. Geciken görevleri tek dokunuşla sonraki uygun çalışma günlerine taşırsın; tamamladıkların yerinde kalır.',
+    a: 'Suçluluk yok. Plan sen istemedikçe değişmez; “Ritmi güncelle” ile geciken görevler sonraki uygun çalışma günlerine yayılır, tamamladıkların yerinde kalır. Nedenini seçersen İlerleme ekranı alışkanlıklarını gösterir ve küçük bir öneri alırsın.',
+  },
+  {
+    q: '“Yetişir mi?” nasıl hesaplanıyor?',
+    a: 'Her videonun gerçek süresi, izleme hızın, tekrar payın, günlük süren ve çalışma günlerin kullanılır. Görevler günlere sığacak kadar dağıtılır; son görevin günü hedef tarihinle karşılaştırılır.',
+  },
+  {
+    q: 'Yapay zekâ bağlantısı güvenli mi?',
+    a: 'Bağlantıyı sen onaylarsın ve Profil sayfandan istediğin an kaldırırsın. Yapay zekâ yalnızca kendi planını okur ve senin onayınla kamp ekler; bir şey silemez, Keşfet’te yayın yapamaz, şifrene ulaşamaz.',
+  },
+  {
+    q: 'Kampımı Keşfet’te yayınlamak zorunda mıyım?',
+    a: 'Hayır. Kampların sen yayınlamadıkça yalnızca sana görünür. Yayınladığında adın ve kampın içeriği görünür; ilerlemen, notların ve e-postan hiçbir zaman paylaşılmaz.',
   },
   {
     q: 'Hedef tarihime yetişemezsem?',
@@ -132,9 +125,9 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
     <section aria-labelledby="hero-title" className="relative overflow-clip">
       <div className="hero-backdrop" aria-hidden="true" />
       <div className="relative mx-auto max-w-[1200px] px-4 pt-16 text-center sm:px-6 sm:pt-24">
-        <a href="#tum-kamplar" className="announce">
+        <a href="#yapay-zeka" className="announce">
           <span className="announce-badge">Yeni</span>
-          <span className="min-w-0 truncate">Tüm Kamplar: birden fazla hedef, tek akış</span>
+          <span className="min-w-0 truncate">Claude, ChatGPT ve Gemini ile planla</span>
           <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
         </a>
         <h1 id="hero-title" className="hero-title text-gradient mx-auto mt-7">
@@ -197,41 +190,6 @@ function Goals() {
   );
 }
 
-function Steps() {
-  return (
-    <section id="nasil-calisir" aria-labelledby="nasil-calisir-baslik" className="border-y border-line/70 bg-card/40">
-      <div className="mx-auto max-w-[1200px] px-4 py-24 sm:px-6 sm:py-32">
-        <div className="reveal max-w-[720px]">
-          <p className="section-eyebrow">
-            <ListChecks aria-hidden="true" />
-            Nasıl çalışır
-          </p>
-          <h2 id="nasil-calisir-baslik" className="section-title text-gradient mt-4">
-            Dört adımda planın hazır.
-          </h2>
-          <p className="mt-5 text-[17px] leading-relaxed text-ink-2">
-            Kamp sihirbazı seni adım adım götürür; kaydetmeden önce her şeyi önizler, istediğin adıma geri dönersin.
-          </p>
-        </div>
-        <ol className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step, i) => (
-            <li key={step.title} className="bento reveal p-6">
-              <div className="flex items-center gap-3">
-                <span className="kbd tnum">{i + 1}</span>
-                {i < STEPS.length - 1 && (
-                  <span className="h-px flex-1 bg-linear-to-r from-line-strong to-transparent max-lg:hidden" aria-hidden="true" />
-                )}
-              </div>
-              <h3 className="mt-5 text-[16.5px] font-semibold tracking-[-0.01em] text-ink">{step.title}</h3>
-              <p className="mt-2 text-[14.5px] leading-relaxed text-ink-2">{step.body}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
 function Faq() {
   return (
     <section id="sss" aria-labelledby="sss-baslik" className="mx-auto max-w-[1200px] px-4 py-24 sm:px-6 sm:py-32">
@@ -276,10 +234,10 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
           <BrandMark size={52} />
         </div>
         <h2 id="son-cagri-baslik" className="section-title text-gradient mx-auto mt-8 max-w-[16ch]">
-          Bugünün planı bir tık uzağında.
+          Panik yok. Bugünün adımını at.
         </h2>
         <p className="mx-auto mt-5 max-w-[520px] text-[17px] leading-relaxed text-ink-2">
-          Kampını birkaç dakikada kur; ilk günün görevleri hemen önünde olsun.
+          Kampını birkaç dakikada kur ya da yapay zekâna kurdur; gerisi yetişir.
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={APP_PATH} className="btn btn-primary btn-lg group">
@@ -353,8 +311,10 @@ export default function Landing() {
       <main id="icerik" tabIndex={-1} className="outline-none">
         <Hero preview={preview} signedIn={signedIn} />
         <Goals />
+        <AskSection preview={preview} />
         <Features preview={preview} />
-        <Steps />
+        <HowItWorks preview={preview} />
+        <AiSection preview={preview} />
         <Faq />
         <FinalCta signedIn={signedIn} />
       </main>

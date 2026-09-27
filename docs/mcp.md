@@ -9,12 +9,12 @@ Adres: **`https://yetistiricem.pages.dev/mcp`** (Streamable HTTP, OAuth ile giri
 
 ## Bağlama
 
-Bağlayıcıyı eklediğinde tarayıcıda Yetişir'in onay sayfası (`/oauth/consent`) açılır: giriş yapar, “İzin ver”e basarsın. Bağlantıyı yapay zekâ uygulamasının bağlayıcı ayarlarından istediğin zaman kaldırabilirsin.
+Bağlayıcıyı eklediğinde tarayıcıda Yetişir'in onay sayfası (`/oauth/consent`) açılır: giriş yapar, “İzin ver”e basarsın. Bağlı uygulamaları Yetişir’de **Profil ve ayarlar → Yapay zekâ bağlantıları** bölümünde görür, istediğini oradan kaldırırsın; aynı bölümde adres ve adım adım bağlama rehberi de var.
 
 - **Claude (claude.ai, masaüstü, mobil):** Ayarlar → Connectors → *Add custom connector* → ad `Yetişir`, URL yukarıdaki adres → *Connect*.
 - **Claude Code:** `claude mcp add --transport http yetistiricem https://yetistiricem.pages.dev/mcp`, sonra `/mcp` ile giriş.
 - **ChatGPT:** Ayarlar → Apps & Connectors → Advanced → *Developer mode*; *Create* ile bağlayıcı ekle, URL yukarıdaki adres, kimlik doğrulama *OAuth*.
-- **Gemini CLI:** `~/.gemini/settings.json` içine `{ "mcpServers": { "yetistiricem": { "httpUrl": "https://yetistiricem.pages.dev/mcp" } } }`, sonra `/mcp auth yetistiricem`. Gemini web uygulamasının özel MCP desteği doğrulanmadı.
+- **Gemini CLI:** `~/.gemini/settings.json` içine `{ "mcpServers": { "yetisir": { "httpUrl": "https://yetistiricem.pages.dev/mcp" } } }`, sonra `/mcp auth yetisir`. Gemini web uygulamasının özel MCP desteği doğrulanmadı.
 
 ## Araçlar
 

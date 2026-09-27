@@ -195,7 +195,7 @@ export function OverdueCard({ count, today, onShift, className = '' }: { count: 
         </p>
         <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={onShift}>
           <Forward aria-hidden="true" />
-          Yeniden planla
+          Ritmi güncelle
         </button>
       </div>
     </section>
