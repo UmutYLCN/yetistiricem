@@ -14,11 +14,11 @@ export function BrandMark({ size = 32 }: { size?: number }) {
   );
 }
 
-/** The name as a wordmark: "Yetişir." with the full stop in the brand green. */
+/** The lowercase wordmark, with the full stop in the brand green. */
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={`font-semibold tracking-[-0.02em] text-ink ${className}`}>
-      Yetişir<span className="text-forest">.</span>
+      yetişir<span className="text-forest">.</span>
     </span>
   );
 }

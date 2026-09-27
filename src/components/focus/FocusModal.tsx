@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import confetti from 'canvas-confetti';
-import { ArrowRight, Check, CircleCheck, ExternalLink, LoaderCircle, Play, TriangleAlert, Undo2 } from 'lucide-react';
+import { ArrowRight, Check, CircleCheck, ExternalLink, LoaderCircle, Play, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import type { FocusSession } from '../../lib/focus';
 import { formatClock, formatMinutes, formatSpeed } from '../../lib/format';
@@ -10,6 +10,7 @@ import type { YTPlayer } from '../../lib/youtubePlayer';
 import { PLAYER_STATE, loadYouTubeApi, playerErrorMessage } from '../../lib/youtubePlayer';
 import { SubjectDot } from '../ui/Bits';
 import { Dialog } from '../ui/Dialog';
+import { FocusCompletion } from './FocusCompletion';
 
 /** The task playing in focus mode. */
 export interface FocusTarget {
@@ -312,31 +313,7 @@ export function FocusModal({ target, next, pastSeconds, today, onComplete, onUnd
   const color = target?.info?.color.solid ?? 'var(--color-ink-3)';
   const alreadyDone = item?.completed && !done;
 
-  const doneOverlay = item && (
-    <>
-      <span className="focus-done-mark" aria-hidden="true">
-        <Check strokeWidth={3} />
-      </span>
-      <p className="font-display mt-4 text-[26px] text-ink max-sm:mt-2 max-sm:text-[20px]">Harika iş!</p>
-      <p className="mt-1 text-[14px] text-ink-2">
-        {item.completed ? '“İzledim” olarak işaretlendi.' : 'İşaret geri alındı.'}{' '}
-        {item.completed && (
-          <button type="button" className="inline-flex items-center gap-1 font-semibold text-ink-2 underline" onClick={() => onUndoComplete(item)}>
-            <Undo2 className="size-3.5" aria-hidden="true" />
-            Geri al
-          </button>
-        )}
-      </p>
-      {next ? (
-        <p className="mt-4 max-w-[28rem] text-[13.5px] text-ink-3 max-sm:hidden">
-          Sıradaki: <span className="font-semibold text-ink-2">{next.title}</span>
-          <span className="tnum"> · {formatMinutes(next.durationMinutes)}</span>
-        </p>
-      ) : (
-        <p className="mt-4 text-[13.5px] text-ink-3 max-sm:mt-2">Bugünün odakta izlenecek görevleri bitti.</p>
-      )}
-    </>
-  );
+  const doneOverlay = item && <FocusCompletion completed={item.completed} next={next} onUndo={() => onUndoComplete(item)} />;
 
   return (
     <Dialog

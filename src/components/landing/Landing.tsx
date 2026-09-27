@@ -1,16 +1,4 @@
-import {
-  ArrowRight,
-  BadgeCheck,
-  BriefcaseBusiness,
-  Check,
-  ChevronRight,
-  Eye,
-  GraduationCap,
-  Languages,
-  MessageCircleQuestion,
-  PencilRuler,
-  Plus,
-} from 'lucide-react';
+import { ArrowRight, Check, ChevronRight, Eye, Menu, X, MessageCircleQuestion, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useToday } from '../../hooks/useToday';
 import type { LandingPreview } from '../../lib/landingPreview';
@@ -21,20 +9,15 @@ import { BrandMark, Wordmark } from '../ui/BrandMark';
 import { Features } from './Features';
 import { AiSection, AskSection, HowItWorks } from './Stories';
 import { ProductPreview } from './ProductPreview';
+import { Goals } from './Goals';
+import { Testimonials } from './Testimonials';
+import './landing.css';
 
 const SECTIONS = [
   { id: 'ozellikler', label: 'Özellikler' },
   { id: 'nasil-calisir', label: 'Nasıl çalışır' },
   { id: 'yapay-zeka', label: 'Yapay zekâ' },
   { id: 'sss', label: 'SSS' },
-];
-
-const GOALS = [
-  { label: 'TYT ve AYT', icon: GraduationCap },
-  { label: 'Dil öğrenimi', icon: Languages },
-  { label: 'Sertifika hazırlığı', icon: BadgeCheck },
-  { label: 'Mesleki gelişim', icon: BriefcaseBusiness },
-  { label: 'Kendi konun', icon: PencilRuler },
 ];
 
 const FAQ = [
@@ -72,7 +55,7 @@ const FAQ = [
   },
   {
     q: 'Sadece sınav hazırlığı için mi?',
-    a: 'Hayır. TYT ve AYT yalnızca iki örnek; dil öğrenimi, sertifika hazırlığı ya da video derslerle çalıştığın herhangi bir konu için kamp kurabilirsin.',
+    a: 'Hayır. Yoğun bir kamp, günlük bir alışkanlık, dönemlik dersler ya da kendi yol haritan için kullanabilirsin. Video serileri ve YouTube dışı konularla da plan oluşturabilirsin.',
   },
   {
     q: 'Demo verilerime dokunur mu?',
@@ -87,39 +70,63 @@ function accountLabel(signedIn: boolean, long: boolean): string {
 }
 
 function SiteHeader({ signedIn }: { signedIn: boolean }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-8 px-4 sm:px-6">
-        <a href={LANDING_PATH} className="flex shrink-0 items-center gap-2.5 rounded-[10px]" aria-label="Yetişir ana sayfası">
-          <BrandMark size={28} />
-          <Wordmark className="text-[16px]" />
+    <header
+      className="landing-header"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          setMenuOpen(false);
+          document.getElementById('landing-menu-toggle')?.focus();
+        }
+      }}
+    >
+      <div className="landing-header-inner">
+        <a href={LANDING_PATH} className="landing-brand" aria-label="Yetişir ana sayfası">
+          <BrandMark size={27} />
+          <Wordmark className="text-[21px]" />
         </a>
-        <nav aria-label="Sayfa bölümleri" className="hidden md:block">
-          <ul className="flex items-center gap-1">
-            {SECTIONS.map(section => (
-              <li key={section.id}>
-                <a
-                  href={`#${section.id}`}
-                  className="rounded-[8px] px-3 py-2 text-[13.5px] text-ink-2 transition-colors hover:bg-sunk/60 hover:text-ink"
-                >
-                  {section.label}
-                </a>
-              </li>
-            ))}
-            <li>
-              <a href={DOCS_PATH} className="rounded-[8px] px-3 py-2 text-[13.5px] text-ink-2 transition-colors hover:bg-sunk/60 hover:text-ink">
-                Belgeler
-              </a>
-            </li>
-          </ul>
+        <nav aria-label="Sayfa bölümleri" className="landing-desktop-nav">
+          {SECTIONS.map((section) => (
+            <a key={section.id} href={`#${section.id}`}>
+              {section.label}
+            </a>
+          ))}
+          <a href={DOCS_PATH}>Belgeler</a>
         </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <a href={APP_PATH} className="btn btn-primary btn-sm group">
-            {accountLabel(signedIn, false)}
-            <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        <div className="landing-header-actions">
+          <a href={DEMO_APP_PATH} className="landing-nav-demo">
+            Demoyu dene
           </a>
+          <a href={APP_PATH} className="landing-nav-cta">
+            {accountLabel(signedIn, false)}
+            <ArrowRight aria-hidden="true" />
+          </a>
+          <button
+            id="landing-menu-toggle"
+            type="button"
+            className="landing-icon-button landing-menu-toggle"
+            aria-label={menuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+            aria-expanded={menuOpen}
+            aria-controls="landing-mobile-nav"
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+          </button>
         </div>
       </div>
+      <nav id="landing-mobile-nav" aria-label="Mobil sayfa bölümleri" className="landing-mobile-nav" hidden={!menuOpen}>
+        {SECTIONS.map((section) => (
+          <a key={section.id} href={`#${section.id}`} onClick={() => setMenuOpen(false)}>
+            {section.label}
+            <ArrowRight aria-hidden="true" />
+          </a>
+        ))}
+        <a href={DOCS_PATH}>
+          Belgeler
+          <ArrowRight aria-hidden="true" />
+        </a>
+      </nav>
     </header>
   );
 }
@@ -155,7 +162,7 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
           </a>
         </div>
         <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] text-ink-3">
-          {['Ücretsiz', 'E-posta ve şifre', 'Demo ile göz at'].map(point => (
+          {['Ücretsiz', 'E-posta ve şifre', 'Demo ile göz at'].map((point) => (
             <li key={point} className="flex items-center gap-1.5">
               <Check className="size-3.5 text-forest" strokeWidth={2.5} aria-hidden="true" />
               {point}
@@ -169,28 +176,7 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
         <div className="hero-tilt">
           <ProductPreview base={preview} />
         </div>
-        <figcaption className="mt-2 text-center text-[12.5px] text-ink-3">
-          Örnek plan: demo kampın bugünü, uygulamanın kendi ekranıyla.
-        </figcaption>
       </figure>
-    </section>
-  );
-}
-
-function Goals() {
-  return (
-    <section aria-labelledby="hedefler-baslik" className="mx-auto max-w-[1200px] px-4 pt-20 sm:px-6 sm:pt-24">
-      <h2 id="hedefler-baslik" className="text-center text-[13.5px] text-ink-3">
-        Video derslerle çalıştığın her hedef için
-      </h2>
-      <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
-        {GOALS.map(({ label, icon: Icon }) => (
-          <li key={label} className="flex items-center gap-2.5 text-[16px] font-medium tracking-[-0.01em] text-ink-2">
-            <Icon className="size-[18px] text-ink-3" aria-hidden="true" />
-            {label}
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
@@ -208,15 +194,11 @@ function Faq() {
             Sık sorulanlar
           </h2>
           <p className="mt-5 max-w-[420px] text-[17px] leading-relaxed text-ink-2">
-            Aklına takılan başka bir şey varsa en hızlı yol denemek: demo hiçbir şey kaydetmez.
+            Başlamadan önce aklına takılanlar. Hesabın, planın ve çalışma ritmin hakkında kısa cevaplar.
           </p>
-          <a href={DEMO_APP_PATH} className="btn btn-secondary mt-7">
-            <Eye aria-hidden="true" />
-            Demo ile göz at
-          </a>
         </div>
         <div className="reveal border-t border-line">
-          {FAQ.map(item => (
+          {FAQ.map((item) => (
             <details key={item.q} className="faq-item border-b border-line">
               <summary className="flex items-center justify-between gap-6 rounded-[8px] py-5 text-[16px] font-medium text-ink">
                 {item.q}
@@ -225,34 +207,6 @@ function Faq() {
               <p className="-mt-1 pr-10 pb-6 text-[15px] leading-relaxed text-ink-2">{item.a}</p>
             </details>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FinalCta({ signedIn }: { signedIn: boolean }) {
-  return (
-    <section aria-labelledby="son-cagri-baslik" className="mx-auto max-w-[1200px] px-4 pb-24 sm:px-6 sm:pb-32">
-      <div className="cta-panel reveal px-6 py-16 text-center sm:px-12 sm:py-24">
-        <div className="cta-mark">
-          <BrandMark size={52} />
-        </div>
-        <h2 id="son-cagri-baslik" className="section-title text-gradient mx-auto mt-8 max-w-[16ch]">
-          Panik yok. Bugünün adımını at.
-        </h2>
-        <p className="mx-auto mt-5 max-w-[520px] text-[17px] leading-relaxed text-ink-2">
-          Kampını birkaç dakikada kur ya da yapay zekâna kurdur; gerisi yetişir.
-        </p>
-        <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-          <a href={APP_PATH} className="btn btn-primary btn-lg group">
-            {accountLabel(signedIn, true)}
-            <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </a>
-          <a href={DEMO_APP_PATH} className="btn btn-secondary btn-lg">
-            <Eye aria-hidden="true" />
-            Demo ile göz at
-          </a>
         </div>
       </div>
     </section>
@@ -268,11 +222,13 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
             <BrandMark size={26} />
             <Wordmark className="text-[15.5px]" />
           </div>
-          <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">Panik yok, yetişir. Ders videolarını günlük ritmine göre dağıtan çalışma planlayıcı.</p>
+          <p className="mt-3 text-[13.5px] leading-relaxed text-ink-3">
+            Panik yok, yetişir. Ders videolarını günlük ritmine göre dağıtan çalışma planlayıcı.
+          </p>
         </div>
         <nav aria-label="Alt menü">
           <ul className="flex flex-wrap gap-x-8 gap-y-3 text-[13.5px] text-ink-2">
-            {SECTIONS.map(section => (
+            {SECTIONS.map((section) => (
               <li key={section.id}>
                 <a href={`#${section.id}`} className="transition-colors hover:text-ink">
                   {section.label}
@@ -326,7 +282,7 @@ export default function Landing() {
         <HowItWorks preview={preview} />
         <AiSection preview={preview} />
         <Faq />
-        <FinalCta signedIn={signedIn} />
+        <Testimonials />
       </main>
       <SiteFooter signedIn={signedIn} />
     </div>

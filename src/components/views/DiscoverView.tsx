@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Compass, LoaderCircle, LogIn, RefreshCw, Search, TriangleAlert, Upload } from 'lucide-react';
 import type { CatalogEntry } from '../../lib/catalog';
-import { publishedLabel, searchCatalog } from '../../lib/catalog';
+import { searchCatalog } from '../../lib/catalog';
 import { listPublishedCamps } from '../../lib/catalogApi';
-import { formatHours } from '../../lib/format';
-import { resolveColor } from '../../lib/subjects';
 import type { AccountState } from '../../hooks/useAccount';
-import { AuthorBadge } from '../discover/AuthorBadge';
+import { CatalogCard } from '../discover/CatalogCard';
 import { PageHeader } from '../layout/PageHeader';
 import { EmptyState } from '../ui/EmptyState';
 
@@ -21,39 +19,6 @@ interface Props {
 }
 
 type ListState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; entries: CatalogEntry[] };
-
-const SHOWN_SUBJECTS = 4;
-
-function EntryCard({ entry, today, own, onOpen }: { entry: CatalogEntry; today: string; own: boolean; onOpen: (id: string) => void }) {
-  const more = entry.subjects.length - SHOWN_SUBJECTS;
-  return (
-    <li>
-      <button type="button" className="catalog-card" onClick={() => onOpen(entry.id)}>
-        <span className="flex items-start gap-2">
-          <span className="font-display min-w-0 flex-1 text-[17px] leading-snug break-words text-ink">{entry.name}</span>
-          {own && <span className="chip chip-forest shrink-0">Senin</span>}
-        </span>
-        <span className="mt-2 flex min-w-0 items-center gap-2 text-[13px] text-ink-2">
-          <AuthorBadge name={entry.authorName} size="sm" />
-          <span className="shrink-0 text-ink-3">· {publishedLabel(entry.createdAt, today)}</span>
-        </span>
-        {entry.description && <span className="mt-2.5 line-clamp-2 text-[13.5px] leading-relaxed text-ink-2">{entry.description}</span>}
-        <span className="mt-3 flex flex-wrap gap-1.5">
-          {entry.subjects.slice(0, SHOWN_SUBJECTS).map(subject => (
-            <span key={subject} className="chip">
-              <span className="size-1.5 rounded-full" style={{ background: resolveColor(undefined, subject).solid }} aria-hidden="true" />
-              {subject}
-            </span>
-          ))}
-          {more > 0 && <span className="chip">+{more}</span>}
-        </span>
-        <span className="tnum mt-3 text-[12.5px] text-ink-3">
-          {entry.branchCount} branş · {entry.videoCount} video · {formatHours(entry.totalMinutes)}
-        </span>
-      </button>
-    </li>
-  );
-}
 
 /** Keşfet: camps students published, to look inside and add to one's own plan. */
 export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpenCamps }: Props) {
@@ -183,7 +148,7 @@ export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpen
         ) : (
           <ul className="grid gap-3 md:grid-cols-2" aria-label="Yayınlanan kamplar">
             {entries.map(entry => (
-              <EntryCard key={entry.id} entry={entry} today={today} own={entry.authorId === userId} onOpen={onOpen} />
+              <CatalogCard key={entry.id} entry={entry} today={today} own={entry.authorId === userId} onOpen={onOpen} />
             ))}
           </ul>
         ))}
