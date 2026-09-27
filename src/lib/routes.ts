@@ -7,10 +7,6 @@
 export const LANDING_PATH = '/';
 export const APP_PATH = '/app';
 
-const ACCOUNT_PARAM = 'account';
-/** Opens the planner's explicit sign-in / account screen from the landing page. */
-export const ACCOUNT_ENTRY_PATH = `${APP_PATH}?${ACCOUNT_PARAM}`;
-
 const DEMO_PARAM = 'demo';
 /** Opens the planner in the demo preview (sample data, nothing saved). */
 export const DEMO_APP_PATH = `${APP_PATH}?${DEMO_PARAM}`;
@@ -35,14 +31,6 @@ export function takeDemoRequest(): boolean {
   const url = new URL(window.location.href);
   if (!url.searchParams.has(DEMO_PARAM)) return false;
   dropParam(url, DEMO_PARAM);
-  return true;
-}
-
-/** Whether this page load explicitly asked for the sign-in / account screen. */
-export function takeAccountEntryRequest(): boolean {
-  const url = new URL(window.location.href);
-  if (!url.searchParams.has(ACCOUNT_PARAM)) return false;
-  dropParam(url, ACCOUNT_PARAM);
   return true;
 }
 

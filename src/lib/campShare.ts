@@ -1,4 +1,4 @@
-import type { CampSchedule, StudyCamp } from '../types';
+import type { CampOrigin, CampSchedule, StudyCamp } from '../types';
 import type { DraftVideo } from '../utils/youtubeParser.ts';
 import {
   MAX_VIDEO_MINUTES,
@@ -308,8 +308,12 @@ export function shareSummary(shared: SharedCamp): { branches: number; videos: nu
   return { branches: shared.branches.length, videos: videos.length, minutes: videos.reduce((acc, v) => acc + v.minutes, 0) };
 }
 
-/** A new camp from a share: fresh ids, starting `today`, no progress. */
-export function campFromShare(shared: SharedCamp, today: string): StudyCamp {
+/**
+ * A new camp from a share: fresh ids, starting `today`, no progress. `origin`
+ * marks it as someone else's work (it cannot be published again); a preview
+ * that is never saved leaves it out.
+ */
+export function campFromShare(shared: SharedCamp, today: string, origin?: Extract<CampOrigin, 'kesfet' | 'link'>): StudyCamp {
   const branches = shared.branches.map(b =>
     createBranch({
       title: b.title,
@@ -337,5 +341,11 @@ export function campFromShare(shared: SharedCamp, today: string): StudyCamp {
     targetEndDate: null,
     weekPlan: (weekPlan ?? []).map(day => day.map(i => ids[i]).filter(Boolean)),
   };
-  return createStudyCamp({ name: shared.name, branches, schedule: normalizeCampSchedule(raw, ids).schedule }, today);
+  const camp = createStudyCamp({ name: shared.name, branches, schedule: normalizeCampSchedule(raw, ids).schedule }, today);
+  return origin ? { ...camp, origin } : camp;
+}
+
+/** Whether a camp came from someone else (Keşfet or a share link), so it cannot be published as one's own. */
+export function isImportedCamp(camp: Pick<StudyCamp, 'origin'>): boolean {
+  return camp.origin === 'kesfet' || camp.origin === 'link';
 }

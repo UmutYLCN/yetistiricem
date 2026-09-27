@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useState } from 'react';
-import { Compass, LoaderCircle, LogIn, LogOut, RefreshCw, Search, TriangleAlert, Upload } from 'lucide-react';
+import { Compass, LoaderCircle, LogIn, RefreshCw, Search, TriangleAlert, Upload } from 'lucide-react';
 import type { CatalogEntry } from '../../lib/catalog';
 import { publishedLabel, searchCatalog } from '../../lib/catalog';
 import { listPublishedCamps } from '../../lib/catalogApi';
@@ -17,8 +17,6 @@ interface Props {
   version: number;
   onOpen: (id: string) => void;
   onSignIn: () => void;
-  onRename: () => void;
-  onSignOut: () => void;
   onOpenCamps: () => void;
 }
 
@@ -58,7 +56,7 @@ function EntryCard({ entry, today, own, onOpen }: { entry: CatalogEntry; today: 
 }
 
 /** Keşfet: camps students published, to look inside and add to one's own plan. */
-export function DiscoverView({ account, today, version, onOpen, onSignIn, onRename, onSignOut, onOpenCamps }: Props) {
+export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpenCamps }: Props) {
   const uid = useId();
   const [list, setList] = useState<ListState>({ status: 'loading' });
   const [query, setQuery] = useState('');
@@ -82,17 +80,9 @@ export function DiscoverView({ account, today, version, onOpen, onSignIn, onRena
     setAttempt(n => n + 1);
   }, []);
 
+  // The account itself lives in the sidebar's profile (Ayarlar); only the demo offers a sign-in here.
   const accountActions =
-    account.status === 'signed-in' ? (
-      <>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={onRename} title="Görünen adını değiştir">
-          <AuthorBadge name={account.displayName ?? '…'} size="sm" />
-        </button>
-        <button type="button" className="icon-btn size-9" onClick={onSignOut} aria-label="Çıkış yap">
-          <LogOut aria-hidden="true" />
-        </button>
-      </>
-    ) : account.status === 'signed-out' ? (
+    account.status === 'signed-out' ? (
       <button type="button" className="btn btn-secondary btn-sm" onClick={onSignIn}>
         <LogIn aria-hidden="true" />
         Giriş yap

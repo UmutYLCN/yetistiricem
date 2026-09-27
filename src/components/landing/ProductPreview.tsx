@@ -60,6 +60,7 @@ export function ProductPreview({ base }: { base: LandingPreview }) {
           onSelectCamp={noop}
           onSelectAll={noop}
           isDemo
+          profile={{ name: 'Demo', detail: 'Ayarlar' }}
         />
         <div className="min-w-0 flex-1 px-4 pt-5 pb-10 sm:px-6 lg:px-8 lg:pt-8">
           <div className="grid gap-x-6 gap-y-4 xl:grid-cols-[minmax(0,1fr)_300px]">

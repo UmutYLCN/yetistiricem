@@ -44,6 +44,9 @@ const AUTH_NOT_CONFIGURED = 'Giriş bu sunucuda kurulmamış.';
 
 function failure(error: { message?: string; code?: string } | null | undefined): { ok: false; error: string } {
   const message = error?.message ?? '';
+  if (message.includes('duplicate_camp')) {
+    return { ok: false, error: 'Bu kamp Keşfet’te başka biri tarafından zaten yayınlanmış. Yalnızca kendi hazırladığın kampları yayınlayabilirsin.' };
+  }
   if (message.includes('publish_limit')) return { ok: false, error: 'En fazla 20 kamp yayınlayabilirsin. Yenisi için eskilerinden birini kaldır.' };
   if (error?.code === '42501' || message.includes('row-level security')) {
     return { ok: false, error: 'Bu işlem için giriş yapman gerekiyor.' };

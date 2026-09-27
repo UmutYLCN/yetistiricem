@@ -92,6 +92,8 @@ export interface CampSchedule extends UserPreferences {
 }
 
 /** A named study program (e.g. "TYT 2027") with its branches and schedule. */
+export type CampOrigin = 'migrated' | 'kesfet' | 'link';
+
 export interface StudyCamp {
   id: string;
   name: string;
@@ -100,8 +102,12 @@ export interface StudyCamp {
   branches: SubjectPlaylist[];
   schedule: CampSchedule;
   shiftEvents: ShiftEvent[];
-  /** `migrated`: built from an older version's flat data. */
-  origin?: 'migrated';
+  /**
+   * `migrated`: built from an older version's flat data. `kesfet` / `link`:
+   * added from someone's published camp or a share link, so it is not the
+   * student's own work and cannot be published under their name.
+   */
+  origin?: CampOrigin;
 }
 
 export interface DailyPlanItem {

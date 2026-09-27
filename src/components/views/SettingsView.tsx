@@ -75,8 +75,8 @@ export function SettingsView({ account, onRename, onSignOut, isDemo, campCount, 
             Verilerin
           </h2>
           <p className="mt-0.5 text-[13px] text-ink-2">
-            Kampların, ilerlemen ve notların yalnızca bu tarayıcıda saklanır; sunucuya yalnızca Keşfet’te yayınladığın kamplar gider.
-            Tarayıcı verisini temizlemeden önce yedek al.
+            Kampların, ilerlemen ve notların hesabına kaydedilir; hangi cihazdan girersen gir planın seninle. İstersen hepsini bir
+            dosyaya yedekleyebilirsin.
           </p>
         </div>
         <ul className="divide-y divide-line">

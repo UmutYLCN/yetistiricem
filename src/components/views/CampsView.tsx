@@ -3,6 +3,7 @@ import { ArrowRightLeft, ChevronDown, ExternalLink, Gauge, ListVideo, Pencil, Pl
 import type { StudyCamp } from '../../types';
 import type { CampInfo, PlanIndex } from '../../lib/planView';
 import { campProgress, tempoSummary } from '../../lib/planView';
+import { isImportedCamp } from '../../lib/campShare';
 import { isLegacyKind, linkStateOf, totalMinutesOf } from '../../lib/camps';
 import { countCompletedVideos } from '../../lib/engine';
 import { compactDayLabel, formatLongDate, formatMinutes, formatShortDate } from '../../lib/format';
@@ -121,6 +122,8 @@ export function CampsView({
                   <p className="tnum mt-1 text-[12.5px] text-ink-3">
                     {camp.branches.length} branş · {total} video · başlangıç {formatShortDate(camp.schedule.startDate)}
                     {camp.schedule.targetEndDate && ` · hedef ${formatShortDate(camp.schedule.targetEndDate)}`}
+                    {camp.origin === 'kesfet' && ' · Keşfet’ten eklendi'}
+                    {camp.origin === 'link' && ' · paylaşım linkinden eklendi'}
                   </p>
                   <p className="mt-1.5 text-[13px] text-ink-2">{tempoSummary(camp.schedule)}</p>
                   {showsAllCamps && !hasVideos && (
@@ -156,16 +159,19 @@ export function CampsView({
                       <Pencil aria-hidden="true" />
                       Adını değiştir
                     </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => onPublishCamp(camp.id)}
-                      aria-haspopup="dialog"
-                      aria-label={`${camp.name} kampını Keşfet’te yayınla`}
-                    >
-                      <Upload aria-hidden="true" />
-                      Yayınla
-                    </button>
+                    {/* Someone else's camp (added from Keşfet or a link) is not published again under this name. */}
+                    {!isImportedCamp(camp) && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => onPublishCamp(camp.id)}
+                        aria-haspopup="dialog"
+                        aria-label={`${camp.name} kampını Keşfet’te yayınla`}
+                      >
+                        <Upload aria-hidden="true" />
+                        Yayınla
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="icon-btn ml-auto size-9 hover:text-danger"

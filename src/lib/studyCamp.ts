@@ -1,4 +1,4 @@
-import type { CampSchedule, PlanMode, RhythmPreset, ShiftEvent, StudyCamp, SubjectPlaylist, UserPreferences, Video } from '../types';
+import type { CampOrigin, CampSchedule, PlanMode, RhythmPreset, ShiftEvent, StudyCamp, SubjectPlaylist, UserPreferences, Video } from '../types';
 import {
   defaultPreferences,
   inspectPreferences,
@@ -344,11 +344,14 @@ export function normalizeCamps(raw: unknown, today: string = todayKey()): CampsN
       branches: branches.playlists,
       schedule,
       shiftEvents: normalizeShiftEvents(item.shiftEvents),
-      ...(item.origin === 'migrated' ? { origin: 'migrated' as const } : {}),
+      ...(isCampOrigin(item.origin) ? { origin: item.origin } : {}),
     });
   }
   return result;
 }
+
+const CAMP_ORIGINS: readonly CampOrigin[] = ['migrated', 'kesfet', 'link'];
+const isCampOrigin = (value: unknown): value is CampOrigin => CAMP_ORIGINS.includes(value as CampOrigin);
 
 // ---------------------------------------------------------------------------
 // Creating camps

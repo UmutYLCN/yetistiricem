@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { StudyCamp } from '../src/types/index.ts';
 import type { SharedCamp } from '../src/lib/campShare.ts';
-import { MAX_JSON_BYTES, campFromShare, decodeCampShare, encodeCampShare, readSharedCamp, shareSummary, toSharedCamp } from '../src/lib/campShare.ts';
+import { MAX_JSON_BYTES, campFromShare, decodeCampShare, encodeCampShare, isImportedCamp, readSharedCamp, shareSummary, toSharedCamp } from '../src/lib/campShare.ts';
+import { normalizeCamps } from '../src/lib/studyCamp.ts';
 import { buildCampSchedule } from '../src/utils/roadmapEngine.ts';
 import { prefs } from './helpers.ts';
 
@@ -157,4 +158,19 @@ test('a small link that inflates past the limit is not opened', async () => {
   const result = await decodeCampShare(payload);
   assert.equal(result.ok, false);
   if (!result.ok) assert.match(result.error, /çok büyük/);
+});
+
+test('a camp added from Keşfet or a link stays marked as someone else’s, so it is not published again', () => {
+  const { shared } = toSharedCamp(sourceCamp());
+  assert.equal(isImportedCamp(sourceCamp()), false, 'the student’s own camp can be published');
+  assert.equal(campFromShare(shared, '2026-09-27').origin, undefined, 'a preview carries no mark');
+  for (const origin of ['kesfet', 'link'] as const) {
+    const camp = campFromShare(shared, '2026-09-27', origin);
+    assert.equal(camp.origin, origin);
+    assert.ok(isImportedCamp(camp));
+    const [stored] = normalizeCamps(JSON.parse(JSON.stringify([camp])), '2026-09-27').camps;
+    assert.equal(stored.origin, origin, 'the mark survives saving and loading');
+  }
+  const [unknown] = normalizeCamps([{ ...campFromShare(shared, '2026-09-27'), origin: 'elsewhere' }], '2026-09-27').camps;
+  assert.equal(unknown.origin, undefined, 'an unknown mark is dropped');
 });

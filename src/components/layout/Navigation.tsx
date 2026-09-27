@@ -4,6 +4,7 @@ import { CalendarCheck, CalendarRange, ChartColumn, Compass, Library, Plus, Rout
 import type { CampScope } from '../../lib/allCamps';
 import { offersAllCamps } from '../../lib/allCamps';
 import { LANDING_PATH } from '../../lib/routes';
+import { Avatar } from '../discover/AuthorBadge';
 import { BrandMark } from '../ui/BrandMark';
 
 export type View = 'today' | 'path' | 'week' | 'progress' | 'camps' | 'discover' | 'settings';
@@ -41,6 +42,14 @@ interface NavProps {
   isDemo: boolean;
   /** The notification bell, top right of the navigation. */
   bell?: ReactNode;
+  /** Who is signed in; the profile entry opens Ayarlar. */
+  profile: Profile;
+}
+
+export interface Profile {
+  name: string;
+  /** The line under the name (the email, or what the entry opens). */
+  detail: string;
 }
 
 export const ALL_CAMPS_LABEL = 'Tüm Kamplar';
@@ -103,7 +112,7 @@ export function CampSwitcher({
   );
 }
 
-export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell }: NavProps) {
+export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell, profile }: NavProps) {
   const campCount = camps.length;
   const item = ({ view: target, label, icon: Icon }: NavItem) => {
     const active = view === target;
@@ -167,14 +176,32 @@ export function Sidebar({ view, onNavigate, onAddCamp, camps, activeCampId, scop
         <ul className="space-y-1">{PRIMARY_NAV.map(item)}</ul>
       </nav>
 
-      <ul className="space-y-1 border-t border-line pt-4">
-        {item({ view: 'settings', label: 'Ayarlar', icon: Settings })}
-      </ul>
+      <div className="border-t border-line pt-4">
+        <button
+          type="button"
+          onClick={() => onNavigate('settings')}
+          aria-current={view === 'settings' ? 'page' : undefined}
+          aria-label={`${profile.name}: profil ve ayarlar`}
+          className={`group flex w-full items-center gap-3 rounded-[10px] px-2 py-2 text-left transition-colors ${
+            view === 'settings' ? 'bg-sunk ring-1 ring-line-strong' : 'hover:bg-sunk/60'
+          }`}
+        >
+          <Avatar name={profile.name} size="lg" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-semibold text-ink">{profile.name}</span>
+            <span className="block truncate text-[12px] text-ink-3">{profile.detail}</span>
+          </span>
+          <Settings
+            className={`size-4 shrink-0 transition-colors ${view === 'settings' ? 'text-forest' : 'text-ink-3 group-hover:text-ink-2'}`}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
     </aside>
   );
 }
 
-export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell }: NavProps) {
+export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId, scope, onSelectCamp, onSelectAll, isDemo, bell, profile }: NavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-paper/80 px-4 backdrop-blur-md lg:hidden">
       <a href={LANDING_PATH} className="-m-1 shrink-0 rounded-[9px] p-1" aria-label="Yetiştiricem ana sayfası">
@@ -205,12 +232,12 @@ export function MobileTopBar({ view, onNavigate, onAddCamp, camps, activeCampId,
       </button>
       <button
         type="button"
-        className={`icon-btn shrink-0 ${view === 'settings' ? 'bg-sunk text-ink' : ''}`}
+        className={`icon-btn shrink-0 ${view === 'settings' ? 'bg-sunk' : ''}`}
         onClick={() => onNavigate('settings')}
-        aria-label="Ayarlar"
+        aria-label={`${profile.name}: profil ve ayarlar`}
         aria-current={view === 'settings' ? 'page' : undefined}
       >
-        <Settings aria-hidden="true" />
+        <Avatar name={profile.name} />
       </button>
     </header>
   );

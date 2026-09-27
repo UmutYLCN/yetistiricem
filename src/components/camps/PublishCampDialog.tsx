@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { CircleCheck, Compass, LoaderCircle, LogIn, TriangleAlert, Upload } from 'lucide-react';
 import type { StudyCamp } from '../../types';
-import { shareSummary, toSharedCamp } from '../../lib/campShare';
+import { isImportedCamp, shareSummary, toSharedCamp } from '../../lib/campShare';
 import type { CatalogEntry } from '../../lib/catalog';
 import { MAX_DESCRIPTION, MAX_PUBLISHED_NAME, publishRow } from '../../lib/catalog';
 import { findPublication, publishCamp } from '../../lib/catalogApi';
@@ -25,7 +25,9 @@ type Existing = { status: 'loading' } | { status: 'ready'; entry: CatalogEntry |
 /**
  * "Keşfet’te yayınla": the camp's name, tempo, branches and videos become a
  * public entry under the student's name. Publishing the same camp again
- * updates that entry.
+ * updates that entry. A camp added from Keşfet or a share link is someone
+ * else's work and is refused (the database also refuses a second author for
+ * the same videos).
  */
 export function PublishCampDialog({ camp, account, onSignIn, onRename, onClose, onView, onPublished }: Props) {
   const uid = useId();
@@ -78,6 +80,21 @@ export function PublishCampDialog({ camp, account, onSignIn, onRename, onClose, 
   let footer;
   if (account.status === 'off') {
     body = <p className="text-[14px] text-ink-2">Keşfet bu sunucuda kurulmamış; kamp yayınlanamıyor.</p>;
+    footer = (
+      <button type="button" className="btn btn-primary" onClick={onClose}>
+        Tamam
+      </button>
+    );
+  } else if (isImportedCamp(camp)) {
+    body = (
+      <p className="callout callout-warn text-[13.5px] text-ink-2">
+        <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden="true" />
+        <span>
+          Bu kampı {camp.origin === 'kesfet' ? 'Keşfet’ten' : 'bir paylaşım linkinden'} ekledin; başkasının hazırladığı kamp senin adınla
+          yayınlanamaz. Yalnızca kendi oluşturduğun kampları yayınlayabilirsin.
+        </span>
+      </p>
+    );
     footer = (
       <button type="button" className="btn btn-primary" onClick={onClose}>
         Tamam

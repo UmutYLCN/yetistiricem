@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ArrowLeft, ArrowRight, Eye, LoaderCircle, LogOut, RefreshCw, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Eye, LoaderCircle, RefreshCw, TriangleAlert } from 'lucide-react';
 import type { Account } from '../../hooks/useAccount';
 import { useAccount } from '../../hooks/useAccount';
 import { hydrateAccount } from '../../lib/cloudSync';
@@ -52,45 +52,6 @@ function SignInScreen({ account }: { account: Account }) {
   );
 }
 
-/** The explicit account entry shown when the landing page is opened with an active session. */
-function SignedInScreen({ account }: { account: Account }) {
-  const label = account.state.status === 'signed-in' ? account.state.displayName || account.state.email || 'hesabın' : 'hesabın';
-  return (
-    <div className="signin-page">
-      <div className="signin-backdrop" aria-hidden="true" />
-      <main id="main" className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col justify-center px-4 py-12">
-        <a href={LANDING_PATH} className="mx-auto flex items-center gap-2.5 rounded-[10px]" aria-label="Yetiştiricem ana sayfası">
-          <BrandMark size={34} />
-          <span className="text-[17px] font-semibold tracking-[-0.015em] text-ink">Yetiştiricem</span>
-        </a>
-        <h1 className="font-display mt-8 text-center text-[28px] leading-tight text-ink">Hesabın açık</h1>
-        <p className="mt-2 text-center text-[14.5px] text-ink-2">
-          <span className="font-semibold text-ink">{label}</span> olarak giriş yaptın.
-        </p>
-        <section className="card mt-7 space-y-3 p-5 sm:p-6" aria-label="Hesap seçenekleri">
-          <a href={APP_PATH} className="btn btn-primary w-full">
-            Dashboard’a devam et
-            <ArrowRight aria-hidden="true" />
-          </a>
-          <button type="button" className="btn btn-secondary w-full" onClick={() => void account.signOut()}>
-            <LogOut aria-hidden="true" />
-            Çıkış yap / hesap değiştir
-          </button>
-        </section>
-        <p className="mt-5 text-center text-[12.5px] leading-relaxed text-ink-3">
-          Başka bir hesapla girmek için önce çıkış yap; sonra e-posta adresini kullan.
-        </p>
-        <div className="mt-6 flex justify-center">
-          <a href={LANDING_PATH} className="btn btn-ghost btn-sm">
-            <ArrowLeft aria-hidden="true" />
-            Ana sayfa
-          </a>
-        </div>
-      </main>
-    </div>
-  );
-}
-
 function Splash({ label }: { label: string }) {
   return (
     <div className="grid min-h-dvh place-items-center" role="status" aria-label={label}>
@@ -129,9 +90,8 @@ type Hydration = { userId: string; status: 'loading' } | { userId: string; statu
  * per page load, so it never mounts twice in one page: if the session ends
  * after it showed, a fresh page starts on the sign-in screen.
  */
-export function AuthGate({ startInDemo, accountEntry, children }: {
+export function AuthGate({ startInDemo, children }: {
   startInDemo: boolean;
-  accountEntry: boolean;
   children: (account: Account, userId: string | null) => ReactNode;
 }) {
   const account = useAccount(true);
@@ -139,7 +99,7 @@ export function AuthGate({ startInDemo, accountEntry, children }: {
   const userId = state.status === 'signed-in' ? state.userId : null;
   const [hydration, setHydration] = useState<Hydration | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const needsHydration = !startInDemo && !accountEntry && userId !== null;
+  const needsHydration = !startInDemo && userId !== null;
 
   useEffect(() => {
     if (!needsHydration || !userId) return;
@@ -155,7 +115,7 @@ export function AuthGate({ startInDemo, accountEntry, children }: {
 
   const ready = hydration?.status === 'ready' && hydration.userId === userId;
   const localOnly = state.status === 'off' && import.meta.env.DEV;
-  const open = startInDemo || localOnly || (!accountEntry && userId !== null && ready);
+  const open = startInDemo || localOnly || (userId !== null && ready);
   const [shown, setShown] = useState(false);
   if (open && !shown) setShown(true);
 
@@ -168,7 +128,6 @@ export function AuthGate({ startInDemo, accountEntry, children }: {
   if (state.status === 'off') {
     return <GateMessage title="Giriş bu sunucuda kurulmamış" body="Uygulamanın Supabase bağlantısı tanımlı değil (kurulum: docs/kesfet.md)." />;
   }
-  if (accountEntry && state.status === 'signed-in') return <SignedInScreen account={account} />;
   if (state.status === 'signed-out') return <SignInScreen account={account} />;
   if (hydration?.status === 'error' && hydration.userId === userId) {
     return (

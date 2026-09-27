@@ -17,7 +17,7 @@ import { useToday } from '../../hooks/useToday';
 import type { LandingPreview } from '../../lib/landingPreview';
 import { buildLandingPreview } from '../../lib/landingPreview';
 import { hasSavedSignIn } from '../../lib/authKey';
-import { ACCOUNT_ENTRY_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
+import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark } from '../ui/BrandMark';
 import { Features } from './Features';
 import { ProductPreview } from './ProductPreview';
@@ -87,9 +87,9 @@ const FAQ = [
   },
 ];
 
-/** Landing account buttons open the sign-in / account screen before the planner. */
+/** Landing account buttons open the planner: straight in with a session, otherwise its sign-in page. */
 function accountLabel(signedIn: boolean, long: boolean): string {
-  if (signedIn) return long ? 'Hesap seçenekleri' : 'Hesap';
+  if (signedIn) return long ? 'Dashboard’a git' : 'Dashboard';
   return long ? 'Giriş yap ve başla' : 'Giriş yap';
 }
 
@@ -119,7 +119,7 @@ function SiteHeader({ signedIn }: { signedIn: boolean }) {
           <a href={DEMO_APP_PATH} className="btn btn-ghost btn-sm max-sm:hidden">
             Demo
           </a>
-          <a href={ACCOUNT_ENTRY_PATH} className="btn btn-primary btn-sm group">
+          <a href={APP_PATH} className="btn btn-primary btn-sm group">
             {accountLabel(signedIn, false)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
@@ -150,7 +150,7 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
           çalışacağını ve hedefe ne kadar kaldığını tek ekranda görürsün.
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-          <a href={ACCOUNT_ENTRY_PATH} className="btn btn-primary btn-lg group">
+          <a href={APP_PATH} className="btn btn-primary btn-lg group">
             {accountLabel(signedIn, true)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
@@ -285,7 +285,7 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
           Kampını birkaç dakikada kur; ilk günün görevleri hemen önünde olsun.
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-          <a href={ACCOUNT_ENTRY_PATH} className="btn btn-primary btn-lg group">
+          <a href={APP_PATH} className="btn btn-primary btn-lg group">
             {accountLabel(signedIn, true)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
@@ -325,7 +325,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
               </a>
             </li>
             <li>
-              <a href={ACCOUNT_ENTRY_PATH} className="transition-colors hover:text-ink">
+              <a href={APP_PATH} className="transition-colors hover:text-ink">
                 {accountLabel(signedIn, false)}
               </a>
             </li>

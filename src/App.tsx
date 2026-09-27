@@ -51,7 +51,7 @@ import type { FocusTarget } from './components/focus/FocusModal';
 import { FocusModal } from './components/focus/FocusModal';
 import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
 import { PathView } from './components/path/PathView';
-import type { View } from './components/layout/Navigation';
+import type { Profile, View } from './components/layout/Navigation';
 import { MobileTabBar, MobileTopBar, Sidebar } from './components/layout/Navigation';
 import { NotificationBell } from './components/layout/NotificationBell';
 import { PageHeader } from './components/layout/PageHeader';
@@ -390,6 +390,11 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
     />
   );
 
+  const me = account.state.status === 'signed-in' ? account.state : null;
+  const profile: Profile = me
+    ? { name: me.displayName ?? me.email?.split('@')[0] ?? 'Hesabın', detail: me.email ?? 'Profil ve ayarlar' }
+    : { name: isDemo ? 'Demo' : 'Misafir', detail: 'Ayarlar' };
+
   const handleEditLink = (item: DailyPlanItem) => {
     const campId = campIdOf(item) ?? camp?.id;
     if (campId) setDialog({ kind: 'editVideo', campId, branchId: item.playlistId, videoId: item.videoId });
@@ -502,7 +507,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
     notify({ message: `“${target.name}” silindi.`, tone: 'info' });
   };
 
-  const handleImportCamp = async (shared: SharedCamp) => {
+  const handleImportCamp = async (shared: SharedCamp, source: 'kesfet' | 'link') => {
     setImportOffer(null);
     if (startInDemo) {
       // The camp travels in an import link, offered again on the student's own plan (after sign-in).
@@ -510,7 +515,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
       return;
     }
     if (isDemo) actions.exitDemo();
-    handleCreateCamp(campFromShare(shared, today));
+    handleCreateCamp(campFromShare(shared, today, source));
   };
 
   const openCatalogEntry = (entry: CatalogEntry) => {
@@ -837,7 +842,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         today={today}
         userId={account.state.status === 'signed-in' ? account.state.userId : null}
         onBack={() => setDiscoverId(null)}
-        onImport={shared => void handleImportCamp(shared)}
+        onImport={shared => void handleImportCamp(shared, 'kesfet')}
         onUnpublish={entry => void handleUnpublish(entry)}
       />
     ) : (
@@ -847,8 +852,6 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         version={catalogVersion}
         onOpen={setDiscoverId}
         onSignIn={() => setSignInOpen(true)}
-        onRename={() => setRenameOpen(true)}
-        onSignOut={() => void handleSignOut()}
         onOpenCamps={() => setView('camps')}
       />
     );
@@ -930,6 +933,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         onSelectAll={selectAllCamps}
         isDemo={isDemo}
         bell={bell}
+        profile={profile}
       />
       <div className="min-w-0 flex-1">
         <MobileTopBar
@@ -943,6 +947,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
           onSelectAll={selectAllCamps}
           isDemo={isDemo}
           bell={bell}
+          profile={profile}
         />
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1240px] px-4 pt-5 pb-28 outline-none sm:px-6 lg:px-10 lg:pt-9 lg:pb-14">
           {(isDemo || notices.length > 0 || (hasLegacy && !legacyDismissed && !isDemo)) && (
@@ -1092,7 +1097,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         offer={importOffer}
         today={today}
         isDemo={isDemo}
-        onImport={shared => void handleImportCamp(shared)}
+        onImport={shared => void handleImportCamp(shared, 'link')}
         onClose={() => setImportOffer(null)}
       />
       {dialog?.kind === 'editBranch' && dialogBranch && (
@@ -1109,15 +1114,14 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
 }
 
 /** The planner ("Dashboard"). `startInDemo`: open the demo preview (the landing page's "Demo ile göz at"). */
-const App = ({ startInDemo = false, accountEntry = false, importPayload = null, openDiscover = false }: {
+const App = ({ startInDemo = false, importPayload = null, openDiscover = false }: {
   startInDemo?: boolean;
-  accountEntry?: boolean;
   importPayload?: string | null;
   openDiscover?: boolean;
 }) => (
   <ToastProvider>
     <ConfirmProvider>
-      <AuthGate startInDemo={startInDemo} accountEntry={accountEntry}>
+      <AuthGate startInDemo={startInDemo}>
         {(account, userId) => (
           <Planner
             startInDemo={startInDemo}
