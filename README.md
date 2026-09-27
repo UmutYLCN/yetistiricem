@@ -27,7 +27,7 @@ Yetişir, video listeleriyle çalıştığın öğrenme hedeflerini esnek çalı
 - **Günlük ilerlemene bak:** Tamamladığın videoları işaretle; kalan süreyi, haftalık yükü ve tahmini bitiş tarihini izle.
 - **Suçluluksuz yeniden planla:** Bir görevi tamamlamak planını değiştirmez. Geride kaldığında “Ritmi güncelle” ile kalanları yalnızca sen istediğinde yeniden dağıt; neden aksadığını seçersen İlerleme ekranı alışkanlıklarını gösterir.
 - **Planın hesabında:** Kampların, ilerlemen ve notların hesabına kaydedilir; giriş yaptığın her cihazda aynı plan açılır. Ayarlar’dan yedek indirip geri de yükleyebilirsin.
-- **Yapay zekâyla çalış:** Claude, ChatGPT ya da Gemini’yi hesabına bağla; “nasıl gidiyorum?” diye sor, ilerlemeni okuyup değerlendirsin; roadmap’ini sohbette birlikte kurun, onayınla planına eklesin ([kurulum](docs/mcp.md)).
+- **Yapay zekâyla çalış:** Claude, ChatGPT ya da Grok’u hesabına bağla; “nasıl gidiyorum?” diye sor, ilerlemeni okuyup değerlendirsin; roadmap’ini sohbette birlikte kurun, onayınla planına eklesin ([kurulum](docs/mcp.md)).
 
 ## Nasıl kullanılır?
 

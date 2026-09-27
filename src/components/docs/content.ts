@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Account, AiOverview, CampJson, CampWizard, ChatGptDoc, ClaudeDoc, Daily, Focus, GeminiDoc, Kesfet, Overview, Progress, QuickStart, Reschedule, Sources, Tempo } from './pages';
+import { Account, AiOverview, CampJson, CampWizard, ChatGptDoc, ClaudeDoc, Daily, Focus, GrokDoc, Kesfet, Overview, Progress, QuickStart, Reschedule, Sources, Tempo } from './pages';
 
 // Every docs page, in sidebar order. `slug` is the address under /docs ('' is
 // the overview); `keywords` feed the search box; the text is in `pages.tsx`.
@@ -24,10 +24,10 @@ export const DOC_PAGES: DocPage[] = [
   { slug: 'focus', group: 'Her gün', title: 'Yetişir Focus', description: 'Videoları önerisiz, dikkat dağıtmayan bir oynatıcıda izle.', keywords: 'odak oynatıcı video izle', Body: Focus },
   { slug: 'ilerleme', group: 'İlerleme', title: 'İlerleme ekranı', description: 'Seri, sorumluluk skoru, ısı haritası ve erteleme analizi.', keywords: 'seri streak skor ısı haritası istatistik', Body: Progress },
   { slug: 'kesfet', group: 'Keşfet ve paylaşım', title: 'Keşfet ve paylaşım', description: 'Kamp yayınlamak, başkalarının kampını eklemek, paylaşım linkleri.', keywords: 'yayınla paylaş link kopyala', Body: Kesfet },
-  { slug: 'yapay-zeka', group: 'Yapay zekâ', title: 'Genel bakış', description: 'Claude, ChatGPT ya da Gemini’yi hesabına bağla.', keywords: 'mcp ai yapay zeka bağlan claude chatgpt gemini güvenlik', Body: AiOverview },
+  { slug: 'yapay-zeka', group: 'Yapay zekâ', title: 'Genel bakış', description: 'Claude, ChatGPT ya da Grok’u hesabına bağla.', keywords: 'mcp ai yapay zeka bağlan claude chatgpt grok güvenlik', Body: AiOverview },
   { slug: 'claude', group: 'Yapay zekâ', title: 'Claude', description: 'Claude’u Yetişir’e bağla.', keywords: 'anthropic connector bağlayıcı', Body: ClaudeDoc },
   { slug: 'chatgpt', group: 'Yapay zekâ', title: 'ChatGPT', description: 'ChatGPT’yi Yetişir’e bağla.', keywords: 'openai connector geliştirici modu', Body: ChatGptDoc },
-  { slug: 'gemini', group: 'Yapay zekâ', title: 'Gemini', description: 'Gemini CLI’ı Yetişir’e bağla.', keywords: 'google cli settings.json', Body: GeminiDoc },
+  { slug: 'grok', group: 'Yapay zekâ', title: 'Grok', description: 'Grok’u Yetişir’e bağla.', keywords: 'xai connector bağlayıcı', Body: GrokDoc },
   { slug: 'kamp-json', group: 'Yapay zekâ', title: 'Kamp JSON formatı', description: 'Yapay zekânın kamp yazarken uyduğu biçim ve sınırlar.', keywords: 'json send_camp format sınır şema', Body: CampJson },
   { slug: 'hesap', group: 'Hesap', title: 'Hesap ve veriler', description: 'Senkron, profil, yedek, sıfırlama ve demo.', keywords: 'senkron cihaz yedek sıfırla çıkış profil', Body: Account },
 ];

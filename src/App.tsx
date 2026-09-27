@@ -18,6 +18,7 @@ import {
 import { addDays, buildCampSchedule, calculateStats, countCompletedVideos } from './lib/engine';
 import type { SharedCamp } from './lib/campShare';
 import { campFromShare, decodeCampShare } from './lib/campShare';
+import { discardMcpCampDraft, readMcpCampDraft } from './lib/mcpDrafts';
 import { classifyCamp, isLegacyKind } from './lib/camps';
 import { focusTotals, focusableVideoId, nextFocusItem } from './lib/focus';
 import { progressInsights } from './lib/insights';
@@ -50,7 +51,7 @@ import { leaveAccountLocally } from './lib/cloudSync';
 import { useCloudSync } from './hooks/useCloudSync';
 import { useSavedCamps } from './hooks/useSavedCamps';
 import { listMyPublications, unpublishCamp } from './lib/catalogApi';
-import { APP_PATH, campImportUrl, discoverReturnUrl } from './lib/routes';
+import { APP_PATH, campImportUrl, clearMcpDraftRequest, discoverReturnUrl } from './lib/routes';
 import type { FocusTarget } from './components/focus/FocusModal';
 import { FocusModal } from './components/focus/FocusModal';
 import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
@@ -105,6 +106,7 @@ function celebrate() {
 interface PlannerProps {
   startInDemo: boolean;
   importPayload: string | null;
+  mcpDraftId: string | null;
   /** Open on Keşfet (a sign-in link brought the student back). */
   openDiscover: boolean;
   /** The student's account (`AuthGate` shows the planner only with one, or in the demo). */
@@ -113,7 +115,7 @@ interface PlannerProps {
   userId: string | null;
 }
 
-function Planner({ startInDemo, importPayload, openDiscover, account, userId }: PlannerProps) {
+function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account, userId }: PlannerProps) {
   const today = useToday();
   const { data, realData, isDemo, selectedDate, campScope, notices, seedPreferences, actions } = usePlanner(today, { startInDemo });
   // The account's plan is saved to the cloud as it changes (a demo page holds no account plan).
@@ -131,18 +133,38 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
   const [renameOpen, setRenameOpen] = useState(false);
   const [discoverId, setDiscoverId] = useState<string | null>(null);
   const [catalogVersion, setCatalogVersion] = useState(0);
-  // A camp from a share link (`/app?import=…`), read once when the page opens.
-  const [importOffer, setImportOffer] = useState<ImportOffer | null>(importPayload ? { status: 'loading' } : null);
+  // A shared camp or private AI proposal, read once when the page opens.
+  const [importOffer, setImportOffer] = useState<ImportOffer | null>(importPayload || mcpDraftId ? { status: 'loading' } : null);
+  const [approvedDraft, setApprovedDraft] = useState<{ id: string; campId: string } | null>(null);
   useEffect(() => {
-    if (!importPayload) return;
+    if (!importPayload && !mcpDraftId) return;
     let cancelled = false;
-    void decodeCampShare(importPayload).then(result => {
-      if (!cancelled) setImportOffer(result.ok ? { status: 'ready', camp: result.camp } : { status: 'error', message: result.error });
-    });
+    if (mcpDraftId) {
+      if (!userId) {
+        setImportOffer({ status: 'error', message: 'Bu kampı görmek için Yetişir hesabına giriş yap.' });
+      } else {
+        void readMcpCampDraft(mcpDraftId, userId).then(result => {
+          if (!cancelled) {
+            setImportOffer(result.ok ? { status: 'ready', camp: result.camp, source: result.origin === 'kesfet' ? 'mcp-kesfet' : 'mcp' } : { status: 'error', message: result.error });
+          }
+        });
+      }
+    } else if (importPayload) {
+      void decodeCampShare(importPayload).then(result => {
+        if (!cancelled) setImportOffer(result.ok ? { status: 'ready', camp: result.camp, source: 'link' } : { status: 'error', message: result.error });
+      });
+    }
     return () => {
       cancelled = true;
     };
-  }, [importPayload]);
+  }, [importPayload, mcpDraftId, userId]);
+
+  // Keep the proposal available until the approved camp reaches the cloud.
+  useEffect(() => {
+    if (!approvedDraft || !userId || sync.status !== 'saved' || !realData.camps.some(c => c.id === approvedDraft.campId)) return;
+    setApprovedDraft(null);
+    void discardMcpCampDraft(approvedDraft.id, userId);
+  }, [approvedDraft, realData.camps, sync.status, userId]);
 
   // The daily check of the branches' YouTube playlists (never in the demo).
   const syncEnabled = !isDemo && syncTargets(data.camps).length > 0;
@@ -535,15 +557,20 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
     notify({ message: `“${target.name}” silindi.`, tone: 'info' });
   };
 
-  const handleImportCamp = async (shared: SharedCamp, source: 'kesfet' | 'link') => {
+  const handleImportCamp = async (shared: SharedCamp, source: 'kesfet' | 'link' | 'mcp' | 'mcp-kesfet') => {
     setImportOffer(null);
     if (startInDemo) {
       // The camp travels in an import link, offered again on the student's own plan (after sign-in).
-      window.location.assign(campImportUrl(await encodeCampShare(shared)));
+      window.location.assign((source === 'mcp' || source === 'mcp-kesfet') && mcpDraftId ? `${APP_PATH}?draft=${encodeURIComponent(mcpDraftId)}` : campImportUrl(await encodeCampShare(shared)));
       return;
     }
     if (isDemo) actions.exitDemo();
-    handleCreateCamp(campFromShare(shared, today, source));
+    const created = campFromShare(shared, today, source === 'mcp' ? undefined : source === 'mcp-kesfet' ? 'kesfet' : source);
+    handleCreateCamp(created);
+    if ((source === 'mcp' || source === 'mcp-kesfet') && mcpDraftId) {
+      clearMcpDraftRequest();
+      setApprovedDraft({ id: mcpDraftId, campId: created.id });
+    }
   };
 
   const openCatalogEntry = (entry: CatalogEntry) => {
@@ -1145,8 +1172,11 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         offer={importOffer}
         today={today}
         isDemo={isDemo}
-        onImport={shared => void handleImportCamp(shared, 'link')}
-        onClose={() => setImportOffer(null)}
+        onImport={shared => void handleImportCamp(shared, importOffer?.status === 'ready' ? importOffer.source : 'link')}
+        onClose={() => {
+          if (mcpDraftId) clearMcpDraftRequest();
+          setImportOffer(null);
+        }}
       />
       {dialog?.kind === 'editBranch' && dialogBranch && (
         <EditBranchDialog
@@ -1171,9 +1201,10 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
 }
 
 /** The planner ("Dashboard"). `startInDemo`: open the demo preview (the landing page's "Demo ile göz at"). */
-const App = ({ startInDemo = false, importPayload = null, openDiscover = false }: {
+const App = ({ startInDemo = false, importPayload = null, mcpDraftId = null, openDiscover = false }: {
   startInDemo?: boolean;
   importPayload?: string | null;
+  mcpDraftId?: string | null;
   openDiscover?: boolean;
 }) => (
   <ToastProvider>
@@ -1183,6 +1214,7 @@ const App = ({ startInDemo = false, importPayload = null, openDiscover = false }
           <Planner
             startInDemo={startInDemo}
             importPayload={importPayload}
+            mcpDraftId={mcpDraftId}
             openDiscover={openDiscover}
             account={account}
             userId={userId}

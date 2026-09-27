@@ -92,10 +92,10 @@ export function createMcpHandler(options: McpHandlerOptions): WebHandler {
     title: 'Yetişir',
     version: '2.0.0',
     instructions: [
-      'Yetişir is a Turkish study planner. A student\'s "camp" holds branches (subjects) of YouTube lesson videos or typed topics, and the app splits them into days that fit the daily study time. You act for the signed-in student.',
+      'Camp-adding MCP tools NEVER save directly. They create a private review link; the student must inspect the complete list and click Planıma ekle in Yetişir. Do not say a camp was added before that approval. Yetişir is a Turkish study planner. A camp holds branches of YouTube lesson videos or typed topics, scheduled to fit daily study time. You act for the signed-in student.',
       'To coach them ("nasıl gidiyorum?"), read get_my_progress and get_my_plan and answer from those numbers.',
-      'To build a roadmap with them: agree on the goal, deadline, daily hours and study days; read their playlists with read_youtube_playlist; write the camp JSON following get_camp_format; check it with send_camp dryRun (it reports the finish date); add it with send_camp once they agree.',
-      'Never invent videos, ids, channel names or durations: YouTube videos come from read_youtube_playlist / read_youtube_videos, and send_camp replaces them with YouTube\'s data anyway. Use link-free topics only for material the student studies without a video.',
+      'To build a roadmap with them: agree on the goal, deadline, daily hours and study days; read their playlists with read_youtube_playlist; write the camp JSON following get_camp_format; check it with send_camp dryRun (it reports the finish date); then call send_camp to prepare a private review link. send_camp never saves the camp: the student must inspect the full list and click Planıma ekle in Yetişir.',
+      'Never invent videos, ids, channel names or durations: YouTube videos come from read_youtube_playlist / read_youtube_videos, and send_camp replaces them with YouTube\'s data anyway. Use link-free topics only for material the student studies without a video. add_kesfet_camp also prepares a review link rather than saving immediately.',
     ].join(' '),
     tools: yetistiricemTools({
       loadPlaylist: async id => {

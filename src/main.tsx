@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/inter/opsz.css'
 import './index.css'
 import { hasAuthCallback } from './lib/authKey.ts'
-import { APP_PATH, isAppPath, isConsentPath, isDocsPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest } from './lib/routes.ts'
+import { APP_PATH, isAppPath, isConsentPath, isDocsPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest, takeMcpDraftRequest } from './lib/routes.ts'
 import { Root } from './Root.tsx'
 
 const inApp = isAppPath(window.location.pathname)
@@ -17,13 +17,14 @@ if (!inApp && !inConsent && hasAuthCallback()) {
 } else {
   const startInDemo = inApp && takeDemoRequest()
   const importPayload = inApp ? takeImportRequest() : null
+  const mcpDraftId = inApp ? takeMcpDraftRequest() : null
   const openDiscover = inApp && takeDiscoverRequest()
   if (inApp) document.title = 'Dashboard · Yetişir'
   if (inConsent) document.title = 'Bağlantı onayı · Yetişir'
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <Root inApp={inApp} inConsent={inConsent} inDocs={inDocs} startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
+      <Root inApp={inApp} inConsent={inConsent} inDocs={inDocs} startInDemo={startInDemo} importPayload={importPayload} mcpDraftId={mcpDraftId} openDiscover={openDiscover} />
     </StrictMode>,
   )
 }

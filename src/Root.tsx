@@ -13,14 +13,15 @@ interface RootProps {
   inDocs: boolean;
   startInDemo: boolean;
   importPayload: string | null;
+  mcpDraftId: string | null;
   openDiscover: boolean;
 }
 
-export function Root({ inApp, inConsent, inDocs, startInDemo, importPayload, openDiscover }: RootProps) {
+export function Root({ inApp, inConsent, inDocs, startInDemo, importPayload, mcpDraftId, openDiscover }: RootProps) {
   return (
     <Suspense fallback={null}>
       {inApp ? (
-        <App startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
+        <App startInDemo={startInDemo} importPayload={importPayload} mcpDraftId={mcpDraftId} openDiscover={openDiscover} />
       ) : inConsent ? (
         <OAuthConsent />
       ) : inDocs ? (

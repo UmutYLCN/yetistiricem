@@ -131,7 +131,7 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
       <div className="relative mx-auto max-w-[1200px] px-4 pt-16 text-center sm:px-6 sm:pt-24">
         <a href="#yapay-zeka" className="announce">
           <span className="announce-badge">Yeni</span>
-          <span className="min-w-0 truncate">Claude, ChatGPT ve Gemini ile planla</span>
+          <span className="min-w-0 truncate">Claude, ChatGPT ve Grok ile planla</span>
           <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
         </a>
         <h1 id="hero-title" className="hero-title text-gradient mx-auto mt-7">

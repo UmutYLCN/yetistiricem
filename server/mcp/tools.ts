@@ -1,20 +1,19 @@
 // The Yetişir MCP tools (docs/mcp.md). The client acts for one signed-in
-// student (`ToolContext.account`): it can read their plan and progress, add a
-// camp the two of them planned in chat (`send_camp`, a camp JSON held to
-// `campFormat.ts`), and read YouTube and Keşfet to prepare one.
+// student (`ToolContext.account`): it can read their plan and progress, prepare
+// a private camp review (`send_camp`, a camp JSON held to `campFormat.ts`),
+// and read YouTube and Keşfet. Only the student adds the reviewed camp.
 //
 // Data truth: every YouTube video in a camp is looked up with the YouTube Data
 // API; its title, channel and exact length come from YouTube, and a video
 // YouTube does not return refuses the camp. Topics without a video carry the
 // minutes the student agreed to.
 import type { SharedCamp, SharedVideo } from '../../src/lib/campShare.ts';
-import { campFromShare, shareSummary } from '../../src/lib/campShare.ts';
+import { campFromShare, shareDocument, shareSummary } from '../../src/lib/campShare.ts';
 import type { CatalogEntry } from '../../src/lib/catalog.ts';
 import { CATALOG_COLUMNS, readCatalogCamp, readCatalogRow, searchCatalog } from '../../src/lib/catalog.ts';
-import { fromCloudDocument, toCloudDocument } from '../../src/lib/cloudState.ts';
+import { fromCloudDocument } from '../../src/lib/cloudState.ts';
 import type { PlannerData } from '../../src/lib/persistence.ts';
 import { emptyData } from '../../src/lib/persistence.ts';
-import { createCamp } from '../../src/lib/plannerOps.ts';
 import type { ReviewRow } from '../../src/lib/playlistImport.ts';
 import { reviewPlaylist, rowLabel } from '../../src/lib/playlistImport.ts';
 import { isDateKey } from '../../src/utils/date.ts';
@@ -24,7 +23,7 @@ import type { PlaylistEntry, PlaylistErrorCode, PlaylistResponse } from '../../s
 import { MAX_VIDEOS_PER_REQUEST } from '../../src/utils/youtubePlaylist.ts';
 import { YouTubeApiError } from '../youtubeApi.ts';
 import type { Account, FetchText, SupabaseConfig } from './account.ts';
-import { AccountError, readPlan, savePlan } from './account.ts';
+import { AccountError, readPlan } from './account.ts';
 import { CAMP_EXAMPLE, CAMP_JSON_SCHEMA, CAMP_RULES, checkCampJson } from './campFormat.ts';
 import { planDays, progressOverview } from './myPlan.ts';
 import type { Tool, ToolResult } from './protocol.ts';
@@ -240,19 +239,31 @@ async function loadAccountPlan(account: Account, deps: ToolDeps): Promise<{ data
   return { data, revision: stored.revision };
 }
 
-/** Adds the camp to the account's plan on top of the newest saved copy (again if another device saves meanwhile). */
-async function addToAccount(shared: SharedCamp, origin: 'kesfet' | undefined, account: Account, deps: ToolDeps): Promise<void> {
-  for (let attempt = 0; ; attempt++) {
-    const { data, revision } = await loadAccountPlan(account, deps);
-    const camp = campFromShare(shared, deps.today(), origin);
-    try {
-      await savePlan(deps.supabase, account, toCloudDocument(createCamp(data, camp)), revision, deps.fetch);
-      return;
-    } catch (error) {
-      if (error instanceof AccountError && error.code === 'conflict' && attempt < 2) continue;
-      throw error;
-    }
+/** Stores a private proposal; the planner adds it only after the student reviews and approves it. */
+async function prepareCampDraft(shared: SharedCamp, account: Account, deps: ToolDeps, origin: 'ai' | 'kesfet' = 'ai'): Promise<string> {
+  let response: Response;
+  try {
+    response = await (deps.fetch ?? fetch)(`${deps.supabase.url}/rest/v1/mcp_camp_drafts?select=id`, {
+      method: 'POST',
+      headers: {
+        apikey: deps.supabase.key,
+        Authorization: `Bearer ${account.token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({ user_id: account.userId, origin, payload: shareDocument(shared) }),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch {
+    throw new AccountError('offline');
   }
+  if (response.status === 401 || response.status === 403) throw new AccountError('refused');
+  if (!response.ok) throw new InputError('Yetişir kamp önizlemesini hazırlayamadı. Biraz sonra tekrar dene.');
+  const rows: unknown = await response.json().catch(() => null);
+  const id = Array.isArray(rows) && typeof rows[0]?.id === 'string' ? rows[0].id : null;
+  if (!id) throw new InputError('Yetişir kamp önizlemesini hazırlayamadı. Biraz sonra tekrar dene.');
+  return id;
 }
 
 // ---------------------------------------------------------------------------
@@ -307,7 +318,7 @@ const publicEntry = ({ id, name, authorName, description, subjects, tags, saveCo
 // The tools
 
 const readOnly = { readOnlyHint: true, openWorldHint: true };
-const addsToPlan = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
+const preparesProposal = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
 
 export function yetistiricemTools(deps: ToolDeps): Tool[] {
   const appUrl = (request: Request) => {
@@ -408,11 +419,11 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
     },
     {
       name: 'send_camp',
-      title: 'Add a camp to my plan',
+      title: 'Prepare a camp for my review',
       description: [
-        'Adds a camp (the roadmap planned with the student) to their Yetişir plan. `camp` follows the format of `get_camp_format`; any problem comes back with its path, so fix the JSON and send again.',
+        'Prepares a private camp proposal for the student to review. This tool NEVER adds a camp to the plan: only the student can add it from the preview page. `camp` follows `get_camp_format`; fix any reported problem and try again.',
         'Every YouTube video is looked up on YouTube: titles, channels and lengths become YouTube\'s, and a video YouTube does not return refuses the camp. The camp starts today and becomes the open camp.',
-        'Set `dryRun` to check the JSON and see the finish date without adding anything.',
+        'Set `dryRun` to check the JSON and see the finish date without creating a proposal. Otherwise return the review link; tell the student to open it, inspect the complete list, and approve there. Never say the camp was added until they approve it in Yetişir.',
       ].join(' '),
       inputSchema: {
         type: 'object',
@@ -423,7 +434,7 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
         required: ['camp'],
         additionalProperties: false,
       },
-      annotations: addsToPlan,
+      annotations: preparesProposal,
       run: (args, { account, request }) =>
         guard(async () => {
           const checked = checkCampJson(args.camp);
@@ -434,10 +445,18 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
           if (args.dryRun === true) {
             return { text: [`Camp "${camp.name}" fits the format (nothing added yet).`, ...lines, ...notes].join('\n'), structured: { added: false, camp, estimate: plan } };
           }
-          await addToAccount(camp, undefined, account, deps);
+          const draftId = await prepareCampDraft(camp, account, deps);
+          const previewUrl = `${appUrl(request)}?draft=${draftId}`;
           return {
-            text: [`Camp "${camp.name}" was added to the student's plan and is now the open camp.`, ...lines, ...notes, '', `They see it in Yetişir (${appUrl(request)}); an open app tab shows it after a reload.`].join('\n'),
-            structured: { added: true, camp, estimate: plan, appUrl: appUrl(request) },
+            text: [
+              `Camp "${camp.name}" is ready for the student's review, but has NOT been added to their plan.`,
+              ...lines,
+              ...notes,
+              '',
+              `Review the complete list and approve it in Yetişir: [Kampı incele](${previewUrl})`,
+              'Show this link to the student. Only their click on "Planıma ekle" in Yetişir will save the camp. Do not call this tool again to bypass approval.',
+            ].join('\n'),
+            structured: { added: false, awaitingApproval: true, previewUrl, estimate: plan },
           };
         }),
     },
@@ -552,18 +571,19 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
     },
     {
       name: 'add_kesfet_camp',
-      title: 'Add a Keşfet camp to my plan',
-      description: 'Adds a copy of a published Keşfet camp to the signed-in student\'s plan, starting today. It stays marked as someone else\'s camp, so the student cannot publish it as their own.',
+      title: 'Prepare a Keşfet camp for my review',
+      description: 'Prepares a private review of a published Keşfet camp. It does NOT add anything to the plan until the student opens the link, reviews every item and clicks Planıma ekle in Yetişir. The approved copy stays marked as someone else\'s camp, so the student cannot publish it as their own.',
       inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'The camp id from `search_kesfet`.' } }, required: ['id'], additionalProperties: false },
-      annotations: addsToPlan,
+      annotations: preparesProposal,
       run: (args, { account, request }) =>
         guard(async () => {
           const { entry, camp } = await catalogCamp(deps, args.id);
-          await addToAccount(camp, 'kesfet', account, deps);
+          const draftId = await prepareCampDraft(camp, account, deps, 'kesfet');
+          const previewUrl = `${appUrl(request)}?draft=${draftId}`;
           const { lines } = campLines(camp, deps.today());
           return {
-            text: [`A copy of "${entry.name}" (by ${entry.authorName}) was added to the student's plan and is now the open camp.`, ...lines, '', `They see it in Yetişir (${appUrl(request)}).`].join('\n'),
-            structured: { added: true, kesfet: publicEntry(entry), appUrl: appUrl(request) },
+            text: [`A copy of "${entry.name}" (by ${entry.authorName}) is ready for review, but has NOT been added to the student's plan.`, ...lines, '', `The student must inspect and approve it in Yetişir: [Kampı incele](${previewUrl})`].join('\n'),
+            structured: { added: false, awaitingApproval: true, kesfet: publicEntry(entry), previewUrl },
           };
         }),
     },

@@ -35,6 +35,7 @@ export function isAppPath(pathname: string): boolean {
 }
 
 const IMPORT_PARAM = 'import';
+const DRAFT_PARAM = 'draft';
 
 /** Removes a parameter from the address bar (reloading then opens the saved plan). */
 function dropParam(url: URL, name: string) {
@@ -63,6 +64,18 @@ export function takeImportRequest(): string | null {
   if (payload === null) return null;
   dropParam(url, IMPORT_PARAM);
   return payload;
+}
+
+/** A private MCP proposal to review. Keep it through a possible sign-in redirect. */
+export function takeMcpDraftRequest(): string | null {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(DRAFT_PARAM);
+}
+
+/** Remove a draft id after its owner has opened the preview. */
+export function clearMcpDraftRequest(): void {
+  const url = new URL(window.location.href);
+  if (url.searchParams.has(DRAFT_PARAM)) dropParam(url, DRAFT_PARAM);
 }
 
 const VIEW_PARAM = 'view';

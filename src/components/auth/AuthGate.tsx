@@ -11,6 +11,9 @@ import { SignInForm } from './SignInForm';
 
 /** The planner's sign-in page. */
 function SignInScreen({ account }: { account: Account }) {
+  const returnUrl = new URL(window.location.href);
+  returnUrl.hash = '';
+  const draftReturnUrl = returnUrl.searchParams.has('draft') ? returnUrl.toString() : undefined;
   return (
     <div className="signin-page">
       <div className="signin-backdrop" aria-hidden="true" />
@@ -30,8 +33,8 @@ function SignInScreen({ account }: { account: Account }) {
         <section className="card mt-7 p-5 sm:p-6" aria-label="Giriş">
           <SignInForm
             onSignIn={(email, password) => account.signInWithPassword(email, password)}
-            onSignUp={(email, password) => account.signUpWithPassword(email, password)}
-            onGoogle={() => account.continueWithGoogle()}
+            onSignUp={(email, password) => account.signUpWithPassword(email, password, draftReturnUrl)}
+            onGoogle={() => account.continueWithGoogle(draftReturnUrl)}
           />
         </section>
         <p className="mt-5 text-center text-[12.5px] leading-relaxed text-ink-3">

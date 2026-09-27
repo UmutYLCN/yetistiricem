@@ -406,7 +406,7 @@ export function AiSection({ preview }: { preview: LandingPreview }) {
           <span className="text-ink-3">Birlikte yol al.</span>
         </h2>
         <p>
-          Claude, ChatGPT veya Gemini’yi Yetişir’e bağla. İlerlemeni bilsin, planını birlikte kurun. “Nasıl gidiyorum?” sorunun artık bir
+          Claude, ChatGPT veya Grok’u Yetişir’e bağla. İlerlemeni bilsin, planını birlikte kurun. “Nasıl gidiyorum?” sorunun artık bir
           bağlamı var.
         </p>
       </div>

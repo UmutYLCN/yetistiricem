@@ -12,7 +12,7 @@ Bu klasör, ürün davranışını ve projeyi geliştirenler için teknik bilgil
 - [Teknik mimari](teknik-mimari.md) — arayüz, planlama, saklama ve YouTube oynatma listesi akışı.
 - [Geliştirme ve çalıştırma](gelistirme.md) — gereksinimler, yerel kurulum, API anahtarı ve kontroller.
 - [Planlama motoru](planner-engine.md) — takvim üretimi, tempo kuralları, çoklu kamp birleştirme ve ileri taşıma sözleşmesi.
-- [Yapay zekâ bağlantısı (MCP)](mcp.md) — Claude, ChatGPT ve Gemini için MCP sunucusu: hesaba bağlama, ilerlemeyi okuma, kamp JSON'u gönderme, kurallar ve kurulum.
+- [Yapay zekâ bağlantısı (MCP)](mcp.md) — Claude, ChatGPT ve Grok için MCP sunucusu: hesaba bağlama, ilerlemeyi okuma, kamp JSON'u gönderme, kurallar ve kurulum.
 
 ## Ekran görüntüleri
 

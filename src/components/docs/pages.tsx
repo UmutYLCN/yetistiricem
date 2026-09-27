@@ -43,7 +43,7 @@ export function Overview() {
           Rotam ekranıyla günlük kullanım.
         </PageCard>
         <PageCard to="yapay-zeka" title="Yapay zekâ" icon={<Bot className="size-4 text-forest" />}>
-          Claude, ChatGPT ya da Gemini’yi bağla; seni değerlendirsin, kampını kursun.
+          Claude, ChatGPT ya da Grok’u bağla; seni değerlendirsin, kampını kursun.
         </PageCard>
       </Cards>
     </>
@@ -361,7 +361,7 @@ export function AiOverview() {
   return (
     <>
       <p>
-        Yetişir bir <strong>MCP</strong> (Model Context Protocol) sunucusu sunar. Claude, ChatGPT ya da Gemini’yi hesabına bağladığında
+        Yetişir bir <strong>MCP</strong> (Model Context Protocol) sunucusu sunar. Claude, ChatGPT ya da Grok’u hesabına bağladığında
         yapay zekân:
       </p>
       <ul>
@@ -373,11 +373,10 @@ export function AiOverview() {
           <strong>günlerini anlatır:</strong> “Bu hafta neyi yetiştirmem lazım?” dediğinde geciken ve sıradaki görevlerini sayar;
         </li>
         <li>
-          <strong>kampını kurar:</strong> hedefini, süreni ve oynatma listelerini sohbette konuşursunuz; kampı yazar, bitiş tarihini gösterir
-          ve onayınla planına ekler;
+          <strong>kampını kurar:</strong> hedefini, süreni ve oynatma listelerini sohbette konuşursunuz; kampı doğrular ve bir önizleme bağlantısı verir. Tüm listeyi inceleyip <strong>Planıma ekle</strong> dediğinde kaydedersin;
         </li>
         <li>
-          <strong>Keşfet’te arar</strong> ve beğendiğin kampı planına ekler.
+          <strong>Keşfet’te arar</strong> ve beğendiğin kampı inceleyip planına eklemen için önizleme hazırlar.
         </li>
       </ul>
       <H2 id="baglan">Bağlan</H2>
@@ -388,8 +387,8 @@ export function AiOverview() {
         <PageCard to="chatgpt" title="ChatGPT" icon={<AiLogo client="chatgpt" size={18} />}>
           MCP uygulaması olarak; hesabındaki araç izinlerine bağlı.
         </PageCard>
-        <PageCard to="gemini" title="Gemini" icon={<AiLogo client="gemini" size={18} />}>
-          Gemini CLI’da; desteklenen bölgelerde Gemini web ve mobilde.
+        <PageCard to="grok" title="Grok" icon={<AiLogo client="grok" size={18} />}>
+          grok.com’da Eklentiler’den özel bağlayıcı olarak.
         </PageCard>
         <PageCard to="kamp-json" title="Kamp JSON formatı" icon={<Compass className="size-4 text-forest" />}>
           Yapay zekânın kampı yazarken uyduğu sınırlar.
@@ -455,7 +454,7 @@ export function ChatGptDoc() {
           </>,
           <>Güven uyarısını okuyup kabul et ve uygulamayı oluştur. Yetişir’in izin sayfası açılır; doğru hesapla giriş yaptığını kontrol edip <strong>İzin ver</strong>’e bas.</>,
           <>ChatGPT’ye döndüğünde gerekirse <strong>Kişisel</strong> eklentilerde Yetişir’i bulup ekle. Ardından <strong>Work</strong> sohbeti aç ve <strong>@Yetişir</strong> seç.</>,
-          <>Önce “Nasıl gidiyorum?” diye sorarak okuma aracını dene. Kamp kurmak için hedefini ve oynatma listeni anlat; planı gördükten sonra “Kampı planıma ekle” de.</>,
+          <>Önce “Nasıl gidiyorum?” diye sorarak okuma aracını dene. Kamp kurmak için hedefini ve oynatma listeni anlat; ChatGPT’nin verdiği Yetişir önizleme bağlantısını aç, tüm listeyi incele ve <strong>Planıma ekle</strong>’ye bas.</>,
         ]}
       </Steps>
       <Callout tone="info">
@@ -467,43 +466,29 @@ export function ChatGptDoc() {
   );
 }
 
-export function GeminiDoc() {
+export function GrokDoc() {
   return (
     <>
-      <p>Gemini, Yetişir’in MCP sunucusuna Gemini CLI üzerinden bağlanabilir. Gemini web ve mobilde özel uygulama bağlantısı da vardır; şu anda herkese açık değildir.</p>
-      <H2 id="gemini-web">Gemini web ve mobil</H2>
+      <p>Grok’a Yetişir’i özel bir MCP bağlayıcısı olarak ekleyebilirsin. Bağlandıktan sonra Grok sohbette planını ve ilerlemeni okur, kamp önerisi hazırlar.</p>
       <Steps>
         {[
-          <>Gemini web’de <strong>Settings → Connected Apps → Custom apps → Add a custom app</strong> yolunu aç.</>,
           <>
-            Yetişir’in sunucu adresini gir:
+            <a href="https://grok.com" target="_blank" rel="noreferrer">grok.com</a>’da sol alttaki <strong>Eklentiler</strong>’e bas. Sağ üstten <strong>Yeni Bağlayıcı</strong>’yı aç ve <strong>Özelleştirilmiş</strong>’i seç.
+          </>,
+          <>
+            <strong>Ad</strong> alanına <strong>Yetişir</strong> yaz, <strong>Sunucu URL’si</strong> alanına aşağıdaki adresi gir ve <strong>Bağlayıcı Ekle</strong>’ye bas.
             <div className="mt-3">
               <CodeBlock label="Sunucu URL’si">{mcpUrl()}</CodeBlock>
             </div>
           </>,
-          <>Bağlantı onayını tamamla. Sohbette <strong>@Yetişir</strong> seç; yazma işlemi için Gemini ayrıca onay isteyebilir.</>,
+          <>Yetişir’in izin sayfası açılır; doğru hesapla giriş yaptığını kontrol edip <strong>İzin ver</strong>’e bas.</>,
+          <>Önce “Nasıl gidiyorum?” diye sorarak okuma aracını dene. Kamp kurmak için hedefini ve oynatma listeni anlat; Grok’un verdiği Yetişir önizleme bağlantısını aç, tüm listeyi incele ve <strong>Planıma ekle</strong>’ye bas.</>,
         ]}
       </Steps>
       <Callout tone="info">
-        Google bu özelliği şu anda ABD’deki, İngilizce kullanan, etkinlik geçmişi açık kişisel hesaplarla sınırlıyor. Türkiye’deki bir hesapta seçenek görünmeyebilir.{' '}
-        <a href="https://support.google.com/gemini/answer/17209137?co=GENIE.Platform%3DDesktop&amp;hl=en-GA" target="_blank" rel="noreferrer">Google’ın güncel koşulları</a>
+        Yetişir, Eklentiler’de <strong>Bağlı</strong> altında görünür. Bağlı görünüp araçlar gelmiyorsa bağlayıcıyı kaldırıp yeniden ekle; izin sayfası açılmadan bağlantı tamamlanmış sayılmaz.{' '}
+        <a href="https://docs.x.ai/grok/connectors" target="_blank" rel="noreferrer">xAI bağlayıcı rehberi</a>
       </Callout>
-      <H2 id="gemini-cli">Gemini CLI</H2>
-      <Steps>
-        {[
-          <>
-            <code>~/.gemini/settings.json</code> dosyasına Yetişir’i ekle:
-            <div className="mt-3">
-              <CodeBlock label="settings.json">{`{\n  "mcpServers": {\n    "yetisir": { "httpUrl": "${mcpUrl()}" }\n  }\n}`}</CodeBlock>
-            </div>
-          </>,
-          <>
-            Gemini CLI’ı aç ve <code>/mcp auth yetisir</code> komutunu çalıştır.
-          </>,
-          <>Açılan Yetişir sayfasında giriş yap ve <strong>İzin ver</strong>’e bas.</>,
-        ]}
-      </Steps>
-      <Callout tone="info">Gemini CLI, OAuth dönüşünde <code>iss</code> parametresini zorunlu tutar. Giriş sonunda hata alırsan kimlik doğrulama akışı ayrıca incelenmelidir.</Callout>
     </>
   );
 }
@@ -512,9 +497,9 @@ export function CampJson() {
   return (
     <>
       <p>
-        Yapay zekâ bir kampı <code>send_camp</code> aracıyla, aşağıdaki JSON biçiminde gönderir. Sınırlar uygulamanın kendi formlarıyla
-        aynıdır; bir sorun olursa yeriyle birlikte bildirilir (<code>camp.branches[2].videos[5].youtubeId</code> gibi) ve yarım kamp
-        eklenmez.
+        Yapay zekâ bir kampı <code>send_camp</code> aracıyla, aşağıdaki JSON biçiminde önizlemeye hazırlar. Sınırlar uygulamanın kendi formlarıyla
+        aynıdır; bir sorun olursa yeriyle birlikte bildirilir (<code>camp.branches[2].videos[5].youtubeId</code> gibi). Kamp yalnızca
+        sen tüm listeyi inceleyip Yetişir’de onayladığında planına eklenir.
       </p>
       <CodeBlock label="Örnek">{`{
   "name": "TYT 2027",

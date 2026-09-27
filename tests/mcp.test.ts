@@ -11,8 +11,10 @@ import { createPlaylistHandler } from '../server/playlistEndpoint.ts';
 import { createVideosHandler } from '../server/videosEndpoint.ts';
 import { checkCampJson } from '../server/mcp/campFormat.ts';
 import type { SharedCamp } from '../src/lib/campShare.ts';
-import { shareDocument } from '../src/lib/campShare.ts';
-import { fromCloudDocument } from '../src/lib/cloudState.ts';
+import { campFromShare, shareDocument } from '../src/lib/campShare.ts';
+import { fromCloudDocument, toCloudDocument } from '../src/lib/cloudState.ts';
+import { emptyData } from '../src/lib/persistence.ts';
+import { createCamp } from '../src/lib/plannerOps.ts';
 import { PLAYLIST_ID, TEST_KEY, fakeVideo, fakeYouTube, vid } from './youtubeFake.ts';
 
 const ORIGIN = 'https://yetistiricem.example';
@@ -46,9 +48,9 @@ const kesfetRow = {
   author: { display_name: 'umut' },
 };
 
-/** Supabase as the MCP server sees it: auth, the student's plan row (RLS: own row only), the save RPC and Keşfet. */
+/** Supabase as the MCP server sees it: auth, the student's plan, private draft rows and Keşfet. */
 function fakeSupabase() {
-  const store = { data: null as unknown, revision: 0, saves: 0, conflictsLeft: 0 };
+  const store = { data: null as unknown, revision: 0, saves: 0, conflictsLeft: 0, drafts: [] as { id: string; origin: string; payload: unknown }[] };
   const fetch = async (input: string, init: RequestInit) => {
     const url = new URL(input);
     const headers = new Headers(init.headers);
@@ -64,6 +66,13 @@ function fakeSupabase() {
       return new Response(JSON.stringify(body), { status: 200 });
     }
     assert.equal(auth, `Bearer ${OAUTH_TOKEN}`, 'the plan is read and written with the student’s own token');
+    if (url.pathname === '/rest/v1/mcp_camp_drafts') {
+      const row = JSON.parse(String(init.body)) as { user_id: string; origin: string; payload: unknown };
+      assert.equal(row.user_id, USER);
+      const id = `00000000-0000-4000-8000-${String(store.drafts.length + 1).padStart(12, '0')}`;
+      store.drafts.push({ id, origin: row.origin, payload: row.payload });
+      return new Response(JSON.stringify([{ id }]), { status: 201 });
+    }
     if (url.pathname === '/rest/v1/planner_states') {
       assert.equal(url.searchParams.get('user_id'), `eq.${USER}`);
       return new Response(JSON.stringify(store.data === null ? [] : [{ data: store.data, revision: store.revision }]), { status: 200 });
@@ -240,7 +249,7 @@ test('the camp JSON is held to the app’s limits, each problem named with its p
   }
 });
 
-test('send_camp adds the camp to the student’s account, with YouTube’s own data', async () => {
+test('send_camp prepares a private review without saving, with YouTube’s own data', async () => {
   const { call, supabase, plan } = server();
   assert.match((await call('get_camp_format')).text, /playbackSpeed: one of 1, 1.25, 1.5, 1.75, 2/);
 
@@ -252,6 +261,7 @@ test('send_camp adds the camp to the student’s account, with YouTube’s own d
   assert.equal(dry.isError, false, dry.text);
   assert.equal(supabase.store.saves, 0, 'a dry run saves nothing');
   assert.match(dry.text, /ends on 2026-/);
+  assert.equal(supabase.store.drafts.length, 0, 'a dry run stores no proposal');
 
   const refused = await call('send_camp', {
     camp: camp({ branches: [{ subject: 'Mat', videos: [{ title: 'a', minutes: 5, youtubeId: vid(3) }, { title: 'b', minutes: 5, youtubeId: vid(99) }] }] }),
@@ -260,43 +270,45 @@ test('send_camp adds the camp to the student’s account, with YouTube’s own d
   assert.match(refused.text, /camp\.branches\[0\]\.videos\[0\] \(vid00000003\)/);
   assert.match(refused.text, /camp\.branches\[0\]\.videos\[1\] \(vid00000099\)/);
   assert.equal(supabase.store.saves, 0);
+  assert.equal(supabase.store.drafts.length, 0);
 
   const sent = await call('send_camp', { camp: camp() });
   assert.equal(sent.isError, false, sent.text);
-  assert.match(sent.text, /added to the student's plan/);
+  assert.match(sent.text, /NOT been added/);
   assert.match(sent.text, /1 video title\(s\) or length\(s\) were replaced/);
-  assert.equal(supabase.store.saves, 1);
-  const saved = plan();
-  assert.ok(saved);
-  assert.equal(saved.camps.length, 1);
-  const [added] = saved.camps;
-  assert.equal(saved.activeCampId, added.id, 'the new camp is the open one');
-  assert.equal(added.origin, undefined, 'a camp planned with the student is their own');
-  assert.equal(added.schedule.startDate, TODAY);
-  assert.equal(added.schedule.playbackSpeed, 1.5);
-  const [mat, tr] = added.branches;
+  assert.equal(sent.data?.added, false);
+  assert.equal(sent.data?.awaitingApproval, true);
+  assert.match(String(sent.data?.previewUrl), /^https:\/\/yetistiricem\.example\/app\?draft=/);
+  assert.equal(supabase.store.saves, 0, 'the AI cannot save a camp directly');
+  assert.equal(plan(), null);
+  assert.equal(supabase.store.drafts.length, 1);
+  assert.equal(supabase.store.drafts[0].origin, 'ai');
+  const prepared = (supabase.store.drafts[0].payload as { camp: SharedCamp }).camp;
+  const [mat, tr] = prepared.branches;
   assert.deepEqual(
-    mat.videos.map(v => [v.title, Math.round(v.durationMinutes * 100) / 100]),
+    mat.videos.map(v => [v.title, Math.round(v.minutes * 100) / 100]),
     [
       ['Ders 1', 11.02],
       ['Ders 2', 60],
     ],
     'titles and lengths are YouTube’s'
   );
-  assert.equal(mat.videos[0].videoUrl, `https://www.youtube.com/watch?v=${vid(1)}`);
-  assert.equal(tr.videos[0].videoUrl, '', 'a topic stays link-free');
+  assert.equal(mat.videos[0].youtubeId, vid(1));
+  assert.equal(tr.videos[0].youtubeId, undefined, 'a topic stays link-free');
 
-  // Another device saves meanwhile: the camp is added on top of its copy.
-  supabase.store.conflictsLeft = 1;
+  // Another proposal cannot bypass the student's approval either.
   const again = await call('send_camp', { camp: camp({ name: 'İkinci kamp' }) });
   assert.equal(again.isError, false, again.text);
-  assert.deepEqual(plan()?.camps.map(c => c.name), ['TYT 2027', 'İkinci kamp']);
+  assert.equal(supabase.store.drafts.length, 2);
+  assert.equal(plan(), null);
 });
 
 test('the student’s progress and plan come from their saved plan', async () => {
-  const { call } = server();
+  const { call, supabase } = server();
   assert.match((await call('get_my_progress')).text, /no camp with videos yet/);
-  await call('send_camp', { camp: camp() });
+  const checked = await call('send_camp', { camp: camp(), dryRun: true });
+  const shared = checked.data!.camp as SharedCamp;
+  supabase.store.data = toCloudDocument(createCamp(emptyData(), campFromShare(shared, TODAY)));
 
   const progress = await call('get_my_progress');
   assert.equal(progress.isError, false, progress.text);
@@ -318,7 +330,7 @@ test('the student’s progress and plan come from their saved plan', async () =>
 });
 
 test('YouTube and Keşfet tools read real sources, and the key never shows', async () => {
-  const { call, plan } = server();
+  const { call, supabase, plan } = server();
   const playlist = await call('read_youtube_playlist', { playlist: `https://www.youtube.com/playlist?list=${PLAYLIST_ID}` });
   assert.deepEqual((playlist.data!.videos as { position: number }[]).map(v => v.position), [1, 2, 4, 6]);
   const skipped = playlist.data!.skipped as { position: number; reason: string }[];
@@ -337,7 +349,9 @@ test('YouTube and Keşfet tools read real sources, and the key never shows', asy
 
   const added = await call('add_kesfet_camp', { id: KESFET_ID });
   assert.equal(added.isError, false, added.text);
-  assert.equal(plan()?.camps[0].origin, 'kesfet', 'a Keşfet copy stays someone else’s and cannot be published');
+  assert.equal(added.data?.awaitingApproval, true);
+  assert.equal(supabase.store.drafts[0].origin, 'kesfet', 'an approved Keşfet copy must remain someone else’s');
+  assert.equal(plan(), null, 'a Keşfet copy is not saved before approval');
 
   const noKey = server({ apiKey: '' });
   assert.match((await noKey.call('read_youtube_videos', { videos: [vid(1)] })).text, /not set up/);
@@ -372,7 +386,8 @@ test('the production server runs the MCP server with the token and body it was s
     assert.equal(response.status, 200);
     const body = (await response.json()) as { result: { isError: boolean } };
     assert.equal(body.result.isError, false);
-    assert.equal(supabase.store.saves, 1);
+    assert.equal(supabase.store.saves, 0);
+    assert.equal(supabase.store.drafts.length, 1);
   } finally {
     await new Promise(resolve => app.close(resolve));
   }

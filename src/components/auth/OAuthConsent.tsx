@@ -45,7 +45,7 @@ const PERMISSIONS = [
 ];
 
 /**
- * `/oauth/consent`: an AI client (Claude, ChatGPT, Gemini…) asks to act for
+ * `/oauth/consent`: an AI client (Claude, ChatGPT, Grok…) asks to act for
  * the student through the MCP server (docs/mcp.md). Supabase Auth's OAuth
  * server sends the student here with `authorization_id`; they sign in if
  * needed, then allow or deny, and go back to the client.

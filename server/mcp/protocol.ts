@@ -2,7 +2,7 @@
 // POST carries one JSON-RPC message (or a batch) and gets one JSON answer. No
 // sessions, no server-sent events, no requests from server to client: tools
 // are all Yetişir offers, so this is enough for Claude, ChatGPT and
-// Gemini clients. Spec: https://modelcontextprotocol.io/specification
+// Grok clients. Spec: https://modelcontextprotocol.io/specification
 import type { WebHandler } from '../playlistEndpoint.ts';
 import type { Account } from './account.ts';
 
