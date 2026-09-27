@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ArrowRight, Bot, CalendarDays, Check, CircleCheck, Link2, ListChecks, ListVideo, MessageCircleQuestion, PencilLine, ShieldCheck, Wrench } from 'lucide-react';
 import { SHORT_WEEKDAYS, formatHours, formatLongDate, formatShortDate, formatSpeed, relativeDayLabel } from '../../lib/format';
 import type { LandingPreview } from '../../lib/landingPreview';
-import { APP_PATH } from '../../lib/routes';
+import { docsHref } from '../../lib/routes';
 
 // ---------------------------------------------------------------------------
 // "Hocam yetişir mi?"
@@ -294,8 +294,8 @@ export function AiSection({ preview }: { preview: LandingPreview }) {
               Videolar YouTube’dan gerçek süreleriyle okunur; uydurma bir ders plana giremez.
             </li>
           </ul>
-          <a href={APP_PATH} className="btn btn-secondary mt-8 group">
-            Profil sayfandan bağla
+          <a href={docsHref('yapay-zeka')} className="btn btn-secondary mt-8 group">
+            Nasıl bağlanır?
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
         </div>

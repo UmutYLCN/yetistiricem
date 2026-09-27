@@ -1,6 +1,6 @@
 // The site has pages on one bundle: the landing page at `/`, the planner
-// ("Dashboard") at `/app`, and the AI connection approval at `/oauth/consent`;
-// every other path shows the landing page.
+// ("Dashboard") at `/app`, the docs at `/docs[/<page>]` and the AI connection
+// approval at `/oauth/consent`; every other path shows the landing page.
 // Links between them are plain page loads, never client-side navigation: the
 // planner reads storage once per page load (`loadPlannerOnce`), so mounting it
 // a second time in the same page would show, and then save, stale data.
@@ -11,6 +11,17 @@ export const APP_PATH = '/app';
 const DEMO_PARAM = 'demo';
 /** Opens the planner in the demo preview (sample data, nothing saved). */
 export const DEMO_APP_PATH = `${APP_PATH}?${DEMO_PARAM}`;
+
+export const DOCS_PATH = '/docs';
+
+export function isDocsPath(pathname: string): boolean {
+  return pathname === DOCS_PATH || pathname.startsWith(`${DOCS_PATH}/`);
+}
+
+/** A docs page (`''` for the overview), with an optional section anchor. */
+export function docsHref(page = '', section?: string): string {
+  return `${DOCS_PATH}${page ? `/${page}` : ''}${section ? `#${section}` : ''}`;
+}
 
 /** Where an AI client (Claude, ChatGPT…) asks the student to approve a connection (docs/mcp.md). */
 export const CONSENT_PATH = '/oauth/consent';

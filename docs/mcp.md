@@ -9,7 +9,7 @@ Adres: **`https://yetistiricem.pages.dev/mcp`** (Streamable HTTP, OAuth ile giri
 
 ## Bağlama
 
-Bağlayıcıyı eklediğinde tarayıcıda Yetişir'in onay sayfası (`/oauth/consent`) açılır: giriş yapar, “İzin ver”e basarsın. Bağlı uygulamaları Yetişir’de **Profil ve ayarlar → Yapay zekâ bağlantıları** bölümünde görür, istediğini oradan kaldırırsın; aynı bölümde adres ve adım adım bağlama rehberi de var.
+Bağlayıcıyı eklediğinde tarayıcıda Yetişir'in onay sayfası (`/oauth/consent`) açılır: giriş yapar, “İzin ver”e basarsın. Bağlı uygulamaları Yetişir’de **Profil ve ayarlar → Yapay zekâ bağlantıları** bölümünde logolarıyla görür (bağlı olanın çerçevesi yeşil), istediğini oradan kaldırırsın. Kullanıcıya yönelik adım adım rehber sitenin belgelerinde: `/docs/yapay-zeka`, `/docs/claude`, `/docs/chatgpt`, `/docs/gemini`, `/docs/kamp-json`.
 
 - **Claude (claude.ai, masaüstü, mobil):** Ayarlar → Connectors → *Add custom connector* → ad `Yetişir`, URL yukarıdaki adres → *Connect*.
 - **Claude Code:** `claude mcp add --transport http yetistiricem https://yetistiricem.pages.dev/mcp`, sonra `/mcp` ile giriş.

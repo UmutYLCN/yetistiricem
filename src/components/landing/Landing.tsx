@@ -16,7 +16,7 @@ import { useToday } from '../../hooks/useToday';
 import type { LandingPreview } from '../../lib/landingPreview';
 import { buildLandingPreview } from '../../lib/landingPreview';
 import { hasSavedSignIn } from '../../lib/authKey';
-import { APP_PATH, DEMO_APP_PATH, LANDING_PATH } from '../../lib/routes';
+import { APP_PATH, DEMO_APP_PATH, DOCS_PATH, LANDING_PATH } from '../../lib/routes';
 import { BrandMark, Wordmark } from '../ui/BrandMark';
 import { Features } from './Features';
 import { AiSection, AskSection, HowItWorks } from './Stories';
@@ -106,6 +106,11 @@ function SiteHeader({ signedIn }: { signedIn: boolean }) {
                 </a>
               </li>
             ))}
+            <li>
+              <a href={DOCS_PATH} className="rounded-[8px] px-3 py-2 text-[13.5px] text-ink-2 transition-colors hover:bg-sunk/60 hover:text-ink">
+                Belgeler
+              </a>
+            </li>
           </ul>
         </nav>
         <div className="ml-auto flex items-center gap-2">
@@ -274,6 +279,11 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
                 </a>
               </li>
             ))}
+            <li>
+              <a href={DOCS_PATH} className="transition-colors hover:text-ink">
+                Belgeler
+              </a>
+            </li>
             <li>
               <a href={DEMO_APP_PATH} className="transition-colors hover:text-ink">
                 Demo

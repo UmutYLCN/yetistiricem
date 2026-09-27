@@ -3,11 +3,12 @@ import { createRoot } from 'react-dom/client'
 import '@fontsource-variable/inter/opsz.css'
 import './index.css'
 import { hasAuthCallback } from './lib/authKey.ts'
-import { APP_PATH, isAppPath, isConsentPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest } from './lib/routes.ts'
+import { APP_PATH, isAppPath, isConsentPath, isDocsPath, takeDemoRequest, takeDiscoverRequest, takeImportRequest } from './lib/routes.ts'
 import { Root } from './Root.tsx'
 
 const inApp = isAppPath(window.location.pathname)
 const inConsent = isConsentPath(window.location.pathname)
+const inDocs = isDocsPath(window.location.pathname)
 
 if (!inApp && !inConsent && hasAuthCallback()) {
   // A sign-in answer that fell back to the site root (its return address was
@@ -22,7 +23,7 @@ if (!inApp && !inConsent && hasAuthCallback()) {
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <Root inApp={inApp} inConsent={inConsent} startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
+      <Root inApp={inApp} inConsent={inConsent} inDocs={inDocs} startInDemo={startInDemo} importPayload={importPayload} openDiscover={openDiscover} />
     </StrictMode>,
   )
 }
