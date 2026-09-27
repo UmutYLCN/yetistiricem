@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { ArrowRightLeft, ChevronDown, ExternalLink, Gauge, ListVideo, Pencil, Play, Plus, SlidersHorizontal, Trash2, TriangleAlert, Upload } from 'lucide-react';
+import { ChevronDown, CloudOff, Compass, ExternalLink, Gauge, Globe, ListVideo, Pencil, Play, Plus, RefreshCw, Trash2, TriangleAlert, Upload } from 'lucide-react';
 import type { StudyCamp } from '../../types';
+import type { CatalogEntry } from '../../lib/catalog';
 import type { CampInfo, PlanIndex } from '../../lib/planView';
 import { campProgress, tempoSummary } from '../../lib/planView';
 import { isImportedCamp } from '../../lib/campShare';
@@ -9,6 +10,8 @@ import { countCompletedVideos } from '../../lib/engine';
 import { compactDayLabel, formatLongDate, formatMinutes, formatShortDate } from '../../lib/format';
 import { PageHeader } from '../layout/PageHeader';
 import { KindBadge, Meter } from '../ui/Bits';
+import { Menu } from '../ui/Menu';
+import type { MenuItem } from '../ui/Menu';
 import { NoCampsYet } from './Welcome';
 
 interface Props {
@@ -30,14 +33,17 @@ interface Props {
   onSelectCamp: (campId: string) => void;
   onEditTempo: () => void;
   onRenameCamp: (campId: string) => void;
-  /** "Keşfet’te yayınla". */
+  /** "Keşfet’te yayınla" (also updates a camp that is already live). */
   onPublishCamp: (campId: string) => void;
   onDeleteCamp: (campId: string) => void;
+  /** The student's live Keşfet entries by their camp id; null while unknown (signed out, demo, loading). */
+  publications: ReadonlyMap<string, CatalogEntry> | null;
+  onUnpublishCamp: (entry: CatalogEntry) => void;
+  onViewPublication: (entry: CatalogEntry) => void;
   onAddBranches: () => void;
   onEditBranch: (campId: string) => void;
   onAddVideos: (campId: string) => void;
   onEditVideo: (campId: string, videoId: string) => void;
-  onRemoveBranch: (campId: string) => void;
 }
 
 const LEGACY_TEXT: Record<'legacy-sample' | 'legacy-generated', { title: string; body: string }> = {
@@ -67,11 +73,13 @@ export function CampsView({
   onRenameCamp,
   onPublishCamp,
   onDeleteCamp,
+  publications,
+  onUnpublishCamp,
+  onViewPublication,
   onAddBranches,
   onEditBranch,
   onAddVideos,
   onEditVideo,
-  onRemoveBranch,
 }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const toggle = (id: string) =>
@@ -113,17 +121,50 @@ export function CampsView({
               const total = camp.branches.reduce((acc, b) => acc + b.videos.length, 0);
               const done = countCompletedVideos(camp.branches, completedMap);
               const hasVideos = total > 0;
+              const imported = isImportedCamp(camp);
+              const published = publications?.get(camp.id) ?? null;
+              const menu: MenuItem[] = [
+                { label: 'Adını değiştir', icon: <Pencil aria-hidden="true" />, onSelect: () => onRenameCamp(camp.id) },
+                ...(published
+                  ? [
+                      { label: 'Keşfet’te gör', icon: <Compass aria-hidden="true" />, onSelect: () => onViewPublication(published) },
+                      { label: 'Yayını güncelle', icon: <RefreshCw aria-hidden="true" />, onSelect: () => onPublishCamp(camp.id) },
+                      { label: 'Yayından kaldır', icon: <CloudOff aria-hidden="true" />, onSelect: () => onUnpublishCamp(published) },
+                    ]
+                  : // Someone else's camp (added from Keşfet or a link) is not published again under this name.
+                    imported
+                    ? []
+                    : [{ label: 'Keşfet’te yayınla', icon: <Upload aria-hidden="true" />, onSelect: () => onPublishCamp(camp.id) }]),
+                { label: 'Kampı sil', icon: <Trash2 aria-hidden="true" />, tone: 'danger', separated: true, onSelect: () => onDeleteCamp(camp.id) },
+              ];
+              const origin = published ? null : camp.origin === 'kesfet' ? 'Keşfet’ten eklendi' : camp.origin === 'link' ? 'Paylaşım linkinden eklendi' : null;
               return (
-                <li key={camp.id} className={`card flex flex-col p-4 sm:p-5 ${active ? 'ring-2 ring-forest/60' : ''}`}>
+                <li
+                  key={camp.id}
+                  className={`card relative flex flex-col p-4 transition-colors sm:p-5 ${active ? 'ring-2 ring-forest/60' : 'hover:border-line-strong hover:bg-sunk/40'}`}
+                >
                   <div className="flex items-start gap-2">
-                    <h2 className="font-display min-w-0 flex-1 text-[20px] leading-tight break-words text-ink">{camp.name}</h2>
-                    {active && <span className="chip chip-forest shrink-0">{showsAllCamps ? 'Seçili' : 'Açık kamp'}</span>}
+                    <h2 className="font-display min-w-0 flex-1 text-[20px] leading-tight break-words text-ink">
+                      {active ? (
+                        camp.name
+                      ) : (
+                        // The whole card opens the camp; the buttons inside sit above this.
+                        <button
+                          type="button"
+                          className="text-left after:absolute after:inset-0 after:rounded-[14px] after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-forest"
+                          onClick={() => onSelectCamp(camp.id)}
+                          aria-label={`${camp.name}: ${showsAllCamps ? 'bu kampı yönet' : 'bu kampa geç'}`}
+                        >
+                          {camp.name}
+                        </button>
+                      )}
+                    </h2>
+                    {active && <span className="chip chip-forest mt-0.5 shrink-0">{showsAllCamps ? 'Seçili' : 'Açık kamp'}</span>}
+                    <Menu label={`${camp.name}: kamp seçenekleri`} items={menu} className="relative z-10 -mt-1.5 -mr-2 shrink-0" />
                   </div>
                   <p className="tnum mt-1 text-[12.5px] text-ink-3">
                     {camp.branches.length} branş · {total} video · başlangıç {formatShortDate(camp.schedule.startDate)}
                     {camp.schedule.targetEndDate && ` · hedef ${formatShortDate(camp.schedule.targetEndDate)}`}
-                    {camp.origin === 'kesfet' && ' · Keşfet’ten eklendi'}
-                    {camp.origin === 'link' && ' · paylaşım linkinden eklendi'}
                   </p>
                   <p className="mt-1.5 text-[13px] text-ink-2">{tempoSummary(camp.schedule)}</p>
                   {showsAllCamps && !hasVideos && (
@@ -137,50 +178,18 @@ export function CampsView({
                       {done}/{total}
                     </span>
                   </div>
-                  <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-                    {!active &&
-                      (showsAllCamps ? (
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => onSelectCamp(camp.id)}
-                          aria-label={`${camp.name} kampını yönet`}
-                        >
-                          <SlidersHorizontal aria-hidden="true" />
-                          Yönet
-                        </button>
+                  {(published || origin) && (
+                    <p className="mt-3 text-[12.5px] text-ink-3">
+                      {published ? (
+                        <span className="inline-flex items-center gap-1.5 font-medium text-forest">
+                          <Globe className="size-3.5" aria-hidden="true" />
+                          Keşfet’te yayında
+                        </span>
                       ) : (
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => onSelectCamp(camp.id)}>
-                          <ArrowRightLeft aria-hidden="true" />
-                          Bu kampa geç
-                        </button>
-                      ))}
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => onRenameCamp(camp.id)}>
-                      <Pencil aria-hidden="true" />
-                      Adını değiştir
-                    </button>
-                    {/* Someone else's camp (added from Keşfet or a link) is not published again under this name. */}
-                    {!isImportedCamp(camp) && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => onPublishCamp(camp.id)}
-                        aria-haspopup="dialog"
-                        aria-label={`${camp.name} kampını Keşfet’te yayınla`}
-                      >
-                        <Upload aria-hidden="true" />
-                        Yayınla
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="icon-btn ml-auto size-9 hover:text-danger"
-                      onClick={() => onDeleteCamp(camp.id)}
-                      aria-label={`Kampı sil: ${camp.name}`}
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </button>
-                  </div>
+                        origin
+                      )}
+                    </p>
+                  )}
                 </li>
               );
             })}
@@ -283,14 +292,6 @@ export function CampsView({
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditBranch(camp.id)}>
                     <Pencil aria-hidden="true" />
                     Düzenle
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm ml-auto text-danger hover:bg-danger-soft"
-                    onClick={() => onRemoveBranch(camp.id)}
-                  >
-                    <Trash2 aria-hidden="true" />
-                    Kaldır
                   </button>
                 </div>
 

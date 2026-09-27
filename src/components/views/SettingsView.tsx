@@ -20,6 +20,7 @@ interface Props {
   today: string;
   onRename: (name: string) => Promise<ApiResult<string>>;
   onSaveProfile: (profile: StudentProfile) => Promise<ApiResult<StudentProfile>>;
+  onUploadAvatar: (blob: Blob, extension: 'webp' | 'jpg') => Promise<ApiResult<string>>;
   onSignOut: () => void;
   isDemo: boolean;
   campCount: number;
@@ -39,7 +40,7 @@ const FACT_ICONS: Record<ProfileFact['kind'], LucideIcon> = {
 };
 
 /** The profile card: picture, name and school details, edited in place. */
-function ProfileCard({ account, onRename, onSaveProfile }: { account: SignedIn } & Pick<Props, 'onRename' | 'onSaveProfile'>) {
+function ProfileCard({ account, onRename, onSaveProfile, onUploadAvatar }: { account: SignedIn } & Pick<Props, 'onRename' | 'onSaveProfile' | 'onUploadAvatar'>) {
   const uid = useId();
   const profile = account.profile ?? EMPTY_PROFILE;
   const name = account.displayName ?? account.email?.split('@')[0] ?? 'Sen';
@@ -112,7 +113,7 @@ function ProfileCard({ account, onRename, onSaveProfile }: { account: SignedIn }
             </h2>
             <div>
               <p className="field-label">Profil resmi</p>
-              <AvatarPicker preview={false} value={draft.avatar} name={draftName || name} onChange={avatar => setDraft(d => ({ ...d, avatar }))} />
+              <AvatarPicker preview={false} value={draft.avatar} name={draftName || name} onChange={avatar => setDraft(d => ({ ...d, avatar }))} onUpload={onUploadAvatar} />
             </div>
             <div>
               <label htmlFor={`${uid}-name`} className="field-label">
@@ -136,7 +137,7 @@ function ProfileCard({ account, onRename, onSaveProfile }: { account: SignedIn }
                 </p>
               ) : (
                 <p id={`${uid}-name-note`} className="field-hint">
-                  Keşfet’te yayınladığın kamplarda bu ad görünür; e-postan ve okul bilgilerin gösterilmez.
+                  Keşfet’te kamplarının yanında adın, resmin, durumun, bölümün ya da mesleğin ve Hakkında yazın görünür; okulun, sınıfın ve e-postan gösterilmez.
                 </p>
               )}
             </div>
@@ -202,7 +203,7 @@ function ProfileCard({ account, onRename, onSaveProfile }: { account: SignedIn }
 }
 
 /** Profile, AI connections and data. Each camp's tempo is edited from the camp itself. */
-export function SettingsView({ account, today, onRename, onSaveProfile, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo }: Props) {
+export function SettingsView({ account, today, onRename, onSaveProfile, onUploadAvatar, onSignOut, isDemo, campCount, onBackup, onRestoreFile, onReset, onStartDemo, onExitDemo }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
@@ -210,7 +211,7 @@ export function SettingsView({ account, today, onRename, onSaveProfile, onSignOu
     <div className="mx-auto max-w-[760px] space-y-5">
       <PageHeader title="Profil ve ayarlar" subtitle={isDemo ? 'Demo açık: buradaki değişiklikler kaydedilmez.' : 'Sen, yapay zekâ bağlantıların ve verilerin.'} />
 
-      {account.status === 'signed-in' && <ProfileCard key={account.userId} account={account} onRename={onRename} onSaveProfile={onSaveProfile} />}
+      {account.status === 'signed-in' && <ProfileCard key={account.userId} account={account} onRename={onRename} onSaveProfile={onSaveProfile} onUploadAvatar={onUploadAvatar} />}
 
       {account.status === 'signed-in' && <AiConnections today={today} />}
 

@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { BadgeCheck, Briefcase, Check, GraduationCap, ImageUp, NotebookPen, School, Trash2 } from 'lucide-react';
 import { avatarFromFile } from '../../lib/avatarImage';
+import type { ApiResult } from '../../lib/catalogApi';
 import type { ProfileField, Stage, StudentProfile } from '../../lib/studentProfile';
 import { AVATAR_SHAPES, MAX_BIO, MAX_PROFILE_TEXT, STAGE_OPTIONS, fieldsFor, gradeLabel, gradesFor, isAvatarShape, stageLabel } from '../../lib/studentProfile';
 import { ProfileAvatar, ShapeSvg } from './ProfileAvatar';
@@ -26,8 +27,18 @@ export function StageChip({ stage, className = '' }: { stage: Stage; className?:
   );
 }
 
-/** The eight drawn shapes, and a photo of the student's own. `preview`: show the picked picture beside them. */
-export function AvatarPicker({ value, name, onChange, preview = true }: { value: string | null; name: string; onChange: (avatar: string | null) => void; preview?: boolean }) {
+interface AvatarPickerProps {
+  value: string | null;
+  name: string;
+  onChange: (avatar: string | null) => void;
+  /** Uploads a prepared photo; the result is the path the profile stores. */
+  onUpload: (blob: Blob, extension: 'webp' | 'jpg') => Promise<ApiResult<string>>;
+  /** Show the picked picture beside the choices. */
+  preview?: boolean;
+}
+
+/** The eight drawn shapes, and a photo of the student's own. */
+export function AvatarPicker({ value, name, onChange, onUpload, preview = true }: AvatarPickerProps) {
   const uid = useId();
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,10 +48,16 @@ export function AvatarPicker({ value, name, onChange, preview = true }: { value:
   const pick = async (file: File) => {
     setBusy(true);
     setError(null);
-    const result = await avatarFromFile(file);
+    const prepared = await avatarFromFile(file);
+    if (!prepared.ok) {
+      setBusy(false);
+      setError(prepared.error);
+      return;
+    }
+    const uploaded = await onUpload(prepared.blob, prepared.extension);
     setBusy(false);
-    if (result.ok) onChange(result.dataUrl);
-    else setError(result.error);
+    if (uploaded.ok) onChange(uploaded.data);
+    else setError(uploaded.error);
   };
 
   return (
@@ -102,7 +119,7 @@ export function AvatarPicker({ value, name, onChange, preview = true }: { value:
             {error}
           </p>
         ) : (
-          <p className="field-hint">Fotoğrafın kare olarak kırpılır; yalnızca sen görürsün.</p>
+          <p className="field-hint">Fotoğrafın kare olarak kırpılır. Profil resmin Keşfet’te kamplarının yanında görünür.</p>
         )}
       </div>
     </div>

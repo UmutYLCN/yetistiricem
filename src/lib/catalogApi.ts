@@ -4,7 +4,7 @@ import type { CatalogEntry, PublishRow } from './catalog';
 import { CATALOG_COLUMNS, readCatalogCamp, readCatalogRow } from './catalog';
 import { AUTH_KEY } from './authKey';
 import type { StudentProfile } from './studentProfile';
-import { profileRow, readProfileRow } from './studentProfile';
+import { privateProfileRow, publicProfileRow, readProfileRow } from './studentProfile';
 
 // The app's connection to Supabase: sign-in (the planner needs an account)
 // and Keşfet (docs/kesfet.md). The URL and the
@@ -155,6 +155,71 @@ export function findPublication(sourceCampId: string, authorId: string): Promise
   });
 }
 
+// ---------------------------------------------------------------------------
+// Keşfet covers and saves
+
+const COVER_BUCKET = 'camp-covers';
+
+/** The public address of a camp's cover photo (a path in the `camp-covers` bucket). */
+export function coverPhotoUrl(path: string): string | null {
+  return URL_ENV ? `${URL_ENV}/storage/v1/object/public/${COVER_BUCKET}/${path}` : null;
+}
+
+/** Uploads a prepared cover to the student's own folder; the result is its path (saved when the camp is published). */
+export function uploadCampCover(userId: string, blob: Blob, extension: 'webp' | 'jpg'): Promise<ApiResult<string>> {
+  return run(async client => {
+    const path = `${userId}/${crypto.randomUUID().replace(/-/g, '')}.${extension}`;
+    const { error } = await client.storage
+      .from(COVER_BUCKET)
+      .upload(path, blob, { contentType: extension === 'webp' ? 'image/webp' : 'image/jpeg', cacheControl: '31536000', upsert: false });
+    if (error) return { ok: false, error: /fetch|network/i.test(error.message) ? OFFLINE : 'Kapak fotoğrafı yüklenemedi. Biraz sonra tekrar dene.' };
+    return { ok: true, data: path };
+  });
+}
+
+/** Removes the student's cover photos that none of their published camps uses any more. */
+export function removeUnusedCovers(userId: string): Promise<ApiResult<null>> {
+  return run(async client => {
+    const [{ data: files, error: listError }, { data: rows, error: rowsError }] = await Promise.all([
+      client.storage.from(COVER_BUCKET).list(userId, { limit: 100 }),
+      client.from('published_camps').select('cover').eq('author_id', userId),
+    ]);
+    if (listError || rowsError) return { ok: false, error: OFFLINE };
+    const used = new Set((rows ?? []).map(row => (row as { cover?: unknown }).cover));
+    const stale = (files ?? []).map(file => `${userId}/${file.name}`).filter(path => !used.has(path));
+    if (stale.length > 0) await client.storage.from(COVER_BUCKET).remove(stale);
+    return { ok: true, data: null };
+  });
+}
+
+/** The ids of the camps the signed-in student saved. */
+export function listSavedCampIds(userId: string): Promise<ApiResult<string[]>> {
+  return run(async client => {
+    const { data, error } = await client.from('saved_camps').select('camp_id').eq('user_id', userId).limit(1000);
+    if (error) return failure(error);
+    return { ok: true, data: (data ?? []).flatMap(row => (typeof row.camp_id === 'string' ? [row.camp_id] : [])) };
+  });
+}
+
+/** Saves a camp for later (the heart), or takes it back. */
+export function setCampSaved(userId: string, campId: string, saved: boolean): Promise<ApiResult<null>> {
+  return run(async client => {
+    const { error } = saved
+      ? await client.from('saved_camps').upsert({ user_id: userId, camp_id: campId }, { onConflict: 'user_id,camp_id', ignoreDuplicates: true })
+      : await client.from('saved_camps').delete().eq('user_id', userId).eq('camp_id', campId);
+    return error ? failure(error) : { ok: true, data: null };
+  });
+}
+
+/** The signed-in student's own published camps (Kamplar shows which are live). */
+export function listMyPublications(authorId: string): Promise<ApiResult<CatalogEntry[]>> {
+  return run(async client => {
+    const { data, error } = await client.from('published_camps').select(CATALOG_COLUMNS).eq('author_id', authorId).limit(LIST_LIMIT);
+    if (error) return failure(error);
+    return { ok: true, data: (data ?? []).map(readCatalogRow).filter((entry): entry is CatalogEntry => entry !== null) };
+  });
+}
+
 export function getDisplayName(userId: string): Promise<ApiResult<string | null>> {
   return run(async client => {
     const { data, error } = await client.from('profiles').select('display_name').eq('id', userId).maybeSingle();
@@ -171,33 +236,66 @@ export function setDisplayName(userId: string, name: string): Promise<ApiResult<
 }
 
 // ---------------------------------------------------------------------------
-// The student's private profile (picture, school details)
+// The student's profile: public part in `profiles`, private part in `student_profiles`
 
-const PROFILE_COLUMNS = 'avatar, stage, school, department, grade, profession, bio, onboarded_at';
+const PUBLIC_PROFILE_COLUMNS = 'avatar, stage, department, profession, bio';
+const PRIVATE_PROFILE_COLUMNS = 'school, grade, onboarded_at';
+const AVATAR_BUCKET = 'avatars';
 
-function profileFailure(error: { message?: string; code?: string } | null | undefined): { ok: false; error: string } {
+function profileFailure(error: { message?: string; code?: string; statusCode?: string } | null | undefined): { ok: false; error: string } {
   const message = error?.message ?? '';
   if (error?.code === '42501' || message.includes('row-level security')) return { ok: false, error: 'Bu işlem için giriş yapman gerekiyor.' };
-  if (error?.code === '23514') return { ok: false, error: 'Profil bilgilerinden biri kabul edilmedi. Fotoğrafı ya da yazdıklarını kontrol edip tekrar dene.' };
+  if (error?.code === '23514') return { ok: false, error: 'Profil bilgilerinden biri kabul edilmedi. Yazdıklarını kontrol edip tekrar dene.' };
   if (/fetch|network/i.test(message)) return { ok: false, error: AUTH_OFFLINE };
   return { ok: false, error: 'Profilin şu an kaydedilemedi. Biraz sonra tekrar dene.' };
 }
 
-/** The signed-in student's profile; null when they have none yet (the welcome questions are due). */
-export function getStudentProfile(userId: string): Promise<ApiResult<StudentProfile | null>> {
+/** The public address of an uploaded profile photo (a path in the `avatars` bucket). */
+export function avatarPhotoUrl(path: string): string | null {
+  return URL_ENV ? `${URL_ENV}/storage/v1/object/public/${AVATAR_BUCKET}/${path}` : null;
+}
+
+/** The signed-in student's profile; `onboardedAt` is null while the welcome questions are due. */
+export function getStudentProfile(userId: string): Promise<ApiResult<StudentProfile>> {
   return runAuth(async client => {
-    const { data, error } = await client.from('student_profiles').select(PROFILE_COLUMNS).eq('user_id', userId).maybeSingle();
-    if (error) return profileFailure(error);
-    return { ok: true, data: data ? readProfileRow(data) : null };
+    const [shown, own] = await Promise.all([
+      client.from('profiles').select(PUBLIC_PROFILE_COLUMNS).eq('id', userId).maybeSingle(),
+      client.from('student_profiles').select(PRIVATE_PROFILE_COLUMNS).eq('user_id', userId).maybeSingle(),
+    ]);
+    if (shown.error) return profileFailure(shown.error);
+    if (own.error) return profileFailure(own.error);
+    return { ok: true, data: readProfileRow({ ...(shown.data ?? {}), ...(own.data ?? {}) }) };
+  });
+}
+
+/** Uploads a prepared photo to the student's own folder; the result is its path (saved with the profile). */
+export function uploadAvatarPhoto(userId: string, blob: Blob, extension: 'webp' | 'jpg'): Promise<ApiResult<string>> {
+  return runAuth(async client => {
+    const path = `${userId}/${crypto.randomUUID().replace(/-/g, '')}.${extension}`;
+    const { error } = await client.storage
+      .from(AVATAR_BUCKET)
+      .upload(path, blob, { contentType: extension === 'webp' ? 'image/webp' : 'image/jpeg', cacheControl: '31536000', upsert: false });
+    if (error) return { ok: false, error: /fetch|network/i.test(error.message) ? AUTH_OFFLINE : 'Fotoğraf yüklenemedi. Biraz sonra tekrar dene.' };
+    return { ok: true, data: path };
   });
 }
 
 export function saveStudentProfile(userId: string, profile: StudentProfile): Promise<ApiResult<StudentProfile>> {
   return runAuth(async client => {
-    const row = { user_id: userId, ...profileRow(profile), updated_at: new Date().toISOString() };
-    const { data, error } = await client.from('student_profiles').upsert(row).select(PROFILE_COLUMNS).single();
-    if (error) return profileFailure(error);
-    return { ok: true, data: readProfileRow(data) };
+    const shown = await client.from('profiles').update(publicProfileRow(profile)).eq('id', userId).select(PUBLIC_PROFILE_COLUMNS).single();
+    if (shown.error) return profileFailure(shown.error);
+    const own = await client
+      .from('student_profiles')
+      .upsert({ user_id: userId, ...privateProfileRow(profile), updated_at: new Date().toISOString() })
+      .select(PRIVATE_PROFILE_COLUMNS)
+      .single();
+    if (own.error) return profileFailure(own.error);
+    const saved = readProfileRow({ ...shown.data, ...own.data });
+    // Photos left over from earlier pictures (or from uploads that were not saved) go.
+    const { data: files } = await client.storage.from(AVATAR_BUCKET).list(userId, { limit: 100 });
+    const stale = (files ?? []).map(file => `${userId}/${file.name}`).filter(path => path !== saved.avatar);
+    if (stale.length > 0) await client.storage.from(AVATAR_BUCKET).remove(stale);
+    return { ok: true, data: saved };
   });
 }
 

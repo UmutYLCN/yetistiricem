@@ -4,7 +4,22 @@ import type { SharedCamp } from '../src/lib/campShare.ts';
 import { hasAuthCallback, hasSavedSignIn, readAuthError } from '../src/lib/authKey.ts';
 import { shareDocument } from '../src/lib/campShare.ts';
 import type { CatalogEntry } from '../src/lib/catalog.ts';
-import { displayNameProblem, publishRow, publishedLabel, readCatalogCamp, readCatalogRow, searchCatalog } from '../src/lib/catalog.ts';
+import {
+  displayNameProblem,
+  normalizeTag,
+  popularSubjects,
+  popularTags,
+  publishRow,
+  publishedLabel,
+  readCatalogCamp,
+  readCatalogRow,
+  readTags,
+  searchCatalog,
+  sortCatalog,
+  suggestTags,
+  withSubject,
+  withTag,
+} from '../src/lib/catalog.ts';
 
 const shared: SharedCamp = {
   name: 'TYT 2027',
@@ -44,6 +59,8 @@ test('what is published is the share document and the summary the list shows', (
       branch_count: 3,
       video_count: 4,
       total_minutes: 115.5,
+      tags: [],
+      cover: null,
       payload: undefined,
     }
   );
@@ -58,10 +75,14 @@ test('catalog rows from other people are checked; unusable rows and documents ar
     id: 'e1',
     authorId: 'u1',
     authorName: 'Ayşe',
+    author: { name: 'Ayşe', avatar: null, stage: null, department: null, profession: null, bio: null },
     sourceCampId: 'camp-1',
     name: 'TYT 2027',
     description: 'Her gün 3 saat.',
     subjects: ['Matematik', 'Fizik'],
+    tags: [],
+    cover: null,
+    saveCount: 0,
     branchCount: 3,
     videoCount: 4,
     totalMinutes: 115.5,
@@ -109,4 +130,58 @@ test('a sign-in answer is recognised in the address bar hash, and storage errors
   assert.match(readAuthError('#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired') ?? '', /süresi dolmuş/);
   assert.match(readAuthError('#error=access_denied') ?? '', /tamamlanmadı/);
   assert.equal(readAuthError('#access_token=abc'), null);
+});
+
+test('Keşfet filters by branch, lists the common branches and sorts by date or length', () => {
+  const entries = [
+    readCatalogRow(row({ id: 'a', subjects: ['Matematik', 'Fizik'], total_minutes: 300, created_at: '2026-09-20T10:00:00Z' })),
+    readCatalogRow(row({ id: 'b', subjects: ['matematik', 'Kimya'], total_minutes: 90, created_at: '2026-09-26T10:00:00Z' })),
+    readCatalogRow(row({ id: 'c', subjects: ['Biyoloji'], total_minutes: 600, created_at: '2026-09-22T10:00:00Z', author: { display_name: 'Can', stage: 'university', department: 'Moleküler Biyoloji' } })),
+  ].filter((e): e is CatalogEntry => e !== null);
+  assert.deepEqual(popularSubjects(entries, 3), ['Matematik', 'Biyoloji', 'Fizik']);
+  assert.deepEqual(withSubject(entries, 'MATEMATİK').map(e => e.id), ['a', 'b']);
+  assert.deepEqual(withSubject(entries, null).map(e => e.id), ['a', 'b', 'c']);
+  assert.deepEqual(sortCatalog(entries, 'new').map(e => e.id), ['b', 'c', 'a']);
+  assert.deepEqual(sortCatalog(entries, 'short').map(e => e.id), ['b', 'a', 'c']);
+  assert.deepEqual(sortCatalog(entries, 'long').map(e => e.id), ['c', 'a', 'b']);
+  assert.deepEqual(searchCatalog(entries, 'moleküler').map(e => e.id), ['c'], 'the author’s department is searchable');
+});
+
+test('tags are stored lowercase without "#", letters, digits and _ only, at most five', () => {
+  assert.equal(normalizeTag('#YKS'), 'yks');
+  assert.equal(normalizeTag('  #İngilizce '), 'ingilizce', 'Turkish lowercase rules');
+  assert.equal(normalizeTag('Bilgisayar Mühendisliği'), 'bilgisayarmühendisliği');
+  assert.equal(normalizeTag('c++'), null, 'too short once cleaned');
+  assert.equal(normalizeTag('#'), null);
+  assert.equal(normalizeTag('a'.repeat(40))?.length, 24);
+  const published = publishRow({ id: 'c' }, shared, { name: 'X', description: '', tags: ['#TYT', 'tyt', 'Matematik', 'x', 'a1', 'b2', 'c3', 'd4'], cover: 'u/c.webp' });
+  assert.deepEqual(published.tags, ['tyt', 'matematik', 'a1', 'b2', 'c3']);
+  assert.equal(published.cover, 'u/c.webp');
+  assert.deepEqual(readTags(['yks', 'YKS', 'yks', '<b>', 'ok_1', 42, 'x', 'a', 'b1', 'c1', 'd1', 'e1']), ['yks', 'ok_1', 'b1', 'c1', 'd1']);
+  assert.deepEqual(suggestTags(['Matematik', 'Türk Dili']).slice(0, 3), ['matematik', 'türkdili', 'yks']);
+});
+
+test('someone else’s row keeps only a cover in the author’s own folder and a sane save count', () => {
+  const author = '732204ea-e03d-4720-aeaf-5027407a2966';
+  const own = readCatalogRow(row({ author_id: author, cover: `${author}/abc123.webp`, save_count: 7, tags: ['yks'] }));
+  assert.equal(own?.cover, `${author}/abc123.webp`);
+  assert.equal(own?.saveCount, 7);
+  assert.deepEqual(own?.tags, ['yks']);
+  assert.equal(readCatalogRow(row({ author_id: author, cover: '14e7de51-d578-4754-84f1-51252383657f/abc.webp' }))?.cover, null, 'another folder');
+  assert.equal(readCatalogRow(row({ author_id: author, cover: `${author}/../x.webp` }))?.cover, null);
+  assert.equal(readCatalogRow(row({ save_count: -3 }))?.saveCount, 0);
+});
+
+test('Keşfet searches tags, filters by tag and sorts oldest or most saved first', () => {
+  const entries = [
+    readCatalogRow(row({ id: 'a', name: 'Kamp A', tags: ['yks', 'tyt'], save_count: 2, created_at: '2026-09-20T10:00:00Z' })),
+    readCatalogRow(row({ id: 'b', name: 'Kamp B', tags: ['yazılım'], save_count: 9, created_at: '2026-09-26T10:00:00Z' })),
+    readCatalogRow(row({ id: 'c', name: 'Kamp C', tags: ['yks'], save_count: 2, created_at: '2026-09-22T10:00:00Z' })),
+  ].filter((e): e is CatalogEntry => e !== null);
+  assert.deepEqual(searchCatalog(entries, '#yks').map(e => e.id), ['a', 'c']);
+  assert.deepEqual(searchCatalog(entries, 'yazilim').map(e => e.id), ['b'], 'accents optional');
+  assert.deepEqual(withTag(entries, 'tyt').map(e => e.id), ['a']);
+  assert.deepEqual(popularTags(entries), ['yks', 'tyt', 'yazılım']);
+  assert.deepEqual(sortCatalog(entries, 'old').map(e => e.id), ['a', 'c', 'b']);
+  assert.deepEqual(sortCatalog(entries, 'popular').map(e => e.id), ['b', 'c', 'a'], 'ties: newest first');
 });

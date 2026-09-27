@@ -14,6 +14,7 @@ interface Props {
   profile: StudentProfile | null;
   onRename: (name: string) => Promise<ApiResult<string>>;
   onSave: (profile: StudentProfile) => Promise<ApiResult<StudentProfile>>;
+  onUploadAvatar: (blob: Blob, extension: 'webp' | 'jpg') => Promise<ApiResult<string>>;
 }
 
 const STEPS = [
@@ -27,7 +28,7 @@ const STEPS = [
  * where the student is (school, department, class, profession). Skipping
  * saves nothing but the answer "asked", so they are not asked again.
  */
-export function OnboardingDialog({ open, displayName, profile, onRename, onSave }: Props) {
+export function OnboardingDialog({ open, displayName, profile, onRename, onSave, onUploadAvatar }: Props) {
   const uid = useId();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(displayName ?? '');
@@ -111,7 +112,7 @@ export function OnboardingDialog({ open, displayName, profile, onRename, onSave 
       <form id={`${uid}-form`} onSubmit={next} noValidate className="space-y-5 pt-4">
         {step === 0 && (
           <>
-            <AvatarPicker value={draft.avatar} name={name} onChange={avatar => setDraft(d => ({ ...d, avatar }))} />
+            <AvatarPicker value={draft.avatar} name={name} onChange={avatar => setDraft(d => ({ ...d, avatar }))} onUpload={onUploadAvatar} />
             <div>
               <label htmlFor={`${uid}-name`} className="field-label">
                 Adın

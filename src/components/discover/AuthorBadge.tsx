@@ -1,20 +1,32 @@
-/** A round initial standing in for a person's picture. */
-export function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
-  const initial = name.trim().charAt(0).toLocaleUpperCase('tr-TR') || '?';
-  const box = size === 'sm' ? 'size-6 text-[11px]' : size === 'md' ? 'size-7 text-[12px]' : 'size-8 text-[13px]';
+import type { PublicAuthor } from '../../lib/studentProfile';
+import { authorHeadline } from '../../lib/studentProfile';
+import { ProfileAvatar } from '../profile/ProfileAvatar';
+
+/** A publisher's picture and name. */
+export function AuthorBadge({ name, avatar = null, size = 'md' }: { name: string; avatar?: string | null; size?: 'sm' | 'md' }) {
   return (
-    <span className={`grid shrink-0 place-items-center rounded-full bg-sunk font-semibold text-ink-2 ring-1 ring-line-strong ${box}`} aria-hidden="true">
-      {initial}
+    <span className="inline-flex min-w-0 items-center gap-2">
+      <ProfileAvatar avatar={avatar} name={name} size={size === 'sm' ? 24 : 28} />
+      <span className="min-w-0 truncate font-semibold text-ink">{name}</span>
     </span>
   );
 }
 
-/** A publisher's name with an initial for an avatar. */
-export function AuthorBadge({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
+/** The author in full on a camp's page: picture, name, what they do and their bio. */
+export function AuthorCard({ author, published }: { author: PublicAuthor; published: string }) {
+  const headline = authorHeadline(author);
   return (
-    <span className="inline-flex min-w-0 items-center gap-2">
-      <Avatar name={name} size={size} />
-      <span className="min-w-0 truncate font-semibold text-ink">{name}</span>
-    </span>
+    <section className="card p-5" aria-label="Kampı hazırlayan">
+      <p className="eyebrow">Hazırlayan</p>
+      <div className="mt-3 flex items-center gap-3">
+        <ProfileAvatar avatar={author.avatar} name={author.name} size={48} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[15.5px] font-semibold text-ink">{author.name}</p>
+          {headline && <p className="text-[12.5px] leading-snug text-ink-2">{headline}</p>}
+        </div>
+      </div>
+      {author.bio && <p className="mt-3.5 text-[13.5px] leading-relaxed break-words whitespace-pre-line text-ink-2">{author.bio}</p>}
+      <p className="mt-3.5 border-t border-line pt-3 text-[12px] text-ink-3">{published} yayınlandı</p>
+    </section>
   );
 }

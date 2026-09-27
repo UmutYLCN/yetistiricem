@@ -327,12 +327,18 @@ export function Kesfet() {
       <H2 id="yayinlama">Kampını yayınlamak</H2>
       <Steps>
         {[
-          <><strong>Kamplar</strong> sayfasında kampının kartındaki <strong>Yayınla</strong>’ya bas.</>,
-          <>Adı ve isteğe bağlı açıklamayı düzenle; kampın Keşfet’te <strong>görünen adınla</strong> çıkar.</>,
-          <>Yayınla. Aynı kampı tekrar yayınlarsan kayıt güncellenir; Keşfet’te <strong>Yayınladıklarım</strong>’dan kampını açıp yayından kaldırabilirsin.</>,
+          <><strong>Kamplar</strong> sayfasında kampının kartındaki ⋯ menüsünden <strong>Keşfet’te yayınla</strong>’yı seç.</>,
+          <>İstersen bir <strong>kapak fotoğrafı</strong> yükle (yüklemezsen branş renklerinden bir kapak çizilir), adı ve açıklamayı düzenle; kampın Keşfet’te <strong>görünen adınla</strong> çıkar.</>,
+          <>Kampının konusunu anlatan en fazla 5 <strong>ilgi etiketi</strong> ekle (#yks, #matematik gibi); Keşfet’te arayanlar kampını bu etiketlerle bulur.</>,
+          <>Yayınla. Yayındaki kampın kartında “Keşfet’te yayında” yazar; aynı ⋯ menüsünden <strong>Yayını güncelle</strong> ile içeriğini yenileyebilir, <strong>Yayından kaldır</strong> ile kaldırabilirsin.</>,
         ]}
       </Steps>
-      <p>Yayınlanan: kampın adı, temposu, branşları ve videoları. Yayınlanmayan: ilerlemen, notların, ritim güncellemelerin ve e-postan.</p>
+      <p>Yayınlanan: kampın adı, kapağı, etiketleri, temposu, branşları ve videoları. Yayınlanmayan: ilerlemen, notların, ritim güncellemelerin ve e-postan.</p>
+      <H2 id="kaydetmek">Kaydetmek</H2>
+      <p>
+        Hemen eklemek istemediğin bir kampı kartındaki kalple <strong>kaydet</strong>; Keşfet’te <strong>Kaydettiklerim</strong>’de toplanır.
+        Kalbin yanındaki sayı kampı kaç kişinin kaydettiğini gösterir; kimin kaydettiği görünmez.
+      </p>
       <Callout tone="warn" title="Yalnızca kendi kampın">
         Keşfet’ten ya da bir paylaşım linkinden eklediğin kamplar başkasının emeğidir; bunları kendi adınla yayınlayamazsın. Aynı videolardan
         oluşan bir kampı başka biri zaten yayınladıysa ikinci yayın da reddedilir.
@@ -568,7 +574,7 @@ export function Account() {
       <p>
         İlk girişte birkaç kısa soru sorulur: sekiz çizim arasından bir profil resmi (ya da kendi fotoğrafın), şu an ne yaptığın (lise,
         sınava hazırlık, üniversite, mezun ya da çalışıyor) buna göre okulun, bölümün, sınıfın ya da mesleğin ve istersen hedeflerini anlatan kısa bir “Hakkında” yazısı. Hepsi isteğe bağlı;
-        sonra <strong>Profili düzenle</strong> ile değiştirebilirsin. Profil resmin, okul bilgilerin ve Hakkında yazın yalnızca sana görünür.
+        sonra <strong>Profili düzenle</strong> ile değiştirebilirsin. Keşfet’te kamplarının yanında profil resmin, adın, durumun, bölümün ya da mesleğin ve Hakkında yazın görünür; okulun, sınıfın ve e-postan yalnızca sende kalır.
       </p>
       <H2 id="yedek">Yedek</H2>
       <p>

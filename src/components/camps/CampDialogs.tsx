@@ -26,10 +26,13 @@ export function EditBranchDialog({
   camp,
   onSave,
   onClose,
+  onRemove,
 }: {
   camp: SubjectPlaylist;
   onSave: (camp: SubjectPlaylist) => void;
   onClose: () => void;
+  /** "Branşı kaldır" (asks for confirmation after this dialog closes). */
+  onRemove: () => void;
 }) {
   const kind = classifyCamp(camp);
   const [fields, setFields] = useState<CampFieldValues>({
@@ -69,6 +72,10 @@ export function EditBranchDialog({
       dismissOnBackdrop={false}
       footer={
         <>
+          <button type="button" className="btn btn-danger-quiet mr-auto" onClick={onRemove}>
+            <Trash2 aria-hidden="true" />
+            Branşı kaldır
+          </button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             Vazgeç
           </button>

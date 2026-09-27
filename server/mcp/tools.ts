@@ -286,15 +286,17 @@ async function catalogCamp(deps: ToolDeps, rawId: unknown): Promise<{ entry: Cat
 }
 
 function entryLine(entry: CatalogEntry): string {
-  return `- "${entry.name}" by ${entry.authorName} (id ${entry.id}): ${entry.subjects.join(', ') || 'no branch names'}; ${entry.branchCount} branch(es), ${entry.videoCount} video(s), ${hoursLabel(entry.totalMinutes)}${entry.description ? ` — ${entry.description.slice(0, 160)}` : ''}`;
+  return `- "${entry.name}" by ${entry.authorName} (id ${entry.id})${entry.tags.length > 0 ? ` ${entry.tags.map(t => `#${t}`).join(' ')}` : ''}: ${entry.subjects.join(', ') || 'no branch names'}; ${entry.branchCount} branch(es), ${entry.videoCount} video(s), ${hoursLabel(entry.totalMinutes)}${entry.description ? ` — ${entry.description.slice(0, 160)}` : ''}`;
 }
 
-const publicEntry = ({ id, name, authorName, description, subjects, branchCount, videoCount, totalMinutes, createdAt }: CatalogEntry) => ({
+const publicEntry = ({ id, name, authorName, description, subjects, tags, saveCount, branchCount, videoCount, totalMinutes, createdAt }: CatalogEntry) => ({
   id,
   name,
   author: authorName,
   description,
   subjects,
+  tags,
+  saves: saveCount,
   branchCount,
   videoCount,
   totalMinutes,
@@ -510,7 +512,7 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
     {
       name: 'search_kesfet',
       title: 'Search Keşfet',
-      description: 'Searches Keşfet, the shelf of camps Yetişir students published, by camp name, branch, description or author.',
+      description: 'Searches Keşfet, the shelf of camps Yetişir students published, by camp name, interest tag (e.g. "#yks"), branch, description or author.',
       inputSchema: {
         type: 'object',
         properties: {

@@ -1,6 +1,8 @@
-// The student's own profile (picture and school details), kept private in
-// Supabase `student_profiles` (supabase/migrations/20260927020000_student_profiles.sql).
-// Pure: the limits here mirror the table's checks.
+// The student's profile. The picture, stage, department / profession and bio
+// are public (Supabase `profiles`, shown with their camps in Keşfet); the
+// school name, class and `onboarded_at` stay private (`student_profiles`).
+// See supabase/migrations/20260927040000_public_author_profile.sql. Pure: the
+// limits here mirror the tables' checks.
 
 export const AVATAR_SHAPES = ['shape-1', 'shape-2', 'shape-3', 'shape-4', 'shape-5', 'shape-6', 'shape-7', 'shape-8'] as const;
 export type AvatarShape = (typeof AVATAR_SHAPES)[number];
@@ -15,11 +17,9 @@ export type ProfileField = 'school' | 'department' | 'grade' | 'profession';
 
 export const MAX_PROFILE_TEXT = 80;
 export const MAX_BIO = 280;
-/** Upper bound of an uploaded picture's data URL (the table allows 200 000 bytes). */
-export const MAX_AVATAR_DATA_URL = 190_000;
 
 export interface StudentProfile {
-  /** A drawn shape id or an uploaded picture's data URL; null shows the initial. */
+  /** A drawn shape id or an uploaded photo's path in the `avatars` bucket (`<user id>/<name>.webp`); null shows the initial. */
   avatar: string | null;
   stage: Stage | null;
   school: string | null;
@@ -138,10 +138,15 @@ export function isAvatarShape(value: unknown): value is AvatarShape {
   return typeof value === 'string' && (AVATAR_SHAPES as readonly string[]).includes(value);
 }
 
-const DATA_URL = /^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/;
+const PHOTO_PATH = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[A-Za-z0-9_-]{1,64}\.(webp|jpg|png)$/;
+
+/** An uploaded photo's path in the `avatars` bucket (the owner's folder, then the file). */
+export function isAvatarPhoto(value: unknown): value is string {
+  return typeof value === 'string' && PHOTO_PATH.test(value);
+}
 
 export function isAvatarValue(value: unknown): value is string {
-  return isAvatarShape(value) || (typeof value === 'string' && value.length <= MAX_AVATAR_DATA_URL && DATA_URL.test(value));
+  return isAvatarShape(value) || isAvatarPhoto(value);
 }
 
 const isStage = (value: unknown): value is Stage => typeof value === 'string' && (STAGES as readonly string[]).includes(value);
@@ -204,19 +209,65 @@ export function normalizeProfile(profile: StudentProfile): StudentProfile {
   };
 }
 
-/** The row written to `student_profiles`. */
-export function profileRow(profile: StudentProfile) {
+/** The public part, written to `profiles` (shown with the student's camps in Keşfet). */
+export function publicProfileRow(profile: StudentProfile) {
   const clean = normalizeProfile(profile);
+  return { avatar: clean.avatar, stage: clean.stage, department: clean.department, profession: clean.profession, bio: clean.bio };
+}
+
+/** The private part, written to `student_profiles` (only its owner reads it). */
+export function privateProfileRow(profile: StudentProfile) {
+  const clean = normalizeProfile(profile);
+  return { school: clean.school, grade: clean.grade, onboarded_at: clean.onboardedAt };
+}
+
+/** What Keşfet shows of a camp's author (from their public `profiles` row). */
+export interface PublicAuthor {
+  name: string;
+  avatar: string | null;
+  stage: Stage | null;
+  department: string | null;
+  profession: string | null;
+  bio: string | null;
+}
+
+/** An author from someone else's `profiles` row; anything unexpected is left out. */
+export function readPublicAuthor(raw: unknown, fallbackName = 'Bir öğrenci'): PublicAuthor {
+  const r = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  const name = typeof r.display_name === 'string' ? r.display_name.replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+  const stage = isStage(r.stage) ? r.stage : null;
+  const asked = new Set(fieldsFor(stage).map(spec => spec.field));
   return {
-    avatar: clean.avatar,
-    stage: clean.stage,
-    school: clean.school,
-    department: clean.department,
-    grade: clean.grade,
-    profession: clean.profession,
-    bio: clean.bio,
-    onboarded_at: clean.onboardedAt,
+    name: name || fallbackName,
+    avatar: isAvatarValue(r.avatar) ? r.avatar : null,
+    stage,
+    department: asked.has('department') ? cleanText(r.department) : null,
+    profession: asked.has('profession') ? cleanText(r.profession) : null,
+    bio: cleanBio(r.bio),
   };
+}
+
+/** One public line about an author: "Üniversite öğrencisi · Bilgisayar Mühendisliği", or null. */
+export function authorHeadline(author: Pick<PublicAuthor, 'stage' | 'department' | 'profession'>): string | null {
+  if (!author.stage) return null;
+  const parts: string[] = [stageLabel(author.stage)];
+  switch (author.stage) {
+    case 'high-school':
+    case 'exam-prep':
+      if (author.department) parts.push(`Hedef: ${author.department}`);
+      break;
+    case 'university':
+      if (author.department) parts.push(author.department);
+      break;
+    case 'graduate':
+      if (author.profession) parts.push(author.profession);
+      else if (author.department) parts.push(`${author.department} mezunu`);
+      break;
+    case 'working':
+      if (author.profession) parts.push(author.profession);
+      break;
+  }
+  return parts.join(' · ');
 }
 
 export interface ProfileFact {

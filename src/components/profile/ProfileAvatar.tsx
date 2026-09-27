@@ -1,5 +1,6 @@
+import { avatarPhotoUrl } from '../../lib/catalogApi';
 import type { AvatarShape } from '../../lib/studentProfile';
-import { isAvatarShape } from '../../lib/studentProfile';
+import { isAvatarPhoto, isAvatarShape } from '../../lib/studentProfile';
 import { SHAPE_ART } from './shapeArt';
 
 const tileOf = (color: string) => `color-mix(in srgb, ${color} 20%, var(--color-card))`;
@@ -33,10 +34,11 @@ export function ProfileAvatar({ avatar, name, size = 32, className = '' }: { ava
       </span>
     );
   }
-  if (avatar && avatar.startsWith('data:image/')) {
+  const photo = isAvatarPhoto(avatar) ? avatarPhotoUrl(avatar) : null;
+  if (photo) {
     return (
-      <span className={box} style={style} aria-hidden="true">
-        <img src={avatar} alt="" className="size-full object-cover" draggable={false} />
+      <span className={`${box} bg-sunk`} style={style} aria-hidden="true">
+        <img src={photo} alt="" className="size-full object-cover" draggable={false} loading="lazy" decoding="async" />
       </span>
     );
   }

@@ -1,7 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { StudentProfile } from '../src/lib/studentProfile.ts';
-import { EMPTY_PROFILE, MAX_BIO, cleanBio, fieldsFor, isAvatarValue, normalizeProfile, profileFacts, profileRow, profileSummary, readProfileRow } from '../src/lib/studentProfile.ts';
+import {
+  EMPTY_PROFILE,
+  MAX_BIO,
+  authorHeadline,
+  cleanBio,
+  fieldsFor,
+  isAvatarValue,
+  normalizeProfile,
+  privateProfileRow,
+  profileFacts,
+  profileSummary,
+  publicProfileRow,
+  readProfileRow,
+  readPublicAuthor,
+} from '../src/lib/studentProfile.ts';
 
 const profile = (overrides: Partial<StudentProfile>): StudentProfile => ({ ...EMPTY_PROFILE, ...overrides });
 
@@ -14,14 +28,17 @@ test('a stored row reads back, and anything unexpected reads as unanswered', () 
   assert.deepEqual(readProfileRow(null), EMPTY_PROFILE);
 });
 
-test('avatars are one of the eight shapes or a small image data URL', () => {
+test('avatars are one of the eight shapes or a photo path in the owner’s folder of the avatars bucket', () => {
+  const owner = '732204ea-e03d-4720-aeaf-5027407a2966';
   assert.equal(isAvatarValue('shape-1'), true);
   assert.equal(isAvatarValue('shape-8'), true);
   assert.equal(isAvatarValue('shape-0'), false);
-  assert.equal(isAvatarValue('data:image/webp;base64,AAAA'), true);
-  assert.equal(isAvatarValue('data:image/svg+xml;base64,AAAA'), false);
+  assert.equal(isAvatarValue(`${owner}/0f3a9c.webp`), true);
+  assert.equal(isAvatarValue(`${owner}/0f3a9c.jpg`), true);
+  assert.equal(isAvatarValue(`${owner}/../x.webp`), false);
+  assert.equal(isAvatarValue(`${owner}/x.svg`), false);
   assert.equal(isAvatarValue('https://example.com/a.png'), false);
-  assert.equal(isAvatarValue(`data:image/jpeg;base64,${'A'.repeat(200_000)}`), false);
+  assert.equal(isAvatarValue('data:image/webp;base64,AAAA'), false);
 });
 
 test('each stage asks its own questions', () => {
@@ -36,16 +53,10 @@ test('saving keeps only the answers the chosen stage asks', () => {
   assert.deepEqual(normalizeProfile(switched), profile({ stage: 'graduate', school: 'Boğaziçi', profession: 'Veri analisti' }));
   // A high-school class is not a university class.
   assert.equal(normalizeProfile(profile({ stage: 'university', grade: '11' })).grade, null);
-  assert.deepEqual(profileRow(profile({ stage: 'exam-prep', department: 'Tıp', onboardedAt: 'x' })), {
-    avatar: null,
-    stage: 'exam-prep',
-    school: null,
-    department: 'Tıp',
-    grade: null,
-    profession: null,
-    bio: null,
-    onboarded_at: 'x',
-  });
+  const prep = profile({ avatar: 'shape-2', stage: 'exam-prep', school: 'ODTÜ', department: 'Tıp', bio: 'Hedef', onboardedAt: 'x' });
+  // The school and class stay private; the rest is shown with the student's camps in Keşfet.
+  assert.deepEqual(publicProfileRow(prep), { avatar: 'shape-2', stage: 'exam-prep', department: 'Tıp', profession: null, bio: 'Hedef' });
+  assert.deepEqual(privateProfileRow(prep), { school: 'ODTÜ', grade: null, onboarded_at: 'x' });
 });
 
 test('the profile reads as short facts and a one-line summary', () => {
@@ -65,4 +76,22 @@ test('the bio is optional, trimmed, keeps its line breaks and stays within the l
   // A bio stays whatever the stage asks.
   assert.equal(normalizeProfile(profile({ stage: null, bio: ' Hedef: YKS ' })).bio, 'Hedef: YKS');
   assert.equal(readProfileRow({ bio: 'Merhaba' }).bio, 'Merhaba');
+});
+
+test('an author’s public profile is read defensively and summed up in one line', () => {
+  const author = readPublicAuthor({ display_name: '  Sude   Y. ', avatar: 'shape-5', stage: 'exam-prep', department: 'Tıp', profession: 'Pilot', bio: '  Merhaba ' });
+  assert.deepEqual(author, { name: 'Sude Y.', avatar: 'shape-5', stage: 'exam-prep', department: 'Tıp', profession: null, bio: 'Merhaba' });
+  assert.equal(authorHeadline(author), 'Sınava hazırlanıyor · Hedef: Tıp');
+  assert.deepEqual(readPublicAuthor({ display_name: 42, avatar: 'javascript:alert(1)', stage: 'robot' }), {
+    name: 'Bir öğrenci',
+    avatar: null,
+    stage: null,
+    department: null,
+    profession: null,
+    bio: null,
+  });
+  assert.equal(authorHeadline({ stage: 'university', department: 'Fizik', profession: null }), 'Üniversite öğrencisi · Fizik');
+  assert.equal(authorHeadline({ stage: 'graduate', department: 'İşletme', profession: null }), 'Üniversite mezunu · İşletme mezunu');
+  assert.equal(authorHeadline({ stage: 'working', department: null, profession: 'Yazılım geliştirici' }), 'Çalışıyor · Yazılım geliştirici');
+  assert.equal(authorHeadline({ stage: null, department: 'Fizik', profession: null }), null);
 });

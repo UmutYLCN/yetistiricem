@@ -6,6 +6,7 @@ import {
   getDisplayName,
   getStudentProfile,
   saveStudentProfile,
+  uploadAvatarPhoto,
   signInWithPassword as authenticateWithPassword,
   signUpWithPassword as createPasswordAccount,
   setDisplayName,
@@ -28,7 +29,7 @@ export type AccountState =
       userId: string;
       email: string | null;
       displayName: string | null;
-      /** The private profile (picture, school details); null until one is saved. */
+      /** The profile (picture, school details, bio); null until it is read. */
       profile: StudentProfile | null;
       /** `ready` once the profile was read, so the welcome questions are not asked by mistake. */
       profileStatus: 'loading' | 'ready' | 'error';
@@ -124,7 +125,15 @@ export function useAccount(wanted: boolean) {
     [state]
   );
 
-  return { state, callbackError, signInWithPassword, signUpWithPassword, continueWithGoogle, signOut: leave, rename, saveProfile };
+  const uploadAvatar = useCallback(
+    async (blob: Blob, extension: 'webp' | 'jpg'): Promise<ApiResult<string>> => {
+      if (state.status !== 'signed-in') return { ok: false, error: 'Bu işlem için giriş yapman gerekiyor.' };
+      return uploadAvatarPhoto(state.userId, blob, extension);
+    },
+    [state]
+  );
+
+  return { state, callbackError, signInWithPassword, signUpWithPassword, continueWithGoogle, signOut: leave, rename, saveProfile, uploadAvatar };
 }
 
 export type Account = ReturnType<typeof useAccount>;

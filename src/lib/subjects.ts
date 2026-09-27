@@ -101,3 +101,9 @@ export function resolveColor(colorTag: string | undefined, subject: string): Sub
   }
   return BY_KEY.get(defaultColorKey(subject))!;
 }
+
+/** Each branch name's colour (Keşfet's covers and bars); a camp without branches gets the accent green. */
+export function subjectColors(subjects: readonly string[]): string[] {
+  const colors = subjects.map(subject => resolveColor(undefined, subject).solid);
+  return colors.length > 0 ? colors : ['var(--color-forest)'];
+}

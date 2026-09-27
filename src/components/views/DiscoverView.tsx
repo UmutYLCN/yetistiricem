@@ -1,31 +1,62 @@
-import { useCallback, useEffect, useId, useState } from 'react';
-import { Compass, LoaderCircle, LogIn, RefreshCw, Search, TriangleAlert, Upload } from 'lucide-react';
-import type { CatalogEntry } from '../../lib/catalog';
-import { searchCatalog } from '../../lib/catalog';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { Compass, Heart, LogIn, RefreshCw, Search, TriangleAlert, Upload, X } from 'lucide-react';
+import type { CatalogEntry, CatalogSort } from '../../lib/catalog';
+import { popularTags, searchCatalog, sortCatalog, withTag } from '../../lib/catalog';
 import { listPublishedCamps } from '../../lib/catalogApi';
 import type { AccountState } from '../../hooks/useAccount';
 import { CatalogCard } from '../discover/CatalogCard';
 import { PageHeader } from '../layout/PageHeader';
 import { EmptyState } from '../ui/EmptyState';
 
+export type SaveToggle = (campId: string) => Promise<{ ok: true; saved: boolean } | { ok: false; error: string }>;
+
 interface Props {
   account: AccountState;
   today: string;
   /** Changes when the list should load again (after publishing or removing). */
   version: number;
+  /** Ids of the camps the student saved; null without an account. */
+  saved: ReadonlySet<string> | null;
+  onToggleSave: SaveToggle;
   onOpen: (id: string) => void;
   onSignIn: () => void;
   onOpenCamps: () => void;
+  onNotify: (message: string) => void;
 }
 
 type ListState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; entries: CatalogEntry[] };
+type Scope = 'all' | 'saved' | 'mine';
 
-/** Keşfet: camps students published, to look inside and add to one's own plan. */
-export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpenCamps }: Props) {
+const SORTS: { value: CatalogSort; label: string }[] = [
+  { value: 'new', label: 'En yeni' },
+  { value: 'old', label: 'En eski' },
+  { value: 'popular', label: 'En çok kaydedilen' },
+  { value: 'short', label: 'En kısa' },
+  { value: 'long', label: 'En uzun' },
+];
+
+function CardSkeleton() {
+  return (
+    <li aria-hidden="true">
+      <div className="aspect-[16/10] animate-pulse rounded-[16px] bg-sunk" />
+      <div className="mt-3 flex items-center gap-2">
+        <div className="size-5 animate-pulse rounded-full bg-sunk" />
+        <div className="h-3 w-1/3 animate-pulse rounded bg-sunk" />
+      </div>
+      <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-sunk" />
+      <div className="mt-2 h-3 w-1/4 animate-pulse rounded bg-sunk" />
+    </li>
+  );
+}
+
+/** Keşfet: camps students published, to search by name or tag, save for later and add to one's own plan. */
+export function DiscoverView({ account, today, version, saved, onToggleSave, onOpen, onSignIn, onOpenCamps, onNotify }: Props) {
   const uid = useId();
   const [list, setList] = useState<ListState>({ status: 'loading' });
   const [query, setQuery] = useState('');
-  const [mine, setMine] = useState(false);
+  const [tag, setTag] = useState<string | null>(null);
+  const [sort, setSort] = useState<CatalogSort>('new');
+  const [scope, setScope] = useState<Scope>('all');
   const [attempt, setAttempt] = useState(0);
   const userId = account.status === 'signed-in' ? account.userId : null;
 
@@ -45,14 +76,26 @@ export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpen
     setAttempt(n => n + 1);
   }, []);
 
-  // The account itself lives in the sidebar's profile (Ayarlar); only the demo offers a sign-in here.
-  const accountActions =
-    account.status === 'signed-out' ? (
-      <button type="button" className="btn btn-secondary btn-sm" onClick={onSignIn}>
-        <LogIn aria-hidden="true" />
-        Giriş yap
-      </button>
-    ) : null;
+  const all = useMemo(() => (list.status === 'ready' ? list.entries : []), [list]);
+  const tags = useMemo(() => popularTags(all, 12), [all]);
+
+  const toggleSave = async (entry: Pick<CatalogEntry, 'id'>) => {
+    if (!userId) {
+      onSignIn();
+      return;
+    }
+    const result = await onToggleSave(entry.id);
+    if (!result.ok) {
+      onNotify(result.error);
+      return;
+    }
+    // The count on screen follows at once; the next load brings the stored one.
+    setList(current =>
+      current.status === 'ready'
+        ? { ...current, entries: current.entries.map(e => (e.id === entry.id ? { ...e, saveCount: Math.max(0, e.saveCount + (result.saved ? 1 : -1)) } : e)) }
+        : current
+    );
+  };
 
   if (account.status === 'off') {
     return (
@@ -67,52 +110,90 @@ export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpen
     );
   }
 
-  const entries = list.status === 'ready' ? searchCatalog(mine && userId ? list.entries.filter(e => e.authorId === userId) : list.entries, query) : [];
+  const scoped = scope === 'mine' && userId ? all.filter(e => e.authorId === userId) : scope === 'saved' && saved ? all.filter(e => saved.has(e.id)) : all;
+  const entries = sortCatalog(searchCatalog(withTag(scoped, tag), query), sort);
+  const filtered = query.trim() !== '' || tag !== null || scope !== 'all';
 
   return (
     <div className="mx-auto max-w-[920px]">
       <PageHeader
         title="Keşfet"
-        subtitle="Öğrencilerin yayınladığı kamplar. İçine bak, beğenirsen kendi planına ekle."
-        actions={accountActions}
+        actions={
+          <>
+            {account.status === 'signed-out' && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={onSignIn}>
+                <LogIn aria-hidden="true" />
+                Giriş yap
+              </button>
+            )}
+            <button type="button" className="btn btn-secondary btn-sm" onClick={onOpenCamps}>
+              <Upload aria-hidden="true" />
+              Kampını yayınla
+            </button>
+          </>
+        }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[14rem] flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
-          <label htmlFor={`${uid}-search`} className="visually-hidden">
-            Kamplarda ara
-          </label>
-          <input
-            id={`${uid}-search`}
-            type="search"
-            className="input pl-9"
-            placeholder="Kamp, branş ya da kişi ara"
-            value={query}
-            onChange={event => setQuery(event.target.value)}
-          />
+      <div className="relative">
+        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
+        <label htmlFor={`${uid}-search`} className="visually-hidden">
+          Kamplarda ara
+        </label>
+        <input
+          id={`${uid}-search`}
+          type="search"
+          className="input min-h-[46px] rounded-full pl-10"
+          placeholder="Kamp adı ya da #etiket ara"
+          value={query}
+          onChange={event => setQuery(event.target.value)}
+        />
+      </div>
+
+      <div className="mt-3 mb-5 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+        <div className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 py-0.5" role="group" aria-label="Etikete göre süz">
+          <button type="button" className="filter-chip" aria-pressed={tag === null} onClick={() => setTag(null)}>
+            Tümü
+          </button>
+          {tags.map(name => (
+            <button key={name} type="button" className="filter-chip" aria-pressed={tag === name} onClick={() => setTag(tag === name ? null : name)}>
+              #{name}
+            </button>
+          ))}
         </div>
-        {userId && (
-          <div className="segmented" role="group" aria-label="Gösterilen kamplar">
-            <button type="button" aria-pressed={!mine} onClick={() => setMine(false)}>
-              Tümü
-            </button>
-            <button type="button" aria-pressed={mine} onClick={() => setMine(true)}>
-              Yayınladıklarım
-            </button>
-          </div>
-        )}
-        <button type="button" className="btn btn-secondary" onClick={onOpenCamps}>
-          <Upload aria-hidden="true" />
-          Kampını yayınla
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {userId && (
+            <div className="segmented" role="group" aria-label="Gösterilen kamplar">
+              <button type="button" aria-pressed={scope === 'all'} onClick={() => setScope('all')}>
+                Hepsi
+              </button>
+              <button type="button" aria-pressed={scope === 'saved'} onClick={() => setScope('saved')}>
+                <Heart className="mr-1 inline size-3.5 align-[-2px]" aria-hidden="true" />
+                Kaydettiklerim
+              </button>
+              <button type="button" aria-pressed={scope === 'mine'} onClick={() => setScope('mine')}>
+                Benim
+              </button>
+            </div>
+          )}
+          <label htmlFor={`${uid}-sort`} className="visually-hidden">
+            Sırala
+          </label>
+          <select id={`${uid}-sort`} className="input min-h-[38px] w-auto py-1.5 text-[13px]" value={sort} onChange={e => setSort(e.target.value as CatalogSort)}>
+            {SORTS.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {list.status === 'loading' && (
-        <p className="flex items-center gap-2 py-10 text-[14px] text-ink-2">
-          <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-          Kamplar yükleniyor…
-        </p>
+        <ul className="grid gap-x-4 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" aria-label="Kamplar yükleniyor" aria-busy="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </ul>
       )}
       {list.status === 'error' && (
         <div className="callout callout-warn flex-wrap items-center">
@@ -125,7 +206,7 @@ export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpen
         </div>
       )}
       {list.status === 'ready' &&
-        (list.entries.length === 0 ? (
+        (all.length === 0 ? (
           <section className="card empty-surface px-6 py-14">
             <EmptyState
               icon={<Compass className="size-5" />}
@@ -142,13 +223,46 @@ export function DiscoverView({ account, today, version, onOpen, onSignIn, onOpen
             </EmptyState>
           </section>
         ) : entries.length === 0 ? (
-          <p className="py-10 text-center text-[14px] text-ink-2">
-            {mine ? 'Henüz kamp yayınlamadın.' : `“${query.trim()}” ile eşleşen kamp yok.`}
-          </p>
+          <div className="flex flex-col items-center rounded-[16px] border border-dashed border-line-strong px-6 py-12 text-center">
+            <p className="font-semibold text-ink">
+              {scope === 'saved' && !query.trim() && !tag
+                ? 'Henüz kaydettiğin kamp yok.'
+                : scope === 'mine' && !query.trim() && !tag
+                  ? 'Henüz kamp yayınlamadın.'
+                  : 'Eşleşen kamp yok.'}
+            </p>
+            <p className="mt-1 text-[13.5px] text-ink-2">
+              {scope === 'saved' && !query.trim() && !tag
+                ? 'Sonra dönmek istediğin bir kampın kalbine bas; burada toplanır.'
+                : 'Aramayı ya da süzgeçleri değiştirip tekrar dene.'}
+            </p>
+            {filtered && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm mt-4"
+                onClick={() => {
+                  setQuery('');
+                  setTag(null);
+                  setScope('all');
+                }}
+              >
+                <X aria-hidden="true" />
+                Süzgeçleri temizle
+              </button>
+            )}
+          </div>
         ) : (
-          <ul className="grid gap-3 md:grid-cols-2" aria-label="Yayınlanan kamplar">
+          <ul className="grid gap-x-4 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" aria-label="Yayınlanan kamplar">
             {entries.map(entry => (
-              <CatalogCard key={entry.id} entry={entry} today={today} own={entry.authorId === userId} onOpen={onOpen} />
+              <CatalogCard
+                key={entry.id}
+                entry={entry}
+                today={today}
+                own={entry.authorId === userId}
+                saved={saved?.has(entry.id) ?? false}
+                onOpen={onOpen}
+                onToggleSave={e => void toggleSave(e)}
+              />
             ))}
           </ul>
         ))}

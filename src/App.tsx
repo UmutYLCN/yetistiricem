@@ -46,7 +46,8 @@ import type { CatalogEntry } from './lib/catalog';
 import { encodeCampShare } from './lib/campShare';
 import { leaveAccountLocally } from './lib/cloudSync';
 import { useCloudSync } from './hooks/useCloudSync';
-import { unpublishCamp } from './lib/catalogApi';
+import { useSavedCamps } from './hooks/useSavedCamps';
+import { listMyPublications, unpublishCamp } from './lib/catalogApi';
 import { APP_PATH, campImportUrl, discoverReturnUrl } from './lib/routes';
 import type { FocusTarget } from './components/focus/FocusModal';
 import { FocusModal } from './components/focus/FocusModal';
@@ -393,6 +394,24 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
   );
 
   const me = account.state.status === 'signed-in' ? account.state : null;
+
+  // Which of the student's camps are live in Keşfet (Kamplar shows it and offers "Yayından kaldır").
+  const [publications, setPublications] = useState<{ userId: string; byCamp: Map<string, CatalogEntry> } | null>(null);
+  const publisherId = !isDemo && me ? me.userId : null;
+  useEffect(() => {
+    if (!publisherId || view !== 'camps') return;
+    let cancelled = false;
+    void listMyPublications(publisherId).then(result => {
+      if (cancelled || !result.ok) return;
+      setPublications({ userId: publisherId, byCamp: new Map(result.data.map(entry => [entry.sourceCampId, entry])) });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [publisherId, view, catalogVersion]);
+  const myPublications = publications && publications.userId === publisherId ? publications.byCamp : null;
+  // Keşfet camps the student saved for later (the heart).
+  const savedCamps = useSavedCamps(me ? me.userId : null);
   const profile: Profile = me
     ? {
         name: me.displayName ?? me.email?.split('@')[0] ?? 'Hesabın',
@@ -853,12 +872,19 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         onBack={() => setDiscoverId(null)}
         onImport={shared => void handleImportCamp(shared, 'kesfet')}
         onUnpublish={entry => void handleUnpublish(entry)}
+        saved={savedCamps.saved ? savedCamps.saved.has(discoverId) : null}
+        onToggleSave={savedCamps.toggle}
+        onSignIn={() => setSignInOpen(true)}
+        onNotify={message => notify({ message, tone: 'info' })}
       />
     ) : (
       <DiscoverView
         account={account.state}
         today={today}
         version={catalogVersion}
+        saved={savedCamps.saved}
+        onToggleSave={savedCamps.toggle}
+        onNotify={message => notify({ message, tone: 'info' })}
         onOpen={setDiscoverId}
         onSignIn={() => setSignInOpen(true)}
         onOpenCamps={() => setView('camps')}
@@ -886,7 +912,9 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         onEditBranch={branchId => camp && setDialog({ kind: 'editBranch', campId: camp.id, branchId })}
         onAddVideos={branchId => camp && setDialog({ kind: 'addVideos', campId: camp.id, branchId })}
         onEditVideo={(branchId, videoId) => camp && setDialog({ kind: 'editVideo', campId: camp.id, branchId, videoId })}
-        onRemoveBranch={handleRemoveBranch}
+        publications={myPublications}
+        onUnpublishCamp={entry => void handleUnpublish(entry)}
+        onViewPublication={openCatalogEntry}
       />
     );
   } else {
@@ -896,6 +924,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         today={today}
         onRename={account.rename}
         onSaveProfile={account.saveProfile}
+        onUploadAvatar={account.uploadAvatar}
         onSignOut={() => void handleSignOut()}
         isDemo={isDemo}
         campCount={data.camps.length}
@@ -1111,6 +1140,7 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
           profile={me.profile}
           onRename={account.rename}
           onSave={account.saveProfile}
+          onUploadAvatar={account.uploadAvatar}
         />
       )}
       <ImportCampDialog
@@ -1121,7 +1151,16 @@ function Planner({ startInDemo, importPayload, openDiscover, account, userId }: 
         onClose={() => setImportOffer(null)}
       />
       {dialog?.kind === 'editBranch' && dialogBranch && (
-        <EditBranchDialog key={dialogBranch.id} camp={dialogBranch} onSave={saveBranch} onClose={closeDialog} />
+        <EditBranchDialog
+          key={dialogBranch.id}
+          camp={dialogBranch}
+          onSave={saveBranch}
+          onClose={closeDialog}
+          onRemove={() => {
+            closeDialog();
+            void handleRemoveBranch(dialogBranch.id);
+          }}
+        />
       )}
       {dialog?.kind === 'addVideos' && dialogBranch && (
         <AddVideosDialog key={dialogBranch.id} camp={dialogBranch} onSave={saveBranch} onClose={closeDialog} />

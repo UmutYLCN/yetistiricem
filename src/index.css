@@ -548,6 +548,61 @@
     outline-offset: 2px;
   }
 
+  /* Action menu ("⋯") --------------------------------------------------------- */
+  .menu-panel {
+    position: fixed;
+    z-index: 60;
+    padding: 5px;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 12px;
+    background: var(--color-card);
+    box-shadow: var(--shadow-pop);
+    animation: menu-in 120ms ease-out;
+  }
+  .menu-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--color-ink);
+    text-align: left;
+  }
+  .menu-item svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--color-ink-3);
+  }
+  .menu-item:hover,
+  .menu-item:focus-visible {
+    background: var(--color-sunk);
+    outline: none;
+  }
+  .menu-item-danger,
+  .menu-item-danger svg {
+    color: var(--color-danger);
+  }
+  .menu-item-danger:hover,
+  .menu-item-danger:focus-visible {
+    background: var(--color-danger-soft);
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .menu-panel {
+      animation: none;
+    }
+  }
+
   /* Profile cover: a soft wash of the avatar's colour ---------------------- */
   .profile-cover {
     background:
@@ -1864,27 +1919,120 @@
   }
 
   /* Keşfet ----------------------------------------------------------------------------------- */
-  .catalog-card {
+  /* Keşfet grid item: the cover is the card, the text sits under it ------------ */
+  .catalog-item {
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    padding: 18px;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-card);
-    background:
-      radial-gradient(80% 60% at 100% 0%, color-mix(in srgb, var(--color-forest) 5%, transparent), transparent 70%),
-      var(--color-card);
-    box-shadow: var(--shadow-card);
     text-align: left;
-    transition: border-color 120ms ease, background-color 120ms ease, transform 120ms ease;
+    border-radius: 16px;
   }
-  .catalog-card:hover {
+  .catalog-item:focus-visible {
+    outline-offset: 4px;
+  }
+  .catalog-thumb {
+    aspect-ratio: 16 / 10;
+    width: 100%;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    transition: border-color 140ms ease, transform 160ms ease;
+  }
+  .catalog-item:hover .catalog-thumb {
     border-color: var(--color-line-strong);
-    background-color: var(--color-sunk);
+    transform: translateY(-2px);
   }
-  .catalog-card:focus-visible {
-    border-radius: var(--radius-card);
+  @media (prefers-reduced-motion: reduce) {
+    .catalog-item:hover .catalog-thumb {
+      transform: none;
+    }
+  }
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-paper) 74%, transparent);
+    backdrop-filter: blur(6px);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  /* Keşfet filter chips ---------------------------------------------------------- */
+  .filter-chip {
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 999px;
+    background: var(--color-card);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-ink-2);
+    white-space: nowrap;
+    transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+  .filter-chip:hover {
+    color: var(--color-ink);
+    border-color: var(--color-control);
+  }
+  .filter-chip[aria-pressed="true"],
+  .filter-chip.is-active {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-on-fill);
+  }
+
+  /* Save heart over a cover ------------------------------------------------------ */
+  .save-heart {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-paper) 72%, transparent);
+    color: var(--color-ink);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-ink) 12%, transparent);
+    transition: transform 120ms ease, background-color 120ms ease, color 120ms ease;
+  }
+  .save-heart svg {
+    width: 17px;
+    height: 17px;
+  }
+  .save-heart:hover {
+    transform: scale(1.08);
+    background: color-mix(in srgb, var(--color-paper) 88%, transparent);
+  }
+  .save-heart.is-saved {
+    color: var(--color-danger);
+  }
+
+  /* Camp cover: rows of lesson pills in the branches' colours ------------------ */
+  .camp-cover {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .camp-cover-rows {
+    position: absolute;
+    inset: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 7px;
+    mask-image: linear-gradient(90deg, #000 55%, transparent);
+  }
+  .camp-cover-row {
+    display: flex;
+    gap: 6px;
+  }
+  .camp-cover-pill {
+    display: block;
+    height: 9px;
+    border-radius: 999px;
   }
 
   /* Sign-in page ------------------------------------------------------------------------------ */

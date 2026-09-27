@@ -9,7 +9,6 @@ import {
   ListVideo,
   Search,
   ShieldCheck,
-  Upload,
   X,
 } from 'lucide-react';
 import { addDays } from '../../lib/engine';
@@ -146,60 +145,84 @@ export function FocusShowcase({ preview }: { preview: LandingPreview }) {
 }
 
 // Fictional names and course ideas for this inert showcase, never published or imported.
-const CATALOG_EXAMPLES = [
+const CATALOG_EXAMPLES: Omit<CatalogPreviewEntry, 'preview' | 'createdAt'>[] = [
   {
     id: 'yks-2027',
+    tags: ['yks', 'tyt', 'ayt'],
+    cover: null,
+    saveCount: 128,
     name: 'YKS 2027 hazırlık kampı',
-    authorName: 'Ömer Yıldız',
+    author: { name: 'Ömer Yıldız', avatar: 'shape-6', stage: 'exam-prep', department: 'Tıp', profession: null, bio: null },
     description: 'Matematik, Türkçe, Fizik, Kimya ve Biyoloji konularını aynı çalışma planında topla.',
     subjects: ['Matematik', 'Türkçe', 'Fizik', 'Kimya', 'Biyoloji'],
   },
   {
     id: 'computer-engineering-fall',
+    tags: ['bilgisayarmühendisliği', 'vize'],
+    cover: null,
+    saveCount: 64,
     name: 'Bilgisayar Mühendisliği · 3. sınıf 1. dönem',
-    authorName: 'Ayşe Koç',
+    author: { name: 'Ayşe Koç', avatar: 'shape-3', stage: 'university', department: 'Bilgisayar Mühendisliği', profession: null, bio: null },
     description: 'Algoritmalar, veritabanı, işletim sistemleri ve bilgisayar ağları. Dönem derslerini tek planda takip et.',
     subjects: ['Algoritmalar', 'Veritabanı', 'İşletim Sistemleri', 'Bilgisayar Ağları'],
   },
   {
     id: 'python',
+    tags: ['yazılım', 'python'],
+    cover: null,
+    saveCount: 212,
     name: 'Sıfırdan Python',
-    authorName: 'Deniz Arslan',
+    author: { name: 'Deniz Arslan', avatar: 'shape-4', stage: 'working', department: null, profession: 'Yazılım geliştirici', bio: null },
     description: 'İlk satır koddan küçük projelere. Temelleri öğren, her adımda pratiğe dök.',
     subjects: ['Python', 'Programlama'],
   },
   {
     id: 'english',
+    tags: ['ingilizce', 'konuşma'],
+    cover: null,
+    saveCount: 97,
     name: 'İngilizce konuşma rutini',
-    authorName: 'Ece Demir',
+    author: { name: 'Ece Demir', avatar: 'shape-2', stage: 'university', department: 'İngiliz Dili ve Edebiyatı', profession: null, bio: null },
     description: 'Dinleme, telaffuz ve günlük konuşma. Her gün biraz daha rahat ifade et.',
     subjects: ['İngilizce', 'Konuşma pratiği'],
   },
   {
     id: 'design',
+    tags: ['tasarım', 'figma'],
+    cover: null,
+    saveCount: 58,
     name: 'Figma ile arayüz tasarımı',
-    authorName: 'Selin Kaya',
+    author: { name: 'Selin Kaya', avatar: 'shape-1', stage: 'graduate', department: null, profession: 'Ürün tasarımcısı', bio: null },
     description: 'Tipografi, renk ve bileşenler. İlk ekranından etkileşimli prototipine.',
     subjects: ['Figma', 'UI tasarımı'],
   },
   {
     id: 'data',
+    tags: ['excel', 'veri'],
+    cover: null,
+    saveCount: 41,
     name: 'Excel ile veri analizi',
-    authorName: 'Mert Aydın',
+    author: { name: 'Mert Aydın', avatar: 'shape-5', stage: 'working', department: null, profession: 'Veri analisti', bio: null },
     description: 'Dağınık tablolardan anlaşılır raporlara. Formüller, grafikler ve veriyle düşünme.',
     subjects: ['Excel', 'Veri analizi'],
   },
   {
     id: 'photography',
+    tags: ['fotoğraf'],
+    cover: null,
+    saveCount: 33,
     name: 'Fotoğrafçılığa ilk adım',
-    authorName: 'İpek Yılmaz',
+    author: { name: 'İpek Yılmaz', avatar: 'shape-7', stage: 'high-school', department: 'Görsel İletişim Tasarımı', profession: null, bio: null },
     description: 'Işığı gör, kadrajını kur. Manuel ayarlardan kendi görsel hikâyene.',
     subjects: ['Fotoğrafçılık'],
   },
   {
     id: 'spanish',
+    tags: ['ispanyolca', 'dil'],
+    cover: null,
+    saveCount: 26,
     name: 'İspanyolca: günlük pratik',
-    authorName: 'Can Erdem',
+    author: { name: 'Can Erdem', avatar: 'shape-8', stage: 'university', department: 'Uluslararası İlişkiler', profession: null, bio: null },
     description: 'Kelimeler, kısa diyaloglar ve dinleme. Yeni bir dile kendi hızında alış.',
     subjects: ['İspanyolca'],
   },
@@ -209,40 +232,40 @@ function CatalogPreview({ preview }: { preview: LandingPreview }) {
   const entries: CatalogPreviewEntry[] = CATALOG_EXAMPLES.map((example, index) => ({
     ...example,
     preview: true,
-    createdAt: `${addDays(preview.today, -index)}T12:00:00`,
+    createdAt: `${addDays(preview.today, -index * 4)}T12:00:00`,
   }));
   return (
     <div className="preview-frame max-h-none text-left [mask-image:none]" aria-hidden="true" inert>
       <AppPreviewLayout camp={preview.camp} view="discover">
         <PageHeader
           title="Keşfet"
-          subtitle="Öğrencilerin yayınladığı kamplar. İçine bak, beğenirsen kendi planına ekle."
           actions={
-            <span className="chip chip-demo" title="Kamp ve kişi adları bu tanıtım için kurgulanmıştır.">
+            <span className="chip chip-demo" title="Kamp ve kişi adları, etiketler ve kayıt sayıları bu tanıtım için kurgulanmıştır.">
               Örnek kamplar
             </span>
           }
         />
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <div className="relative min-w-0 basis-56 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
-            <input
-              className="input pl-9"
-              type="search"
-              placeholder="Kamp, branş ya da kişi ara"
-              aria-label="Kamplarda ara"
-              readOnly
-              tabIndex={-1}
-            />
-          </div>
-          <button type="button" className="btn btn-secondary" tabIndex={-1}>
-            <Upload />
-            Kampını yayınla
-          </button>
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+          <input
+            className="input min-h-[46px] rounded-full pl-10"
+            type="search"
+            placeholder="Kamp adı ya da #etiket ara"
+            aria-label="Kamplarda ara"
+            readOnly
+            tabIndex={-1}
+          />
         </div>
-        <ul className="grid gap-3 md:grid-cols-2">
+        <div className="mt-3 mb-5 flex gap-1.5 overflow-hidden">
+          {['Tümü', '#yks', '#yazılım', '#ingilizce', '#tasarım'].map((label, i) => (
+            <span key={label} className={`filter-chip inline-flex items-center ${i === 0 ? 'is-active' : ''}`}>
+              {label}
+            </span>
+          ))}
+        </div>
+        <ul className="grid gap-x-4 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map(entry => (
-            <CatalogCard key={entry.id} entry={entry} today={preview.today} own={false} onOpen={noop} />
+            <CatalogCard key={entry.id} entry={entry} today={preview.today} own={false} saved={false} onOpen={noop} onToggleSave={noop} />
           ))}
         </ul>
       </AppPreviewLayout>
