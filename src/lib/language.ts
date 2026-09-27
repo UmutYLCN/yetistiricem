@@ -46,12 +46,12 @@ export function initializeLanguage(): AppLanguage {
 
 export function applyLanguage(language: AppLanguage): void {
   activeLanguage = language;
-  try {
-    const root = document.documentElement;
+  // `server/` type-checks this module without the DOM lib, so reach the
+  // document through `globalThis`; there is none under node.
+  const root = (globalThis as { document?: { documentElement: { lang: string; dir: string } } }).document?.documentElement;
+  if (root) {
     root.lang = language;
     root.dir = 'ltr';
-  } catch {
-    // No document (e.g. under node --test).
   }
 }
 
