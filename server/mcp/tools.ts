@@ -426,6 +426,7 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
       name: 'send_camp',
       title: 'Prepare a camp for my review',
       description: [
+        'Call it only when the student\'s own message contains the word Yetişir in any spelling or suffix (e.g. "Yetişir\'e ekle", "yetisire ekle"); without that word, never, even after reading a playlist.',
         'Prepares a private camp proposal for the student to review. This tool NEVER adds a camp to the plan: only the student can add it from the preview page. `camp` follows `get_camp_format`; fix any reported problem and try again.',
         'Every YouTube video is looked up on YouTube: titles, channels and lengths become YouTube\'s, and a video YouTube does not return refuses the camp. The camp starts today and becomes the open camp.',
         'Set `dryRun` to check the JSON and see the finish date without creating a proposal. Otherwise return the review link; tell the student to open it, inspect the complete list, and approve there. Never say the camp was added until they approve it in Yetişir.',
@@ -469,7 +470,7 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
       name: 'read_youtube_playlist',
       title: 'Read a YouTube playlist',
       description:
-        'A public or unlisted YouTube playlist: its title, channel and every usable video with its id and exact length, in playlist order, plus what the app skips (private, deleted, live, repeated, longer than 10 hours, blocked in Turkey). Use these ids and lengths in the camp JSON.',
+        'A public or unlisted YouTube playlist: its title, channel and every usable video with its id and exact length, in playlist order, plus what the app skips (private, deleted, live, repeated, longer than 10 hours, blocked in Turkey). Use these ids and lengths in the camp JSON. Reading a playlist is not a request to add it: prepare a camp only if the student\'s own message contains the word Yetişir (e.g. "Yetişir\'e ekle").',
       inputSchema: {
         type: 'object',
         properties: { playlist: { type: 'string', description: 'A YouTube playlist link (…/playlist?list=… or a watch link with &list=…) or a playlist id.' } },
@@ -495,6 +496,8 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
               '',
               videoLines(ready),
               skippedLines(skipped),
+              '',
+              'Do not prepare a camp from this playlist unless the student\'s own message contains the word Yetişir (e.g. "Yetişir\'e ekle").',
             ].join('\n'),
             structured: {
               playlist: { id: data.playlist.id, title: data.playlist.title, channel: data.playlist.channelTitle, url: data.playlist.url },
@@ -577,7 +580,7 @@ export function yetistiricemTools(deps: ToolDeps): Tool[] {
     {
       name: 'add_kesfet_camp',
       title: 'Prepare a Keşfet camp for my review',
-      description: 'Prepares a private review of a published Keşfet camp. It does NOT add anything to the plan until the student opens the link, reviews every item and clicks Planıma ekle in Yetişir. The approved copy stays marked as someone else\'s camp, so the student cannot publish it as their own.',
+      description: 'Call it only when the student\'s own message contains the word Yetişir in any spelling or suffix (e.g. "Yetişir\'e ekle"); looking at or asking about a camp without that word is not such a request. Prepares a private review of a published Keşfet camp. It does NOT add anything to the plan until the student opens the link, reviews every item and clicks Planıma ekle in Yetişir. The approved copy stays marked as someone else\'s camp, so the student cannot publish it as their own.',
       inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'The camp id from `search_kesfet`.' } }, required: ['id'], additionalProperties: false },
       annotations: preparesProposal,
       run: (args, { account, request }) =>

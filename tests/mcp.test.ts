@@ -193,6 +193,7 @@ test('the MCP protocol: initialize, ping, tools/list, notifications and malforme
   assert.equal(init.result?.protocolVersion, '2025-06-18');
   assert.deepEqual(init.result?.capabilities, { tools: { listChanged: false } });
   assert.match(String(init.result?.instructions), /Never invent videos/);
+  assert.match(String(init.result?.instructions), /contains the word Yetişir/, 'a camp is prepared only when the student says Yetişir');
   assert.equal((await rpc('initialize', { protocolVersion: '2099-01-01' })).result?.protocolVersion, '2025-11-25');
   assert.deepEqual((await rpc('ping')).result, {});
   const tools = (await rpc('tools/list')).result?.tools as { name: string; inputSchema: { type: string } }[];
