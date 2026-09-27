@@ -116,9 +116,6 @@ function SiteHeader({ signedIn }: { signedIn: boolean }) {
           </ul>
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <a href={DEMO_APP_PATH} className="btn btn-ghost btn-sm max-sm:hidden">
-            Demo
-          </a>
           <a href={APP_PATH} className="btn btn-primary btn-sm group">
             {accountLabel(signedIn, false)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
