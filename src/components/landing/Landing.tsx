@@ -63,13 +63,12 @@ const FAQ = [
   },
 ];
 
-/** Landing account buttons open the planner: straight in with a session, otherwise its sign-in page. */
-function accountLabel(signedIn: boolean, long: boolean): string {
-  if (signedIn) return long ? 'Dashboard’a git' : 'Dashboard';
-  return long ? 'Giriş yap ve başla' : 'Giriş yap';
+/** The hero's account button opens the planner: straight in with a session, otherwise its sign-in page. */
+function accountLabel(signedIn: boolean): string {
+  return signedIn ? 'Dashboard’a git' : 'Giriş yap ve başla';
 }
 
-function SiteHeader({ signedIn }: { signedIn: boolean }) {
+function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header
@@ -95,10 +94,6 @@ function SiteHeader({ signedIn }: { signedIn: boolean }) {
           <a href={DOCS_PATH}>Belgeler</a>
         </nav>
         <div className="landing-header-actions">
-          <a href={APP_PATH} className="landing-nav-cta">
-            {accountLabel(signedIn, false)}
-            <ArrowRight aria-hidden="true" />
-          </a>
           <button
             id="landing-menu-toggle"
             type="button"
@@ -150,7 +145,7 @@ function Hero({ preview, signedIn }: { preview: LandingPreview; signedIn: boolea
         </p>
         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={APP_PATH} className="btn btn-primary btn-lg group">
-            {accountLabel(signedIn, true)}
+            {accountLabel(signedIn)}
             <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </a>
           <a href={DEMO_APP_PATH} className="btn btn-secondary btn-lg">
@@ -244,7 +239,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
             </li>
             <li>
               <a href={APP_PATH} className="transition-colors hover:text-ink">
-                {accountLabel(signedIn, false)}
+                {signedIn ? 'Dashboard' : 'Giriş yap'}
               </a>
             </li>
           </ul>
@@ -258,7 +253,7 @@ function SiteFooter({ signedIn }: { signedIn: boolean }) {
 }
 
 /**
- * The landing page at `/`. Its "Dashboard" / "Giriş yap" links open the planner
+ * The landing page at `/`. Its hero and footer account links open the planner
  * at `/app` (a full page load, see `lib/routes`), which asks signed-out visitors to sign in.
  */
 export default function Landing() {
@@ -270,7 +265,7 @@ export default function Landing() {
       <a href="#icerik" className="skip-link">
         İçeriğe geç
       </a>
-      <SiteHeader signedIn={signedIn} />
+      <SiteHeader />
       <main id="icerik" tabIndex={-1} className="outline-none">
         <Hero preview={preview} signedIn={signedIn} />
         <Goals />

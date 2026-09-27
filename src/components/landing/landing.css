@@ -2342,12 +2342,6 @@
     .landing-header-inner {
       padding-inline: 14px;
     }
-    .landing-header .landing-nav-cta {
-      min-height: 34px;
-      padding-inline: 11px;
-      font-size: 11px;
-      gap: 6px;
-    }
     .landing-feature-copy {
       padding: 22px 20px 0;
     }

@@ -386,10 +386,10 @@ export function AiOverview() {
           claude.ai, masaüstü ve mobil uygulama; Claude Code.
         </PageCard>
         <PageCard to="chatgpt" title="ChatGPT" icon={<AiLogo client="chatgpt" size={18} />}>
-          Geliştirici modunda özel bağlayıcı olarak.
+          MCP uygulaması olarak; hesabındaki araç izinlerine bağlı.
         </PageCard>
         <PageCard to="gemini" title="Gemini" icon={<AiLogo client="gemini" size={18} />}>
-          Gemini CLI’da MCP sunucusu olarak.
+          Gemini CLI’da; desteklenen bölgelerde Gemini web ve mobilde.
         </PageCard>
         <PageCard to="kamp-json" title="Kamp JSON formatı" icon={<Compass className="size-4 text-forest" />}>
           Yapay zekânın kampı yazarken uyduğu sınırlar.
@@ -441,22 +441,28 @@ export function ClaudeDoc() {
 export function ChatGptDoc() {
   return (
     <>
-      <p>ChatGPT, özel MCP bağlayıcılarını geliştirici modunda ekler.</p>
+      <p>ChatGPT’ye Yetişir’i bir MCP uygulaması olarak bağlayabilirsin. Bir kez bağlandıktan sonra sohbetten planını okuyabilir; hesabındaki araç izinleri uygunsa kamp ekleyebilirsin.</p>
       <Steps>
         {[
-          <>ChatGPT’de <strong>Ayarlar → Apps &amp; Connectors → Advanced</strong>’a gir ve <strong>Developer mode</strong>’u aç.</>,
           <>
-            <strong>Create</strong> ile yeni bir bağlayıcı oluştur: ad <strong>Yetişir</strong>, URL aşağıdaki adres, kimlik doğrulama{' '}
-            <strong>OAuth</strong>.
+            ChatGPT’de <strong>Eklentiler → Ekle → MCP uygulaması oluştur</strong> yolunu aç. Bu seçenek görünmüyorsa <strong>Ayarlar → Security and login → Developer mode</strong> ayarını kontrol et.
+          </>,
+          <>
+            <strong>Ad</strong> alanına <strong>Yetişir</strong> yaz. <strong>Bağlantı</strong> için <strong>Sunucu URL’si</strong> seçip aşağıdaki adresi gir; <strong>Kimlik doğrulama</strong> alanını <strong>OAuth</strong> olarak bırak. Simge isteğe bağlıdır, gelişmiş OAuth ayarlarını otomatik bırakabilirsin.
             <div className="mt-3">
-              <CodeBlock label="URL">{mcpUrl()}</CodeBlock>
+              <CodeBlock label="Sunucu URL’si">{mcpUrl()}</CodeBlock>
             </div>
           </>,
-          <>Açılan Yetişir sayfasında giriş yap ve <strong>İzin ver</strong>’e bas.</>,
-          <>Yeni bir sohbette bağlayıcıyı seç ve sor: “Bu hafta neyi yetiştirmem lazım?”</>,
+          <>Güven uyarısını okuyup kabul et ve uygulamayı oluştur. Yetişir’in izin sayfası açılır; doğru hesapla giriş yaptığını kontrol edip <strong>İzin ver</strong>’e bas.</>,
+          <>ChatGPT’ye döndüğünde gerekirse <strong>Kişisel</strong> eklentilerde Yetişir’i bulup ekle. Ardından <strong>Work</strong> sohbeti aç ve <strong>@Yetişir</strong> seç.</>,
+          <>Önce “Nasıl gidiyorum?” diye sorarak okuma aracını dene. Kamp kurmak için hedefini ve oynatma listeni anlat; planı gördükten sonra “Kampı planıma ekle” de.</>,
         ]}
       </Steps>
-      <Callout tone="info">Menü adları ChatGPT sürümüne göre biraz farklı olabilir; aradığın bölüm “Connectors” ya da “Apps”.</Callout>
+      <Callout tone="info">
+        MCP uygulaması oluşturabilmen, kamp ekleme gibi yazma işlemlerinin hesabında açık olduğunu tek başına göstermez. Araçlar görünmüyorsa veya <code>send_camp</code> çalışmıyorsa ChatGPT hesap ve çalışma alanı izinlerini kontrol et.{' '}
+        <a href="https://developers.openai.com/plugins/quickstart" target="_blank" rel="noreferrer">OpenAI kurulum rehberi</a> ·{' '}
+        <a href="https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt" target="_blank" rel="noreferrer">erişim koşulları</a>
+      </Callout>
     </>
   );
 }
@@ -464,7 +470,25 @@ export function ChatGptDoc() {
 export function GeminiDoc() {
   return (
     <>
-      <p>Gemini, MCP sunucularını <strong>Gemini CLI</strong>’da destekler.</p>
+      <p>Gemini, Yetişir’in MCP sunucusuna Gemini CLI üzerinden bağlanabilir. Gemini web ve mobilde özel uygulama bağlantısı da vardır; şu anda herkese açık değildir.</p>
+      <H2 id="gemini-web">Gemini web ve mobil</H2>
+      <Steps>
+        {[
+          <>Gemini web’de <strong>Settings → Connected Apps → Custom apps → Add a custom app</strong> yolunu aç.</>,
+          <>
+            Yetişir’in sunucu adresini gir:
+            <div className="mt-3">
+              <CodeBlock label="Sunucu URL’si">{mcpUrl()}</CodeBlock>
+            </div>
+          </>,
+          <>Bağlantı onayını tamamla. Sohbette <strong>@Yetişir</strong> seç; yazma işlemi için Gemini ayrıca onay isteyebilir.</>,
+        ]}
+      </Steps>
+      <Callout tone="info">
+        Google bu özelliği şu anda ABD’deki, İngilizce kullanan, etkinlik geçmişi açık kişisel hesaplarla sınırlıyor. Türkiye’deki bir hesapta seçenek görünmeyebilir.{' '}
+        <a href="https://support.google.com/gemini/answer/17209137?co=GENIE.Platform%3DDesktop&amp;hl=en-GA" target="_blank" rel="noreferrer">Google’ın güncel koşulları</a>
+      </Callout>
+      <H2 id="gemini-cli">Gemini CLI</H2>
       <Steps>
         {[
           <>
@@ -479,7 +503,7 @@ export function GeminiDoc() {
           <>Açılan Yetişir sayfasında giriş yap ve <strong>İzin ver</strong>’e bas.</>,
         ]}
       </Steps>
-      <Callout tone="info">Gemini web ve mobil uygulamasının özel MCP sunucusu desteği henüz doğrulanmadı.</Callout>
+      <Callout tone="info">Gemini CLI, OAuth dönüşünde <code>iss</code> parametresini zorunlu tutar. Giriş sonunda hata alırsan kimlik doğrulama akışı ayrıca incelenmelidir.</Callout>
     </>
   );
 }
