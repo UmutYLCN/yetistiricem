@@ -95,6 +95,7 @@ function PathVisual({ preview }: { preview: LandingPreview }) {
         minutes={minutes}
         doneMinutes={doneMinutes}
         onOpen={noop}
+        autoScrollToNext={false}
       />
     </div>
   );

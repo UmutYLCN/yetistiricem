@@ -24,6 +24,8 @@ interface Props {
   minutes: number;
   doneMinutes: number;
   onOpen: (item: DailyPlanItem) => void;
+  /** Bring the next stop into view on a long day. Off for the inert landing-page illustration, which sits off-screen and would otherwise drag the whole page down to it. */
+  autoScrollToNext?: boolean;
 }
 
 const STATE_TEXT: Record<StopState, string> = {
@@ -136,7 +138,7 @@ function StopButton({
  * The day's tasks as stops on a winding path: walked up to the stop where it
  * waits, then dotted on to the finish. Every stop opens its task.
  */
-export function DayPath({ stops, look, isToday, minutes, doneMinutes, onOpen }: Props) {
+export function DayPath({ stops, look, isToday, minutes, doneMinutes, onOpen, autoScrollToNext = true }: Props) {
   const { ref, width } = useWidth();
   const nextRef = useRef<HTMLButtonElement>(null);
   const scrolled = useRef(false);
@@ -150,7 +152,7 @@ export function DayPath({ stops, look, isToday, minutes, doneMinutes, onOpen }: 
 
   // Opening on a long day: bring the stop where the path waits into view.
   useEffect(() => {
-    if (scrolled.current || width === 0) return;
+    if (!autoScrollToNext || scrolled.current || width === 0) return;
     scrolled.current = true;
     const stop = nextRef.current;
     if (!stop) return;
@@ -158,7 +160,7 @@ export function DayPath({ stops, look, isToday, minutes, doneMinutes, onOpen }: 
     if (top >= 0 && bottom <= window.innerHeight - 96) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     stop.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
-  }, [width]);
+  }, [width, autoScrollToNext]);
 
   const geometry = width > 0 ? pathGeometry(stops.length, width) : null;
   const doneCount = stops.filter(s => s.state === 'done').length;
