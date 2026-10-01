@@ -3,8 +3,7 @@ import type { ReactNode } from 'react';
 import { CircleCheck, Forward, TriangleAlert } from 'lucide-react';
 import type { DailyPlanItem } from '../../types';
 import type { CampDaySummary, CampLabel } from '../../lib/allCamps';
-import { addDays } from '../../lib/engine';
-import { formatDayTitle, formatLongDate, formatMinutes } from '../../lib/format';
+import { formatDayTitle, formatMinutes } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
 import { groupByBranch } from '../../lib/planView';
 import { linkStateOf } from '../../lib/camps';
@@ -187,7 +186,8 @@ export function DayPanel({
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-ink">{msg("Bu günden ")}{open} {msg(" görev yetişmedi.")}</p>
                 <p className="mt-0.5 text-[13px] text-ink-2">
-                  {msg("\n                  Ritmini güncellersen kalanlar ")}{formatLongDate(addDays(today, 1))} {msg(" gününden itibaren yeniden dağıtılır. Bugünkü\n                  görevlerin yerinde kalır.\n                ")}</p>
+                  {msg("Ritmini güncellersen geciken tüm görevler bugünden itibaren sırayla yeniden dağıtılır; bugünkü görevlerin onların ardından gelir.")}
+                </p>
                 <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={() => onShift(date)}>
                   <Forward aria-hidden="true" />
                   {msg("\n                  Ritmi güncelle\n                ")}</button>

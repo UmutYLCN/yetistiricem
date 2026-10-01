@@ -274,9 +274,7 @@ export function ProgressView({ stats, today, index, camps, weeks, scope, insight
             <span className="font-semibold text-ink">
               {translateTemplate('{count} görev geride kaldı.', { count: index.overdue.length })}
             </span>{' '}
-            {translateTemplate('Ritmini güncellersen {date} gününden itibaren dağıtılır.', {
-              date: formatLongDate(addDays(today, 1)),
-            })}
+            {msg('Ritmini güncellersen bugünden itibaren sırayla dağıtılır.')}
           </p>
           <button type="button" className="btn btn-sm btn-secondary" onClick={onShiftOverdue}>
             <Forward aria-hidden="true" />

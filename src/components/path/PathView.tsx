@@ -5,8 +5,7 @@ import type { CampLabel } from '../../lib/allCamps';
 import { campIdOf } from '../../lib/allCamps';
 import { linkStateOf } from '../../lib/camps';
 import { dayStops } from '../../lib/dayPath';
-import { addDays } from '../../lib/engine';
-import { formatDayTitle, formatLongDate } from '../../lib/format';
+import { formatDayTitle } from '../../lib/format';
 import type { CampInfo, DaySummary } from '../../lib/planView';
 import { DayEmpty } from '../day/DayEmpty';
 import { OverdueCard } from '../rail/RightRail';
@@ -85,7 +84,7 @@ export function PathView({
 
   return (
     <div className="mx-auto max-w-[720px]">
-      <OverdueCard className="mb-4" count={overdueCount} today={today} onShift={onShiftOverdue} />
+      <OverdueCard className="mb-4" count={overdueCount} onShift={onShiftOverdue} />
 
       {total > 0 ? (
         <>
@@ -95,7 +94,8 @@ export function PathView({
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-ink">{msg("Bu günden ")}{open} {msg(" görev yetişmedi.")}</p>
                 <p className="mt-0.5 text-[13px] text-ink-2">
-                  {msg("\n                  Ritmini güncellersen kalanlar ")}{formatLongDate(addDays(today, 1))} {msg(" gününden itibaren yeniden dağıtılır.\n                ")}</p>
+                  {msg("Ritmini güncellersen geciken tüm görevler bugünden itibaren sırayla yeniden dağıtılır; bugünkü görevlerin onların ardından gelir.")}
+                </p>
                 <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={() => onShift(date)}>
                   <Forward aria-hidden="true" />
                   {msg("\n                  Ritmi güncelle\n                ")}</button>

@@ -253,7 +253,8 @@ export interface CampShift {
 
 /**
  * "Ritmi güncelle" (carry the rest forward) for `date` across camps: one stored event per camp
- * that still has unfinished tasks on or before `date`, made from that camp's
+ * that still has unfinished tasks to carry (see `createShiftEvent`: a past
+ * `date` carries every overdue task from today on), made from that camp's
  * own plan. So an event only ever names its own camp's tasks, and a camp with
  * nothing to carry gets no event and keeps its plan.
  */

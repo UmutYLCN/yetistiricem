@@ -2,7 +2,7 @@ import { Forward, TriangleAlert } from 'lucide-react';
 import type { RoadmapStats, UserPreferences } from '../../types';
 import type { CampLabel } from '../../lib/allCamps';
 import { sumGoals } from '../../lib/allCamps';
-import { addDays, assessDeadline, dayOfWeek, diffDays } from '../../lib/engine';
+import { assessDeadline, dayOfWeek, diffDays } from '../../lib/engine';
 import {
   SHORT_WEEKDAYS,
   formatHours,
@@ -184,7 +184,7 @@ export function WeekCard({
   );
 }
 
-export function OverdueCard({ count, today, onShift, className = '' }: { count: number; today: string; onShift: () => void; className?: string }) {
+export function OverdueCard({ count, onShift, className = '' }: { count: number; onShift: () => void; className?: string }) {
   if (count === 0) return null;
   return (
     <section className={`callout callout-danger ${className}`} aria-labelledby="rail-overdue">
@@ -193,7 +193,8 @@ export function OverdueCard({ count, today, onShift, className = '' }: { count: 
         <h2 id="rail-overdue" className="font-semibold text-ink">
           {count} {msg(" geciken görev\n        ")}</h2>
         <p className="mt-0.5 text-[13px] text-ink-2">
-          {msg("\n          Geçmiş günlerde kalanlar ")}{formatLongDate(addDays(today, 1))} {msg(" gününden itibaren yeniden dağıtılabilir.\n        ")}</p>
+          {msg("Geçmiş günlerde kalanlar bugünden itibaren sırayla yeniden dağıtılabilir; bugünkü görevlerin onların ardından gelir.")}
+        </p>
         <button type="button" className="btn btn-sm btn-secondary mt-2.5" onClick={onShift}>
           <Forward aria-hidden="true" />
           {msg("\n          Ritmi güncelle\n        ")}</button>

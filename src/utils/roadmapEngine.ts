@@ -8,7 +8,7 @@ import type {
   UserPreferences,
   Video,
 } from '../types/index.ts';
-import { addDays, dayOfWeek, diffDays, maxDateKey, todayKey, weekdayName } from './date.ts';
+import { addDays, dayOfWeek, diffDays, todayKey, weekdayName } from './date.ts';
 import { defaultPreferences, inspectPreferences, normalizeShiftEvents } from './storage.ts';
 
 // Scheduling contract
@@ -427,17 +427,23 @@ export function generateRoadmap(
 }
 
 /**
- * Records a shift of `date`: every item still incomplete on or before `date`
- * is carried forward and replanned from the day after `max(date, today)`, so
- * today's plan is left alone. Returns null when there is nothing to carry.
+ * Records a shift of `date`. Returns null when there is nothing to carry.
+ * - A past day ("Ritmi güncelle" on overdue tasks): every item still
+ *   incomplete on any day before today is carried and the plan is re-laid
+ *   from today, so today's own tasks follow the carried ones and every branch
+ *   keeps its lesson order. The event's `date` is yesterday.
+ * - Today or later ("Kalanları yarına kaydır"): every item still incomplete
+ *   on or before `date` is carried and replanned from `date + 1`.
  * Persist the event (append it) and pass all events to `generateRoadmap`.
+ * Stored events replay by their own `resumeDate`, whichever rule made them.
  */
 export function createShiftEvent(date: string, plans: DailyPlan[], today: string = todayKey()): ShiftEvent | null {
+  const until = date < today ? addDays(today, -1) : date;
   const itemIds = plans
-    .filter(plan => plan.date <= date)
+    .filter(plan => plan.date <= until)
     .flatMap(plan => plan.items.filter(item => !item.completed).map(item => item.id));
   if (itemIds.length === 0) return null;
-  return { date, resumeDate: addDays(maxDateKey(date, today), 1), itemIds };
+  return { date: until, resumeDate: addDays(until, 1), itemIds };
 }
 
 function applyShift(plans: DailyPlan[], event: ShiftEvent, rules: PackRules, today: string): DailyPlan[] {

@@ -821,7 +821,6 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         <OverdueCard
           className="min-w-0 xl:col-start-2 xl:row-start-1 xl:self-start"
           count={index.overdue.length}
-          today={today}
           onShift={() => handleShift(addDays(today, -1))}
         />
         {/* Spans the overdue card's row too, so the card never pushes the week strip down. */}
