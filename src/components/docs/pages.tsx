@@ -201,7 +201,7 @@ export function Reschedule() {
           <>{msg("Geçmiş bir günde tamamlanmamış görev varsa kırmızı kartta ")}<strong>{msg("Ritmi güncelle")}</strong>{msg("’ye bas.")}</>,
           <>
             <strong>{msg("Neden yetişmedi?")}</strong> {msg(" sorusunda bir neden seç: sosyal medya / dikkat dağınıklığı, ders ağır geldi, yorgunluk, zaman\n            yetmedi ya da isteksizlik. İstersen ")}<strong>{msg("Belirtmeden güncelle")}</strong> {msg(" ile geçebilirsin.\n          ")}</>,
-          <>{msg("Kalanlar yarından itibaren yeniden dağılır. Seçtiğin nedene göre küçük bir öneri görürsün; ")}<strong>{msg("Geri al")}</strong> {msg(" ile vazgeçebilirsin.")}</>,
+          <>{msg("Geciken görevler bugünden itibaren sırayla yeniden dağılır, bugünkü görevlerin onların ardından gelir. Seçtiğin nedene göre küçük bir öneri görürsün; ")}<strong>{msg("Geri al")}</strong> {msg(" ile vazgeçebilirsin.")}</>,
         ]}
       </Steps>
       <H2 id="oneriler">{msg("Öneriler")}</H2>

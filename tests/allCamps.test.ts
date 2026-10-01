@@ -312,8 +312,10 @@ test('shifting in the combined view writes each camp its own event and leaves th
   const { data, tyt, ayt } = twoCamps();
   const today = '2026-09-30'; // Wednesday; TYT has open tasks since 21 Sep, AYT since 28 Sep
 
-  // Only TYT has open work before AYT starts.
-  const early = shiftEventsByCamp(sources(data, today), '2026-09-25', today);
+  // On AYT's first day only TYT has overdue work: a past-day shift carries
+  // every overdue task, so only TYT gets an event.
+  const aytStart = '2026-09-28';
+  const early = shiftEventsByCamp(sources(data, aytStart), '2026-09-25', aytStart);
   assert.deepEqual(early.map(s => s.campId), [tyt.id]);
   const tytVideoIds = new Set(tyt.branches.flatMap(b => b.videos.map(v => v.id)));
   assert.ok(early[0].event.itemIds.every(id => tytVideoIds.has(id)));
@@ -329,7 +331,7 @@ test('shifting in the combined view writes each camp its own event and leaves th
   const aytVideoIds = new Set(ayt.branches.flatMap(b => b.videos.map(v => v.id)));
   assert.ok(both[0].event.itemIds.every(id => tytVideoIds.has(id)));
   assert.ok(both[1].event.itemIds.every(id => aytVideoIds.has(id)));
-  assert.ok(both.every(s => s.event.resumeDate === '2026-10-01'));
+  assert.ok(both.every(s => s.event.resumeDate === today), 'overdue tasks restart today');
 
   const shifted = ops.addShiftEvents(frozen, both);
   assert.deepEqual(shifted.camps[0].shiftEvents, [both[0].event]);
@@ -343,11 +345,13 @@ test('shifting in the combined view writes each camp its own event and leaves th
   for (const p of aytAfter) {
     if (p.items.length > 0) assert.ok([1, 3, 5].includes(dayOfWeek(p.date)), `${p.date}: AYT still studies only on its own weekdays`);
   }
-  assert.deepEqual(itemsOn(aytAfter, '2026-09-30'), itemsOn(plansOf(ayt, data, today), '2026-09-30'), 'today stays as it was');
+  // AYT studies only kim on Wednesdays, so its carried geo lessons leave today as it was.
+  assert.deepEqual(itemsOn(aytAfter, '2026-09-30'), itemsOn(plansOf(ayt, data, today), '2026-09-30'), 'today keeps its kim lessons');
 
   // Undo removes both events.
   assert.deepEqual(ops.removeShiftEvents(shifted, both).camps.map(c => c.shiftEvents), [[], []]);
-  assert.deepEqual(shiftEventsByCamp(sources(data, today), '2026-09-20', today), [], 'nothing to carry, no event');
+  const firstDay = '2026-09-21';
+  assert.deepEqual(shiftEventsByCamp(sources(data, firstDay), '2026-09-20', firstDay), [], 'nothing to carry, no event');
 });
 
 test('the plan screens combine running camps from two on; paused and video-less camps stay out', () => {
