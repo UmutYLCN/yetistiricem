@@ -26,7 +26,7 @@ const hours = (minutes: number) => round(minutes / 60);
 function sourcesOf(data: PlannerData, today: string): InsightSource[] {
   return data.camps
     .filter(camp => !camp.pausedAt && camp.branches.some(b => b.videos.length > 0))
-    .map(camp => ({ camp, result: buildCampSchedule(camp, { today, completedMap: data.completedMap }) }));
+    .map(camp => ({ camp, result: buildCampSchedule(camp, { today, completedMap: data.completedMap, completionDays: data.completionDates }) }));
 }
 
 function campSummary({ camp, result }: InsightSource, today: string) {

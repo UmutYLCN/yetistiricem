@@ -191,8 +191,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   const planCamp = combined ? null : (running[0] ?? null);
   const emptyCamp = useMemo(() => ({ branches: [], schedule: defaultSchedule(today), shiftEvents: [] }), [today]);
   const schedule = useMemo(
-    () => buildCampSchedule(planCamp ?? emptyCamp, { completedMap: data.completedMap, today }),
-    [planCamp, emptyCamp, data.completedMap, today]
+    () => buildCampSchedule(planCamp ?? emptyCamp, { completedMap: data.completedMap, completionDays: data.completionDates, today }),
+    [planCamp, emptyCamp, data.completedMap, data.completionDates, today]
   );
   const prefs = schedule.preferences;
   const planBranches = useMemo(() => planCamp?.branches ?? [], [planCamp]);
@@ -205,16 +205,19 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
 
   // Kamplar lists the open camp's branches, shown on the plan screens or not.
   const managedSchedule = useMemo(
-    () => (camp && camp === planCamp ? schedule : buildCampSchedule(camp ?? emptyCamp, { completedMap: data.completedMap, today })),
-    [camp, planCamp, schedule, emptyCamp, data.completedMap, today]
+    () =>
+      camp && camp === planCamp
+        ? schedule
+        : buildCampSchedule(camp ?? emptyCamp, { completedMap: data.completedMap, completionDays: data.completionDates, today }),
+    [camp, planCamp, schedule, emptyCamp, data.completedMap, data.completionDates, today]
   );
   const campIndex = useMemo(() => indexPlans(managedSchedule.plans, today), [managedSchedule.plans, today]);
   const campBranches = useMemo(() => indexCamps(branches), [branches]);
 
   // What the plan screens show (one camp, or every running camp together).
   const allPlan = useMemo(
-    () => (combined ? buildAllCampsPlan(running, { completedMap: data.completedMap, today }) : null),
-    [combined, running, data.completedMap, today]
+    () => (combined ? buildAllCampsPlan(running, { completedMap: data.completedMap, completionDays: data.completionDates, today }) : null),
+    [combined, running, data.completedMap, data.completionDates, today]
   );
   const shownCamps: ScopedCamp[] = useMemo(
     () => allPlan?.camps ?? (planCamp ? [{ camp: planCamp, result: schedule }] : []),
@@ -251,7 +254,10 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
 
   // Focus mode reads the task from the plan shown, so it always has the current completion.
   const canFocus = (item: DailyPlanItem) => focusableVideoId(item, camps.get(item.playlistId)?.kind ?? 'manual') !== null;
-  const focusEntry = focus ? index.items.find(s => s.item.id === focus.itemId && s.date === focus.date) : undefined;
+  // A task done ahead moves to the day it was done, so it is also found by id alone.
+  const focusEntry = focus
+    ? (index.items.find(s => s.item.id === focus.itemId && s.date === focus.date) ?? index.items.find(s => s.item.id === focus.itemId))
+    : undefined;
   const focusTarget: FocusTarget | null = (() => {
     if (!focusEntry) return null;
     const { item, date } = focusEntry;
@@ -269,7 +275,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       speed: owner?.schedule.playbackSpeed ?? 1,
     };
   })();
-  const nextFocus = focusEntry ? nextFocusItem(index.items, { id: focusEntry.item.id, date: focusEntry.date }, canFocus) : null;
+  // "Next" stays on the day the student opened, even when this task moved off it.
+  const nextFocus = focusEntry && focus ? nextFocusItem(index.items, { id: focusEntry.item.id, date: focus.date }, canFocus) : null;
 
   // --- actions -----------------------------------------------------------
 
@@ -370,7 +377,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     setDeadlineQueue(
       shifts.filter(({ campId }) => {
         const shifted = after.find(c => c.id === campId);
-        return shifted !== undefined && deadlineOverrun(shifted, { today, limit }) !== null;
+        return shifted !== undefined && deadlineOverrun(shifted, { today, limit, completedMap: data.completedMap, completionDays: data.completionDates }) !== null;
       })
     );
     if (reason) {
@@ -401,7 +408,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     for (const shift of deadlineQueue) {
       const target = data.camps.find(c => c.id === shift.campId);
       if (!target || target.pausedAt || !target.shiftEvents.includes(shift.event)) continue;
-      const overrun = deadlineOverrun(target, { today, limit: getDailyLimit() });
+      const overrun = deadlineOverrun(target, { today, limit: getDailyLimit(), completedMap: data.completedMap, completionDays: data.completionDates });
       if (overrun) return { shift, camp: target, overrun };
     }
     return null;
@@ -446,7 +453,11 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   const acceptNotification = ({ campId, branch, videos }: SyncNotification) => {
     const target = data.camps.find(c => c.id === campId);
     if (!target) return;
-    const { carried } = withAppendedVideos(target, branch.id, videos.map(draftFromPending), { completedMap: data.completedMap, today });
+    const { carried } = withAppendedVideos(target, branch.id, videos.map(draftFromPending), {
+      completedMap: data.completedMap,
+      completionDays: data.completionDates,
+      today,
+    });
     actions.acceptPlaylistVideos(campId, branch.id);
     notify({
       message:
@@ -552,7 +563,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   const handleAddBranches = (campId: string, added: SubjectPlaylist[], weekdays: number[] | undefined) => {
     const target = data.camps.find(c => c.id === campId);
     if (!target || added.length === 0) return;
-    const { carried } = withAddedBranches(target, added, { weekdays, completedMap: data.completedMap, today });
+    const { carried } = withAddedBranches(target, added, { weekdays, completedMap: data.completedMap, completionDays: data.completionDates, today });
     actions.addBranches(campId, added, { weekdays, today });
     const names = added.map(b => `“${b.subject}”`).join(', ');
     notify({
@@ -628,7 +639,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   const handleResumeCamp = (campId: string) => {
     const target = data.camps.find(c => c.id === campId);
     if (!target?.pausedAt) return;
-    const { carried } = withResumed(target, { completedMap: data.completedMap, today });
+    const { carried } = withResumed(target, { completedMap: data.completedMap, completionDays: data.completionDates, today });
     actions.resumeCamp(campId);
     notify({
       message:
@@ -1163,6 +1174,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
           key={tempoTarget.id}
           camp={tempoTarget}
           today={today}
+          completedMap={data.completedMap}
+          completionDays={data.completionDates}
           onSave={next => handleSaveTempo(tempoTarget, next)}
           onClose={closeDialog}
         />
@@ -1173,6 +1186,7 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
           camp={addTarget}
           today={today}
           completedMap={data.completedMap}
+          completionDays={data.completionDates}
           onAdd={(added, weekdays) => handleAddBranches(addTarget.id, added, weekdays)}
           onClose={closeDialog}
         />

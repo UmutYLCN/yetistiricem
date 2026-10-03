@@ -54,7 +54,7 @@ function twoCamps(): { data: PlannerData; tyt: StudyCamp; ayt: StudyCamp } {
     camps: [tyt, ayt],
     activeCampId: tyt.id,
     completedMap: { 'mat-1': true, 'geo-1': true },
-    completionDates: { since: '2026-09-21', dates: { 'mat-1': '2026-09-21', 'geo-1': '2026-09-21' } },
+    completionDates: { since: '2026-09-21', dates: { 'mat-1': '2026-09-21', 'geo-1': '2026-09-21' }, aheadSince: '2026-09-21' },
     focusSessions: [],
     playlistSync: { lastAttempt: null, lastFailure: null, branches: {} },
     dayNotes: {},
@@ -294,7 +294,7 @@ test('totals, stats and daily goals add up over the camps', () => {
   assert.equal(campOverview(plan.camps[0], data.completedMap).deadline?.kind, 'none', 'TYT has no target');
 });
 
-test('ticking tasks in the combined view moves nothing', () => {
+test('ticking tasks on their own day in the combined view moves nothing', () => {
   const { data } = twoCamps();
   const before = mergeDailyPlans(sources(data));
   const firstDay = before.find(p => p.items.length > 0 && p.camps.length > 1)!;

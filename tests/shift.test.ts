@@ -79,7 +79,7 @@ test('shiftDayPlan without preferences still keeps every task', () => {
   assert.ok(shifted.every(p => p.items.length <= 1 || p.totalMinutes <= capacity + 1e-9));
 });
 
-test('a stored shift event keeps every date stable while tasks are ticked afterwards', () => {
+test('a stored shift event keeps every date stable while tasks are ticked afterwards (no tick days)', () => {
   const progress = { 'mat-1': true, 'fiz-1': true };
   const event = createShiftEvent('2026-09-23', schedule(progress), TODAY)!;
   assert.equal(event.resumeDate, TODAY, 'shift of a past day restarts today');
@@ -296,7 +296,7 @@ test("carried tasks fill what is left of today's capacity, then continue in less
   assert.deepEqual(shifted.flatMap(p => p.items.filter(i => i.playlistId === 'mat').map(i => i.id)), ['mat-1', 'mat-2', 'mat-3', 'mat-4', 'mat-5']);
 });
 
-test('later ticking or unticking never moves anything after a keep-today postpone', () => {
+test('later ticking or unticking without tick days never moves anything after a keep-today postpone', () => {
   const event = createShiftEvent(addDays(TODAY, -1), buildTwo(80), TODAY)!;
   const base = layout(buildTwo(80, [event]));
   for (const id of ['mat-2', 'mat-3', 'fiz-1', 'fiz-2']) {

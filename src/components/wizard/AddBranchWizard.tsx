@@ -6,6 +6,7 @@ import { totalMinutesOf, youtubeIdsOf } from '../../lib/camps';
 import { hoursToMeetTarget } from '../../lib/deadlineOverrun';
 import { focusFirstInvalid } from '../../lib/dom';
 import { addDays, assessDeadline, buildCampSchedule, dayOfWeek, diffDays, planEndDate } from '../../lib/engine';
+import type { CompletionDays } from '../../lib/engine';
 import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatHours, formatLongDate, formatMinutes, formatShortDate, relativeDayLabel } from '../../lib/format';
 import { withAddedBranches } from '../../lib/plannerOps';
 import { tempoSummary, weekdaysLabel } from '../../lib/planView';
@@ -43,6 +44,7 @@ interface Props {
   camp: StudyCamp;
   today: string;
   completedMap: Record<string, boolean>;
+  completionDays: CompletionDays;
   onAdd: (branches: SubjectPlaylist[], weekdays: number[] | undefined) => void;
   onClose: () => void;
 }
@@ -52,7 +54,7 @@ interface Props {
  * preview of the camp's plan with them. It never asks for a name, dates or a
  * rhythm: the camp keeps its own tempo.
  */
-export function AddBranchWizard({ camp, today, completedMap, onAdd, onClose }: Props) {
+export function AddBranchWizard({ camp, today, completedMap, completionDays, onAdd, onClose }: Props) {
   const uid = useId();
   const manual = camp.schedule.mode === 'manual';
   const steps: StepId[] = manual ? ['sources', 'days', 'preview'] : ['sources', 'preview'];
@@ -206,7 +208,7 @@ export function AddBranchWizard({ camp, today, completedMap, onAdd, onClose }: P
         )}
 
         {current === 'preview' && (
-          <AdditionPreview camp={camp} branches={branches} weekdays={manual ? weekdays : undefined} completedMap={completedMap} today={today} />
+          <AdditionPreview camp={camp} branches={branches} weekdays={manual ? weekdays : undefined} completedMap={completedMap} completionDays={completionDays} today={today} />
         )}
       </div>
     </Dialog>
@@ -263,18 +265,20 @@ function AdditionPreview({
   branches,
   weekdays,
   completedMap,
+  completionDays,
   today,
 }: {
   camp: StudyCamp;
   branches: SubjectPlaylist[];
   weekdays: number[] | undefined;
   completedMap: Record<string, boolean>;
+  completionDays: CompletionDays;
   today: string;
 }) {
   const view = useMemo(() => {
-    const before = buildCampSchedule(camp, { completedMap, today });
-    const { camp: next, carried } = withAddedBranches(camp, branches, { weekdays, completedMap, today });
-    const after = buildCampSchedule(next, { completedMap, today });
+    const before = buildCampSchedule(camp, { completedMap, completionDays, today });
+    const { camp: next, carried } = withAddedBranches(camp, branches, { weekdays, completedMap, completionDays, today });
+    const after = buildCampSchedule(next, { completedMap, completionDays, today });
     const finishBefore = planEndDate(before.plans);
     const finishAfter = planEndDate(after.plans);
     const deadline = assessDeadline({
@@ -291,9 +295,9 @@ function AdditionPreview({
       deadline,
       // Only a late plan needs the (heavier) search for a daily time that fits,
       // counted from today on: that is how "Tempoyu düzenle" would apply it.
-      suggestion: deadline.kind === 'late' ? hoursToMeetTarget(next, { today }) : null,
+      suggestion: deadline.kind === 'late' ? hoursToMeetTarget(next, { today, completedMap, completionDays }) : null,
     };
-  }, [camp, branches, weekdays, completedMap, today]);
+  }, [camp, branches, weekdays, completedMap, completionDays, today]);
 
   const { next, after, carried, finishBefore, finishAfter, deadline, suggestion } = view;
   const newIds = new Set(branches.map(b => b.id));

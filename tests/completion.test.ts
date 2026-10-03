@@ -15,7 +15,9 @@ test('reported bug: ticking the first task keeps it and every other task on its 
   assert.equal(day?.items.find(i => i.id === 'mat-1')?.completed, true);
 });
 
-test('toggling any single task, or many, never changes the layout', () => {
+// Without recorded tick days (`completionDays`) no task counts as done ahead;
+// early finishes are covered in earlyFinish.test.ts.
+test('toggling any single task, or many, without a tick day never changes the layout', () => {
   const base = layout(generateRoadmap(playlists, pref));
   const ids = base.flatMap(d => d.items);
   for (const id of ids) {

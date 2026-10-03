@@ -2,6 +2,7 @@ import type { CampSchedule, ShiftEvent, StudyCamp, SubjectPlaylist } from '../ty
 import type { DraftVideo } from '../utils/youtubeParser.ts';
 import type { PlaylistEntry } from '../utils/youtubePlaylist.ts';
 import { videoFromDraft, withVideos } from './camps.ts';
+import type { CompletionDays } from './engine.ts';
 import { addDays, buildCampSchedule } from './engine.ts';
 import type { FocusSession } from './focus.ts';
 import type { PlannerData } from './persistence.ts';
@@ -19,19 +20,30 @@ function mapCamp(data: PlannerData, campId: string, fn: (camp: StudyCamp) => Stu
   return { ...data, camps: data.camps.map(c => (c.id === campId ? fn(c) : c)) };
 }
 
-/** Ticks or unticks a video. A tick records `today` as its day; ticking an already done video keeps its first day. */
+/**
+ * Ticks or unticks a video. A tick records `today` as its day; ticking an
+ * already done video keeps its first day. A tick that counts as an early
+ * finish (from `aheadSince` on) and is taken back on a later day is kept in
+ * `reopened`, so the plan replays the same up to today and the task rejoins
+ * the open plan from today (see docs/planner-engine.md).
+ */
 export function setCompleted(data: PlannerData, videoId: string, done: boolean, today: string): PlannerData {
   if (done === (data.completedMap[videoId] === true)) return data;
   const completedMap = { ...data.completedMap };
-  const dates = { ...data.completionDates.dates };
+  const { dates: storedDates, ...completion } = data.completionDates;
+  const dates = { ...storedDates };
   if (done) {
     completedMap[videoId] = true;
     dates[videoId] = today;
   } else {
+    const ticked = dates[videoId];
+    if (ticked && ticked >= completion.aheadSince && ticked < today) {
+      completion.reopened = { ...completion.reopened, [videoId]: [...(completion.reopened?.[videoId] ?? []), [ticked, today]] };
+    }
     delete completedMap[videoId];
     delete dates[videoId];
   }
-  return { ...data, completedMap, completionDates: { ...data.completionDates, dates } };
+  return { ...data, completedMap, completionDates: { ...completion, dates } };
 }
 
 /** Keeps what one focus player session did. */
@@ -42,7 +54,13 @@ export function addFocusSession(data: PlannerData, session: FocusSession): Plann
 /** `next` with the completion marks (and their dates) of `removed` videos dropped when no camp uses them any more. */
 function withoutRemovedCompletion(data: PlannerData, next: PlannerData, removed: readonly string[]): PlannerData {
   const completedMap = pruneCompletion(data.completedMap, removed, next.camps);
-  return { ...next, completedMap, completionDates: datesOfCompleted(data.completionDates, completedMap) };
+  const completionDates = datesOfCompleted(data.completionDates, completedMap);
+  const { reopened } = completionDates;
+  if (reopened) {
+    const kept = pruneCompletion(Object.fromEntries(Object.keys(reopened).map(id => [id, true])), removed, next.camps);
+    completionDates.reopened = Object.fromEntries(Object.entries(reopened).filter(([id]) => kept[id]));
+  }
+  return { ...next, completedMap, completionDates };
 }
 
 /** Adds a new camp and makes it the active one. */
@@ -66,11 +84,14 @@ export function pauseCamp(data: PlannerData, campId: string, today: string): Pla
  * (`origin: 'resumed'`, not a postponement). Today's own tasks follow them.
  * `carried` counts the carried tasks.
  */
-export function withResumed(camp: StudyCamp, options: { completedMap?: Record<string, boolean>; today: string }): { camp: StudyCamp; carried: number } {
+export function withResumed(
+  camp: StudyCamp,
+  options: { completedMap?: Record<string, boolean>; completionDays?: CompletionDays; today: string }
+): { camp: StudyCamp; carried: number } {
   const next: StudyCamp = { ...camp };
   delete next.pausedAt;
-  const { today, completedMap = {} } = options;
-  const { plans } = buildCampSchedule(next, { completedMap, today });
+  const { today, completedMap = {}, completionDays } = options;
+  const { plans } = buildCampSchedule(next, { completedMap, completionDays, today });
   const itemIds = plans.filter(plan => plan.date < today).flatMap(plan => plan.items.filter(item => !item.completed).map(item => item.id));
   if (itemIds.length === 0) return { camp: next, carried: 0 };
   const shift: ShiftEvent = { date: addDays(today, -1), resumeDate: today, itemIds, origin: 'resumed' };
@@ -78,7 +99,7 @@ export function withResumed(camp: StudyCamp, options: { completedMap?: Record<st
 }
 
 export function resumeCamp(data: PlannerData, campId: string, today: string): PlannerData {
-  return mapCamp(data, campId, c => (c.pausedAt ? withResumed(c, { completedMap: data.completedMap, today }).camp : c));
+  return mapCamp(data, campId, c => (c.pausedAt ? withResumed(c, { completedMap: data.completedMap, completionDays: data.completionDates, today }).camp : c));
 }
 
 export function renameCamp(data: PlannerData, campId: string, name: string): PlannerData {
@@ -150,17 +171,17 @@ export function removeCamp(data: PlannerData, campId: string): PlannerData {
 export function withAddedBranches(
   camp: StudyCamp,
   branches: readonly SubjectPlaylist[],
-  options: { weekdays?: readonly number[]; completedMap?: Record<string, boolean>; today: string }
+  options: { weekdays?: readonly number[]; completedMap?: Record<string, boolean>; completionDays?: CompletionDays; today: string }
 ): { camp: StudyCamp; carried: number } {
   if (branches.length === 0) return { camp, carried: 0 };
-  const { weekdays, completedMap = {}, today } = options;
+  const { weekdays, completedMap = {}, completionDays, today } = options;
   let schedule = camp.schedule;
   if (schedule.mode === 'manual' && weekdays) {
     for (const branch of branches) schedule = withBranchOnWeekdays(schedule, branch.id, weekdays);
   }
   const next: StudyCamp = { ...camp, branches: [...camp.branches, ...branches], schedule };
   const newIds = new Set(branches.map(b => b.id));
-  const { plans } = buildCampSchedule(next, { completedMap, today });
+  const { plans } = buildCampSchedule(next, { completedMap, completionDays, today });
   const newUntilToday = plans
     .filter(plan => plan.date <= today)
     .flatMap(plan => plan.items.filter(item => newIds.has(item.playlistId) && !item.completed).map(item => ({ id: item.id, date: plan.date })));
@@ -182,7 +203,7 @@ export function addBranches(
   options: { weekdays?: readonly number[]; today: string }
 ): PlannerData {
   if (branches.length === 0) return data;
-  return mapCamp(data, campId, c => withAddedBranches(c, branches, { ...options, completedMap: data.completedMap }).camp);
+  return mapCamp(data, campId, c => withAddedBranches(c, branches, { ...options, completedMap: data.completedMap, completionDays: data.completionDates }).camp);
 }
 
 /** Edits one branch. A new playlist link starts its playlist record over. */
@@ -259,7 +280,7 @@ export function withAppendedVideos(
   camp: StudyCamp,
   branchId: string,
   drafts: readonly DraftVideo[],
-  options: { completedMap?: Record<string, boolean>; today: string }
+  options: { completedMap?: Record<string, boolean>; completionDays?: CompletionDays; today: string }
 ): { camp: StudyCamp; carried: number } {
   const branch = camp.branches.find(b => b.id === branchId);
   if (!branch || drafts.length === 0) return { camp, carried: 0 };
@@ -269,9 +290,9 @@ export function withAppendedVideos(
     ...camp,
     branches: camp.branches.map(b => (b.id === branchId ? withVideos(b, [...b.videos, ...added]) : b)),
   };
-  const { today, completedMap = {} } = options;
+  const { today, completedMap = {}, completionDays } = options;
   const newIds = new Set(added.map(v => v.id));
-  const { plans } = buildCampSchedule(next, { completedMap, today });
+  const { plans } = buildCampSchedule(next, { completedMap, completionDays, today });
   const untilToday = plans
     .filter(plan => plan.date <= today)
     .flatMap(plan => plan.items.filter(item => newIds.has(item.videoId) && !item.completed).map(item => ({ id: item.id, date: plan.date })));
@@ -287,7 +308,7 @@ export function acceptPlaylistVideos(data: PlannerData, campId: string, branchId
   const drafts = pendingOf(data.playlistSync, branch).map(draftFromPending);
   const cleared = dismissPlaylistVideos(data, branchId);
   if (drafts.length === 0) return cleared;
-  return mapCamp(cleared, campId, c => withAppendedVideos(c, branchId, drafts, { completedMap: data.completedMap, today }).camp);
+  return mapCamp(cleared, campId, c => withAppendedVideos(c, branchId, drafts, { completedMap: data.completedMap, completionDays: data.completionDates, today }).camp);
 }
 
 /** "Göz ardı et": the waiting videos are dropped; they stay seen, so they are not offered again. */

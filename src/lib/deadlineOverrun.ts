@@ -1,5 +1,6 @@
 import type { StudyCamp } from '../types/index.ts';
 import { DEFAULT_DAILY_LIMIT } from './dailyLimit.ts';
+import type { CompletionDays } from './engine.ts';
 import { buildCampSchedule, dailyHoursForDeadline, planEndDate } from './engine.ts';
 import { withTempo } from './plannerOps.ts';
 
@@ -21,9 +22,15 @@ export function campWithDailyHours(camp: StudyCamp, hours: number, today: string
  * today: only the days from today on gain capacity, past days keep their
  * layout. Null when no such time exists.
  */
-export function hoursToMeetTarget(camp: StudyCamp, options: { today: string; maxHours?: number }): number | null {
-  const { today, maxHours } = options;
-  return dailyHoursForDeadline(camp, { today, maxHours, withHours: hours => campWithDailyHours(camp, hours, today) });
+export function hoursToMeetTarget(camp: StudyCamp, options: { today: string; maxHours?: number } & Completion): number | null {
+  const { today, maxHours, completedMap, completionDays } = options;
+  return dailyHoursForDeadline(camp, { today, maxHours, completedMap, completionDays, withHours: hours => campWithDailyHours(camp, hours, today) });
+}
+
+/** The plan screens' completion, so tasks done ahead free their days in every projection. */
+export interface Completion {
+  completedMap?: Record<string, boolean>;
+  completionDays?: CompletionDays;
 }
 
 export interface DeadlineOverrun {
@@ -49,11 +56,11 @@ export function isIntense(hours: number, currentHours: number, limit: number): b
  * it. Otherwise the gap and a verified suggestion: the plan laid out with the
  * suggested time from today really ends on or before the target.
  */
-export function deadlineOverrun(camp: StudyCamp, options: { today: string; limit?: number }): DeadlineOverrun | null {
+export function deadlineOverrun(camp: StudyCamp, options: { today: string; limit?: number } & Completion): DeadlineOverrun | null {
   const target = camp.schedule.targetEndDate;
   if (!target) return null;
-  const { today, limit = DEFAULT_DAILY_LIMIT } = options;
-  const result = buildCampSchedule(camp, { today });
+  const { today, limit = DEFAULT_DAILY_LIMIT, completedMap, completionDays } = options;
+  const result = buildCampSchedule(camp, { today, completedMap, completionDays });
   // Unplaceable videos are a different problem (the tempo dialog reports it).
   if (result.unscheduledItems.length > 0) return null;
   const finishDate = planEndDate(result.plans);
@@ -62,9 +69,9 @@ export function deadlineOverrun(camp: StudyCamp, options: { today: string; limit
   const currentHours = camp.schedule.dailyStudyHours;
   const targetPassed = target < today;
   let suggestion: DeadlineOverrun['suggestion'] = null;
-  const hours = targetPassed ? null : hoursToMeetTarget(camp, { today, maxHours: limit });
+  const hours = targetPassed ? null : hoursToMeetTarget(camp, { today, maxHours: limit, completedMap, completionDays });
   if (hours !== null) {
-    const check = buildCampSchedule(campWithDailyHours(camp, hours, today), { today });
+    const check = buildCampSchedule(campWithDailyHours(camp, hours, today), { today, completedMap, completionDays });
     const end = planEndDate(check.plans);
     if (check.unscheduledItems.length === 0 && end !== null && end <= target) {
       suggestion = { hours, finishDate: end, intense: isIntense(hours, currentHours, limit) };
