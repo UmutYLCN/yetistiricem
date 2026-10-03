@@ -252,3 +252,96 @@ test('stored shift events are validated', () => {
   const plans = schedule({}, [{ date: '2026-09-22', resumeDate: '2026-09-25', itemIds: ['gone-1'] }]);
   checkInvariants(plans, allIds(schedule()));
 });
+
+// --- Overdue postpone with tasks already ticked today ----------------------
+
+// mat-1 (Tue) and today's mat-2 are ticked, Wednesday's fiz-1 was missed: only fiz-1 is overdue.
+const twoBranches = (minutes: number) => [playlist('mat', repeat(5, minutes)), playlist('fiz', repeat(5, minutes))];
+const twoBranchPref = prefs({ restDays: [0], activeDays: [1, 2, 3, 4, 5, 6], startDate: '2026-09-22', maxSubjectsPerDay: 2 });
+const matDone = { 'mat-1': true, 'mat-2': true };
+const buildTwo = (minutes: number, shiftEvents: ShiftEvent[] = [], completedMap: Record<string, boolean> = matDone) =>
+  buildSchedule(twoBranches(minutes), twoBranchPref, { completedMap, shiftEvents, today: TODAY }).plans;
+const dayItems = (plans: DailyPlan[], date: string) => plans.find(p => p.date === date)!.items.map(i => i.id);
+
+test('an overdue postpone does not move a task ticked today and fills only the remaining capacity', () => {
+  // 80-minute lessons: the ticked mat-2 already uses 80 of today's 120 minutes.
+  const plans = buildTwo(80);
+  const event = createShiftEvent(addDays(TODAY, -1), plans, TODAY)!;
+  assert.deepEqual(event.itemIds, ['fiz-1']);
+  assert.deepEqual(event.keepOnResume, ['mat-2']);
+
+  const shifted = buildTwo(80, [event]);
+  checkInvariants(shifted, allIds(plans));
+  assert.deepEqual(dayItems(shifted, TODAY), ['mat-2'], 'the ticked task stays, no carried one fits beside it');
+  assert.ok(shifted.find(p => p.date === TODAY)!.totalMinutes <= 120 + 1e-9);
+  assert.ok(shifted.find(p => p.items.some(i => i.id === 'fiz-1'))!.date > TODAY, 'the carried task moves on to a later day');
+  assert.ok(shifted.filter(p => p.date < TODAY).every(p => p.items.every(i => i.completed)), 'no open task left behind');
+  // Without the frozen list (the old behaviour) the ticked task was pushed past the carried ones.
+  const { keepOnResume, ...old } = event;
+  assert.ok(keepOnResume);
+  assert.deepEqual(dayItems(buildTwo(80, [old]), TODAY), ['fiz-1']);
+});
+
+test("carried tasks fill what is left of today's capacity, then continue in lesson order", () => {
+  const done = { ...matDone, 'mat-3': true }; // 60-minute lessons: Tue and Wed pairs, today mat-3 + fiz-3
+  const plans = buildTwo(60, [], done);
+  const event = createShiftEvent(addDays(TODAY, -1), plans, TODAY)!;
+  assert.deepEqual(event.keepOnResume, ['mat-3']);
+  const shifted = buildTwo(60, [event], done);
+  const today = shifted.find(p => p.date === TODAY)!;
+  assert.deepEqual(today.items.map(i => i.id).sort(), ['fiz-1', 'mat-3']);
+  assert.equal(today.totalMinutes, 120);
+  checkInvariants(shifted, allIds(plans));
+  assert.deepEqual(shifted.flatMap(p => p.items.filter(i => i.playlistId === 'fiz').map(i => i.id)), ['fiz-1', 'fiz-2', 'fiz-3', 'fiz-4', 'fiz-5']);
+  assert.deepEqual(shifted.flatMap(p => p.items.filter(i => i.playlistId === 'mat').map(i => i.id)), ['mat-1', 'mat-2', 'mat-3', 'mat-4', 'mat-5']);
+});
+
+test('later ticking or unticking never moves anything after a keep-today postpone', () => {
+  const event = createShiftEvent(addDays(TODAY, -1), buildTwo(80), TODAY)!;
+  const base = layout(buildTwo(80, [event]));
+  for (const id of ['mat-2', 'mat-3', 'fiz-1', 'fiz-2']) {
+    const videoId = id;
+    assert.deepEqual(layout(buildTwo(80, [event], { ...matDone, [videoId]: !matDone[videoId as keyof typeof matDone] })), base, id);
+  }
+});
+
+test('a task ticked today ahead of an overdue lesson of its branch is not kept, so lesson order holds', () => {
+  const progress = missedSince('2026-09-23');
+  const todays = schedule(progress).find(p => p.date === TODAY)!.items.slice(0, 2);
+  const ticked = { ...progress, ...Object.fromEntries(todays.map(i => [i.videoId, true])) };
+  const plans = schedule(ticked);
+  const event = createShiftEvent(addDays(TODAY, -1), plans, TODAY)!;
+  assert.equal(event.keepOnResume, undefined, 'every branch has an overdue lesson');
+  const shifted = schedule(ticked, [event]);
+  checkInvariants(shifted, allIds(plans));
+  assertLessonOrder(shifted);
+});
+
+test("nothing ticked today, today's own shift and old events carry no keepOnResume", () => {
+  const progress = missedSince('2026-09-23');
+  const plans = schedule(progress);
+  assert.equal(createShiftEvent(addDays(TODAY, -1), plans, TODAY)!.keepOnResume, undefined);
+  assert.equal(createShiftEvent(TODAY, buildTwo(80), TODAY)!.keepOnResume, undefined, "'Kalanları yarına kaydır' is unchanged");
+  const old: ShiftEvent = { date: '2026-09-23', resumeDate: '2026-09-24', itemIds: ['fiz-1'], reason: 'difficult' };
+  assert.deepEqual(dayItems(buildTwo(80, [old]), TODAY), ['fiz-1'], 'a stored event without the field replays as before');
+});
+
+test('keepOnResume survives storage validation', () => {
+  const event: ShiftEvent = { date: '2026-09-23', resumeDate: '2026-09-24', itemIds: ['fiz-1'], keepOnResume: ['mat-2'] };
+  assert.deepEqual(normalizeShiftEvents([event]), [event]);
+  assert.deepEqual(normalizeShiftEvents([{ ...event, keepOnResume: [3, 'mat-2'] }])[0].keepOnResume, ['mat-2']);
+  assert.equal(normalizeShiftEvents([{ ...event, keepOnResume: [] }])[0].keepOnResume, undefined);
+  assert.equal(normalizeShiftEvents([{ ...event, keepOnResume: 'mat-2' }])[0].keepOnResume, undefined);
+});
+
+test('the kept task also holds in manual week-plan mode', () => {
+  const weekPlan = [[], [], ['mat'], ['fiz'], ['mat', 'fiz'], ['mat', 'fiz'], []];
+  const build = (shiftEvents: ShiftEvent[]) =>
+    buildSchedule(twoBranches(80), twoBranchPref, { completedMap: matDone, shiftEvents, today: TODAY, weekPlan }).plans;
+  const plans = build([]);
+  const event = createShiftEvent(addDays(TODAY, -1), plans, TODAY)!;
+  assert.deepEqual(event.keepOnResume, ['mat-2']);
+  const shifted = build([event]);
+  assert.deepEqual(dayItems(shifted, TODAY), ['mat-2']);
+  checkInvariants(shifted, allIds(plans));
+});

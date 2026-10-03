@@ -220,10 +220,10 @@ interface Queue {
  * next (eligible) study day to itself, and each 7-day window places at least
  * one item, so this always finishes. Completion is ignored here on purpose.
  */
-function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, today: string): PackResult {
+function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, today: string, pinned: DailyPlanItem[] = []): PackResult {
   const { pref, weekPlan } = rules;
   const plans: DailyPlan[] = [];
-  if (items.length === 0) return { plans, unscheduled: [] };
+  if (items.length === 0 && pinned.length === 0) return { plans, unscheduled: [] };
   if (!hasStudyWeekday(pref)) return { plans, unscheduled: [...items] };
 
   const assigned = weekPlan ? new Set(weekPlan.flat()) : null;
@@ -260,7 +260,7 @@ function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, 
   // against a future regression.
   const maxDays = items.length * 7 + 7;
 
-  for (let dayIndex = 0; remaining > 0 && dayIndex < maxDays; dayIndex++, date = addDays(date, 1)) {
+  for (let dayIndex = 0; (remaining > 0 || (dayIndex === 0 && pinned.length > 0)) && dayIndex < maxDays; dayIndex++, date = addDays(date, 1)) {
     const kind = dayKindOf(date, pref);
     if (kind !== 'study') {
       plans.push(makeDay(date, kind, [], today));
@@ -270,12 +270,14 @@ function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, 
     const eligible = queuesOn(dayOfWeek(date));
     // Rotation only matters in auto mode; manual days keep branch order.
     const order = weekPlan ? eligible : eligible.map((_, i) => eligible[(start + i) % eligible.length]);
-    const dayItems: DailyPlanItem[] = [];
-    const subjects = new Set<string>();
-    let used = 0;
+    // Pinned items (already ticked) hold the first day's capacity before anything else.
+    const dayItems: DailyPlanItem[] = dayIndex === 0 ? [...pinned] : [];
+    const subjects = new Set<string>(dayItems.map(item => item.subject));
+    let used = dayItems.reduce((sum, item) => sum + item.effectiveMinutes, 0);
     let lastQueue = start;
 
-    const oversizedQueue = order.find(qi => {
+    // A day that already holds pinned work cannot also take an oversized item alone.
+    const oversizedQueue = dayItems.length > 0 ? undefined : order.find(qi => {
       const q = queues[qi];
       return q.pos < q.items.length && q.items[q.pos].effectiveMinutes > capacity + EPSILON;
     });
@@ -304,7 +306,7 @@ function packItems(items: DailyPlanItem[], startDate: string, rules: PackRules, 
       }
     }
 
-    remaining -= dayItems.length;
+    remaining -= dayIndex === 0 ? dayItems.length - pinned.length : dayItems.length;
     if (!weekPlan) start = (lastQueue + 1) % queues.length;
     plans.push(makeDay(date, weekPlan && dayItems.length === 0 ? 'free' : 'study', dayItems, today));
   }
@@ -431,7 +433,10 @@ export function generateRoadmap(
  * - A past day ("Ritmi güncelle" on overdue tasks): every item still
  *   incomplete on any day before today is carried and the plan is re-laid
  *   from today, so today's own tasks follow the carried ones and every branch
- *   keeps its lesson order. The event's `date` is yesterday.
+ *   keeps its lesson order. The event's `date` is yesterday. Tasks already
+ *   ticked today stay on today (`keepOnResume`) and use up its capacity, so the
+ *   carried ones only fill the rest; a ticked task whose branch has a carried
+ *   lesson before it is not kept, as it would otherwise overtake that lesson.
  * - Today or later ("Kalanları yarına kaydır"): every item still incomplete
  *   on or before `date` is carried and replanned from `date + 1`.
  * Persist the event (append it) and pass all events to `generateRoadmap`.
@@ -443,7 +448,18 @@ export function createShiftEvent(date: string, plans: DailyPlan[], today: string
     .filter(plan => plan.date <= until)
     .flatMap(plan => plan.items.filter(item => !item.completed).map(item => item.id));
   if (itemIds.length === 0) return null;
-  return { date: until, resumeDate: addDays(until, 1), itemIds };
+  const event: ShiftEvent = { date: until, resumeDate: addDays(until, 1), itemIds };
+  if (date < today) {
+    const carried = new Set(itemIds);
+    const carriedBranches = new Set(
+      plans.filter(plan => plan.date <= until).flatMap(plan => plan.items.filter(item => carried.has(item.id)).map(item => item.playlistId))
+    );
+    const keep = plans
+      .filter(plan => plan.date === today)
+      .flatMap(plan => plan.items.filter(item => item.completed && !carriedBranches.has(item.playlistId)).map(item => item.id));
+    if (keep.length > 0) event.keepOnResume = keep;
+  }
+  return event;
 }
 
 function applyShift(plans: DailyPlan[], event: ShiftEvent, rules: PackRules, today: string): DailyPlan[] {
@@ -451,18 +467,24 @@ function applyShift(plans: DailyPlan[], event: ShiftEvent, rules: PackRules, tod
   const sorted = [...plans].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const kept: DailyPlan[] = [];
   const replan: DailyPlanItem[] = [];
+  const pinned: DailyPlanItem[] = [];
+  // Only a study day can hold the pinned items; otherwise they replan like the rest.
+  const keep = new Set(event.keepOnResume ?? []);
+  const canPin = keep.size > 0 && dayKindOf(event.resumeDate, rules.pref) === 'study';
 
   for (const plan of sorted) {
     if (plan.date < event.resumeDate) {
       const stay = plan.items.filter(item => !carried.has(item.id));
       replan.push(...plan.items.filter(item => carried.has(item.id)));
       kept.push(makeDay(plan.date, kindOfPlan(plan), stay.map(item => ({ ...item })), today));
+    } else if (canPin && plan.date === event.resumeDate) {
+      for (const item of plan.items) (keep.has(item.id) ? pinned : replan).push(item);
     } else {
       replan.push(...plan.items);
     }
   }
 
-  const packed = packItems(replan, event.resumeDate, rules, today);
+  const packed = packItems(replan, event.resumeDate, rules, today, pinned);
   if (packed.unscheduled.length > 0) {
     // No study day to move to: leave the plan as it was rather than drop tasks.
     return sorted.map(plan => makeDay(plan.date, kindOfPlan(plan), plan.items.map(item => ({ ...item })), today));
