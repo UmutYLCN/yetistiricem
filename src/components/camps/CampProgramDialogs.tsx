@@ -1,6 +1,7 @@
 import { useId, useMemo, useState } from 'react';
 import { CalendarClock, CircleCheck, TriangleAlert } from 'lucide-react';
 import type { CampSchedule, StudyCamp } from '../../types';
+import type { CompletionDays } from '../../lib/engine';
 import type { RhythmDraft } from '../../lib/campDraft';
 import { detailErrors, hasRhythmErrors, rhythmDraftOf, rhythmErrors, sameSchedule, scheduleOf } from '../../lib/campDraft';
 import { focusFirstInvalid } from '../../lib/dom';
@@ -23,11 +24,16 @@ import { useConfirm } from '../ui/ConfirmDialog';
 export function CampTempoDialog({
   camp,
   today,
+  completedMap,
+  completionDays,
   onSave,
   onClose,
 }: {
   camp: StudyCamp;
   today: string;
+  completedMap: Record<string, boolean>;
+  /** Tasks done ahead free their days, so the preview ends where the plan will. */
+  completionDays: CompletionDays;
   onSave: (schedule: CampSchedule) => void;
   onClose: () => void;
 }) {
@@ -47,10 +53,10 @@ export function CampTempoDialog({
   const unchanged = schedule !== null && sameSchedule(schedule, camp.schedule, branchIds);
   const effect = useMemo(() => {
     if (!schedule) return null;
-    const result = buildCampSchedule(withTempo(camp, schedule, today), { today });
+    const result = buildCampSchedule(withTempo(camp, schedule, today), { completedMap, completionDays, today });
     const finish = planEndDate(result.plans);
     return { finish, deadline: assessDeadline({ finishDate: finish, targetEndDate: schedule.targetEndDate, unscheduledCount: result.unscheduledItems.length }) };
-  }, [schedule, camp, today]);
+  }, [schedule, camp, completedMap, completionDays, today]);
 
   // A moved start date re-lays the plan from scratch and drops the camp's stored shifts and earlier tempos.
   const resetsShifts = schedule !== null && schedule.startDate !== camp.schedule.startDate && (camp.shiftEvents.length > 0 || (camp.tempoHistory?.length ?? 0) > 0);

@@ -70,7 +70,7 @@ test('the next task is the next open one of the same day that can play', () => {
 });
 
 test('focus sessions are kept with the data, in storage and in backups', () => {
-  const data: PlannerData = { ...emptyData(), completionDates: { since: '2026-09-26', dates: {} } };
+  const data: PlannerData = { ...emptyData(), completionDates: { since: '2026-09-26', dates: {}, aheadSince: '2026-09-26' } };
   const next = ops.addFocusSession(data, session());
   assert.deepEqual(next.focusSessions, [session()]);
   assert.deepEqual(data.focusSessions, [], 'the input is not changed');

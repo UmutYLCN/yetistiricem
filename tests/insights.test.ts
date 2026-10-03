@@ -90,14 +90,14 @@ test('a tick records its day, an untick clears it, and removed videos drop their
     camps: [c],
     activeCampId: c.id,
     completedMap: {},
-    completionDates: { since: '2026-09-21', dates: {} },
+    completionDates: { since: '2026-09-21', dates: {}, aheadSince: '2026-09-21' },
     focusSessions: [],
     playlistSync: { lastAttempt: null, lastFailure: null, branches: {} },
     dayNotes: {},
   };
   const ticked = ops.setCompleted(data, 'mat-1', true, '2026-09-22');
   assert.deepEqual(ticked.completedMap, { 'mat-1': true });
-  assert.deepEqual(ticked.completionDates, { since: '2026-09-21', dates: { 'mat-1': '2026-09-22' } });
+  assert.deepEqual(ticked.completionDates, { since: '2026-09-21', dates: { 'mat-1': '2026-09-22' }, aheadSince: '2026-09-21' });
   assert.equal(ops.setCompleted(ticked, 'mat-1', true, '2026-09-25'), ticked, 'a done task keeps its first day');
   const unticked = ops.setCompleted(ticked, 'mat-1', false, '2026-09-22');
   assert.deepEqual(unticked.completedMap, {});
@@ -111,7 +111,7 @@ test('a tick records its day, an untick clears it, and removed videos drop their
 test('daily activity uses recorded days only, and the heatmap scales days against the busiest one', () => {
   const c = camp([mat, fiz]);
   const completedMap = { 'mat-1': true, 'fiz-1': true, 'mat-2': true };
-  const completion: CompletionDates = { since: '2026-09-21', dates: { 'mat-1': '2026-09-21', 'fiz-1': '2026-09-21', 'mat-3': '2026-09-22' } };
+  const completion: CompletionDates = { since: '2026-09-21', dates: { 'mat-1': '2026-09-21', 'fiz-1': '2026-09-21', 'mat-3': '2026-09-22' }, aheadSince: '2026-09-21' };
   const sources = [source(c, completedMap, '2026-09-24')];
   const activity = activityByDay(sources, completedMap, completion);
   assert.deepEqual([...activity], [['2026-09-21', { count: 2, minutes: 120 }]], 'mat-3 is not done; mat-2 has no day');
@@ -164,6 +164,7 @@ test('commitment counts tasks done on their planned day against every task that 
   const completion: CompletionDates = {
     since: '2026-09-21',
     dates: { 'mat-1': '2026-09-21', 'fiz-1': '2026-09-22', 'mat-2': '2026-09-22', 'mat-4': today, 'mat-5': today },
+    aheadSince: '2026-09-21',
   };
   const c = camp([mat, fiz]);
   // On time: mat-1, mat-2, mat-4 (today), mat-5 (early). Late: fiz-1 (a day late), mat-3 and fiz-3 (left open).
@@ -248,8 +249,12 @@ function withStorage(initial: Record<string, string>, run: (store: Map<string, s
 test('completion dates start on the first load, keep only done videos and travel with backups', () => {
   withStorage({}, store => {
     const { data } = loadPlanner();
-    assert.deepEqual(data.completionDates, { since: todayKey(), dates: {} });
-    assert.deepEqual(JSON.parse(store.get(PROGRESS_KEYS.completionDates)!), { version: 1, since: todayKey(), dates: {} }, 'the start day is saved at once');
+    assert.deepEqual(data.completionDates, { since: todayKey(), dates: {}, aheadSince: todayKey() });
+    assert.deepEqual(
+      JSON.parse(store.get(PROGRESS_KEYS.completionDates)!),
+      { version: 1, since: todayKey(), dates: {}, aheadSince: todayKey() },
+      'the start day is saved at once'
+    );
   });
 
   withStorage(
@@ -257,9 +262,11 @@ test('completion dates start on the first load, keep only done videos and travel
       yt_completed: JSON.stringify({ a: true, b: true }),
       [PROGRESS_KEYS.completionDates]: JSON.stringify({ version: 1, since: '2026-09-01', dates: { a: '2026-09-02', c: '2026-09-03', b: 'dün' } }),
     },
-    () => {
+    store => {
       const { data, notices } = loadPlanner();
-      assert.deepEqual(data.completionDates, { since: '2026-09-01', dates: { a: '2026-09-02' } });
+      // Saved before early finishes: they count from this load on, and that day is saved at once.
+      assert.deepEqual(data.completionDates, { since: '2026-09-01', dates: { a: '2026-09-02' }, aheadSince: todayKey() });
+      assert.equal(JSON.parse(store.get(PROGRESS_KEYS.completionDates)!).aheadSince, todayKey());
       assert.deepEqual(notices, []);
     }
   );
@@ -276,17 +283,17 @@ test('completion dates start on the first load, keep only done videos and travel
     camps: [c],
     activeCampId: c.id,
     completedMap: { 'mat-1': true },
-    completionDates: { since: '2026-09-01', dates: { 'mat-1': '2026-09-21' } },
+    completionDates: { since: '2026-09-01', dates: { 'mat-1': '2026-09-21' }, aheadSince: '2026-09-05' },
     focusSessions: [],
     playlistSync: { lastAttempt: null, lastFailure: null, branches: {} },
     dayNotes: {},
   };
   const restored = parseBackup(JSON.stringify(createBackup(data, '2026-09-21')), '2026-10-01');
-  assert.ok(restored.ok && restored.data.completionDates.dates['mat-1'] === '2026-09-21' && restored.data.completionDates.since === '2026-09-01');
+  assert.ok(restored.ok && restored.data.completionDates.dates['mat-1'] === '2026-09-21' && restored.data.completionDates.since === '2026-09-01' && restored.data.completionDates.aheadSince === '2026-09-05');
   const { completionDates: _dropped, ...older } = createBackup(data, '2026-09-21');
   const fromOlder = parseBackup(JSON.stringify(older), '2026-10-01');
   assert.ok(fromOlder.ok);
-  if (fromOlder.ok) assert.deepEqual(fromOlder.data.completionDates, { since: '2026-10-01', dates: {} }, 'older backups start the record on the restore day');
+  if (fromOlder.ok) assert.deepEqual(fromOlder.data.completionDates, { since: '2026-10-01', dates: {}, aheadSince: '2026-10-01' }, 'older backups start the record on the restore day');
 });
 
 test('percent shares take the suffix of the number read aloud', () => {

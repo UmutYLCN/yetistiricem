@@ -107,7 +107,7 @@ test('manual mode keeps completion stable and shifts respect the weekday assignm
   for (const plan of shifted.plans) {
     for (const item of plan.items) assert.ok(weekPlan[dayOfWeek(plan.date)].includes(item.playlistId), `${item.id} on ${plan.date}`);
   }
-  // Ticking after the shift moves nothing.
+  // Ticking after the shift (no tick days recorded) moves nothing.
   const later = buildCampSchedule(camp({ weekPlan }, [event]), { today, completedMap: { ...progress, 'fiz-3': true } });
   assert.deepEqual(layout(later.plans), layout(shifted.plans));
 });

@@ -59,7 +59,7 @@ export function buildDemoData(today: string): PlannerData {
     camps: [camp],
     activeCampId: camp.id,
     completedMap,
-    completionDates: { since: camp.schedule.startDate, dates },
+    completionDates: { since: camp.schedule.startDate, dates, aheadSince: camp.schedule.startDate },
     focusSessions: [],
     playlistSync: emptyPlaylistSync(),
     dayNotes: {

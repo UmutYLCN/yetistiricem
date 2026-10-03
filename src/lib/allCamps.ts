@@ -1,5 +1,6 @@
 import type { DailyPlan, DailyPlanItem, RoadmapStats, ShiftEvent, StudyCamp, UserPreferences } from '../types/index.ts';
 import type { DeadlineStatus, ScheduleResult } from './engine.ts';
+import type { CompletionDays } from './engine.ts';
 import { assessDeadline, buildCampSchedule, calculateStats, countCompletedVideos, createShiftEvent } from './engine.ts';
 import type { DayKind, DaySummary, PlanIndex } from './planView.ts';
 import { dayKindFor, daySummaryOf, indexPlans, planKind } from './planView.ts';
@@ -232,7 +233,10 @@ export function campOverview({ camp, result }: ScopedCamp, completedMap: Record<
 }
 
 /** Every camp with a plan, each built with its own schedule, then merged by date. */
-export function buildAllCampsPlan(camps: readonly StudyCamp[], options: { completedMap: Record<string, boolean>; today: string }): AllCampsPlan {
+export function buildAllCampsPlan(
+  camps: readonly StudyCamp[],
+  options: { completedMap: Record<string, boolean>; completionDays?: CompletionDays; today: string }
+): AllCampsPlan {
   const scoped = campsWithPlans(camps).map(camp => ({ camp, result: buildCampSchedule(camp, options) }));
   const plans = mergeDailyPlans(scoped.map(({ camp, result }) => ({ campId: camp.id, plans: result.plans })));
   return {

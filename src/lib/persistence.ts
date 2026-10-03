@@ -3,6 +3,7 @@ import type { FocusSession } from './focus.ts';
 import { normalizeFocusSessions } from './focus.ts';
 import type { PlaylistSync } from './playlistSync.ts';
 import { emptyPlaylistSync, normalizePlaylistSync, playlistSyncStore } from './playlistSync.ts';
+import type { CompletionDays } from './engine.ts';
 import {
   STORAGE_KEYS,
   buildSchedule,
@@ -28,10 +29,13 @@ import { allBranches, migrateLegacyData, normalizeCamps, normalizePlaylists } fr
 // - `yt_camp_scope` is retired: it once chose between every camp and the
 //   active camp on the plan screens, which now always combine every camp.
 //   It is never read or written; a reset still clears an old one.
-// - `yt_completed_on` (`{ version, since, dates }`) records the day each video
-//   was ticked, from `since` (the first day a version with this key ran) on.
-//   `yt_completed` stays the source of truth for what is done; older ticks
-//   simply have no date.
+// - `yt_completed_on` (`{ version, since, dates, aheadSince, reopened? }`)
+//   records the day each video was ticked, from `since` (the first day a
+//   version with this key ran) on. `yt_completed` stays the source of truth
+//   for what is done; older ticks simply have no date. Ticks from
+//   `aheadSince` (the first day a version with early finishes ran) on move a
+//   task done ahead to its day and free its planned day; `reopened` keeps the
+//   ticks taken back on a later day, so that replay stays the same.
 // - `yt_focus_sessions` (`{ version, sessions }`) keeps one record per focus
 //   player session (see `src/lib/focus.ts`).
 // - `yt_playlist_sync` (`{ version, lastAttempt, lastFailure, branches }`)
@@ -88,10 +92,17 @@ export const MAX_NOTE_LENGTH = 2000;
  * before `since` have no date: they still count as done, but the activity map,
  * the streak and the commitment score only use what was recorded.
  */
-export interface CompletionDates {
+export interface CompletionDates extends CompletionDays {
   since: string;
   /** videoId -> date key; only ids that are completed. */
   dates: Record<string, string>;
+  /**
+   * Ticks from this day on free the later day their task was planned for
+   * (see docs/planner-engine.md); older ticks keep their place.
+   */
+  aheadSince: string;
+  /** videoId -> [ticked, unticked] days of ticks taken back on a later day (from `aheadSince` on). */
+  reopened?: Record<string, [string, string][]>;
 }
 
 export interface PlannerData {
@@ -125,7 +136,7 @@ export interface LoadResult {
 }
 
 export function emptyCompletionDates(since: string = todayKey()): CompletionDates {
-  return { since, dates: {} };
+  return { since, dates: {}, aheadSince: since };
 }
 
 export function emptyData(): PlannerData {
@@ -145,7 +156,13 @@ export function campStore(camps: StudyCamp[]) {
 }
 
 export function completionDatesStore(value: CompletionDates) {
-  return { version: COMPLETION_DATES_VERSION, since: value.since, dates: value.dates };
+  return {
+    version: COMPLETION_DATES_VERSION,
+    since: value.since,
+    dates: value.dates,
+    aheadSince: value.aheadSince,
+    ...(value.reopened && Object.keys(value.reopened).length > 0 ? { reopened: value.reopened } : {}),
+  };
 }
 
 export function focusSessionsStore(sessions: FocusSession[]) {
@@ -159,14 +176,18 @@ export function readFocusSessions(raw: unknown): FocusSession[] | null {
   return normalizeFocusSessions(raw.sessions);
 }
 
-/** Keeps only the dates of videos that are still completed. */
+/** Keeps only the dates of videos that are still completed (taken-back ticks stay). */
 export function datesOfCompleted(value: CompletionDates, completedMap: Record<string, boolean>): CompletionDates {
   const dates: Record<string, string> = {};
   for (const [id, date] of Object.entries(value.dates)) if (completedMap[id] === true) dates[id] = date;
-  return { since: value.since, dates };
+  return { ...value, dates };
 }
 
-/** A stored `yt_completed_on` value, or null when it is not one this version understands. */
+/**
+ * A stored `yt_completed_on` value, or null when it is not one this version
+ * understands. Values saved before early finishes have no `aheadSince`: it
+ * becomes `fallbackSince` (the load day), so their ticks keep their place.
+ */
 export function normalizeCompletionDates(raw: unknown, fallbackSince: string): CompletionDates | null {
   if (!isRecord(raw)) return null;
   if (typeof raw.version === 'number' && raw.version > COMPLETION_DATES_VERSION) return null;
@@ -174,7 +195,22 @@ export function normalizeCompletionDates(raw: unknown, fallbackSince: string): C
   if (isRecord(raw.dates)) {
     for (const [id, date] of Object.entries(raw.dates)) if (isDateKey(date)) dates[id] = date;
   }
-  return { since: isDateKey(raw.since) ? raw.since : fallbackSince, dates };
+  const reopened: Record<string, [string, string][]> = {};
+  if (isRecord(raw.reopened)) {
+    for (const [id, pairs] of Object.entries(raw.reopened)) {
+      if (!Array.isArray(pairs)) continue;
+      const valid = pairs.filter(
+        (pair): pair is [string, string] => Array.isArray(pair) && pair.length === 2 && isDateKey(pair[0]) && isDateKey(pair[1]) && pair[0] < pair[1]
+      );
+      if (valid.length > 0) reopened[id] = valid.map(([ticked, unticked]) => [ticked, unticked]);
+    }
+  }
+  return {
+    since: isDateKey(raw.since) ? raw.since : fallbackSince,
+    dates,
+    aheadSince: isDateKey(raw.aheadSince) ? raw.aheadSince : fallbackSince,
+    ...(Object.keys(reopened).length > 0 ? { reopened } : {}),
+  };
 }
 
 /** The camp the screens show: the active one, else the first. */
@@ -358,6 +394,11 @@ function loadFromStorage(): LoadResult {
   const completionDates = completion.status === 'ok' ? normalizeCompletionDates(completion.value, today) : null;
   if (completionDates) {
     data.completionDates = datesOfCompleted(completionDates, data.completedMap);
+    // Saved before early finishes: they start today. Save that day now, so a
+    // later load does not move it and re-lay days that have passed by then.
+    if (completion.status === 'ok' && isRecord(completion.value) && !isDateKey(completion.value.aheadSince)) {
+      writeKey(PROGRESS_KEYS.completionDates, completionDatesStore(data.completionDates));
+    }
   } else {
     data.completionDates = emptyCompletionDates(today);
     if (completion.status === 'missing') {

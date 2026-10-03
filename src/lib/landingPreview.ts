@@ -37,7 +37,7 @@ export function buildLandingPreview(today: string, alsoDone: readonly string[] =
   const completedMap = { ...data.completedMap };
   for (const videoId of alsoDone) completedMap[videoId] = true;
 
-  const schedule = buildCampSchedule(camp, { completedMap, today });
+  const schedule = buildCampSchedule(camp, { completedMap, completionDays: data.completionDates, today });
   const index = indexPlans(schedule.plans, today);
   const prefs = schedule.preferences;
   const shownDate =

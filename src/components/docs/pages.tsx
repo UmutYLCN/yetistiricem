@@ -176,7 +176,7 @@ export function Tempo() {
 export function Daily() {
   return (
     <>
-      <p>{msg("Her gün yalnızca bugünün görevlerine bakarsın. Bir görevi işaretlemek planı değiştirmez; işareti geri alabilirsin.")}</p>
+      <p>{msg("Her gün yalnızca bugünün görevlerine bakarsın. Sonraki bir günün görevini önden bitirirsen o görev bitirdiğin güne sayılır ve sonraki görevler boşalan yere öne kayar; işareti geri alabilirsin.")}</p>
       <H2 id="bugun">{msg("Rotam")}</H2>
       <p>
         {msg("\n        Menüdeki ")}<strong>{msg("Rotam")}</strong> {msg(" seçili günü iki şekilde gösterir; sağ üstteki ")}<strong>{msg("Liste / Yol")}</strong> {msg(" düğmesiyle geçersin ve\n        menü son kullandığını açar.\n      ")}</p>

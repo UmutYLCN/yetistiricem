@@ -14,11 +14,14 @@ import { defaultPreferences, inspectPreferences, normalizeShiftEvents } from './
 
 // Scheduling contract
 // - Every video of every playlist is scheduled, completed or not. The layout
-//   depends only on playlists, preferences and shift events; completion only
-//   sets `item.completed`, so ticking a task never moves any task.
+//   depends on playlists, preferences, shift events and the day each task was
+//   ticked (`completionDays`): a task ticked before its planned day moves to
+//   the day it was done, and the open tasks after it move up into the freed
+//   time (`applyFinishOps`). Nothing else about completion moves a task.
 // - A shift is a durable event recorded once, when the user asks for it (see
-//   `createShiftEvent`). Replaying the stored events keeps later completion
-//   toggles from moving anything.
+//   `createShiftEvent`). Shifts and early ticks replay in the order they
+//   happened, and each only re-lays days from the day it happened on, so the
+//   days before today never change.
 // - Dates are local `YYYY-MM-DD` keys (see ./date.ts).
 // - A camp's tempo can change part-way (`PastTempo`): each day is laid out
 //   with the tempo in force on it, so days before a change keep their layout.
@@ -35,8 +38,23 @@ export type ScheduleIssue =
   | { kind: 'unassigned-branch'; playlistId: string; unscheduledCount: number }
   | { kind: 'oversized-item'; itemId: string; date: string; effectiveMinutes: number; capacityMinutes: number };
 
+/**
+ * The day each video was ticked (`yt_completed_on`). Ticks recorded from
+ * `aheadSince` on free the later day they were planned for; earlier ones
+ * (made before this rule existed) keep their place.
+ */
+export interface CompletionDays {
+  aheadSince: string;
+  /** videoId -> day it was ticked (only videos that are ticked). */
+  dates: Readonly<Record<string, string>>;
+  /** videoId -> [ticked, unticked] days of ticks taken back on a later day, oldest first. */
+  reopened?: Readonly<Record<string, readonly (readonly [string, string])[]>>;
+}
+
 export interface ScheduleOptions {
   completedMap?: Record<string, boolean>;
+  /** Without it (or for undated ticks) ticking never moves a task. */
+  completionDays?: CompletionDays;
   shiftEvents?: readonly ShiftEvent[];
   /** Local day used for `isToday`/`isPast`; defaults to the real today. */
   today?: string;
@@ -228,6 +246,9 @@ interface PackResult {
   unscheduled: DailyPlanItem[];
 }
 
+/** Item id -> its place in the branches' video order (`buildItems`). */
+type LessonOrder = ReadonlyMap<string, number>;
+
 interface Queue {
   playlistId: string;
   subject: string;
@@ -256,9 +277,19 @@ interface Queue {
  * This rotation applies from `today` on only: earlier days keep the layout
  * they had. Under the current tempo each 7-day
  * window places at least one item, so this always finishes. Completion is
- * ignored here on purpose.
+ * ignored here on purpose. With `lessonOrder` each branch is laid out in
+ * lesson order rather than in the order its items arrive.
  */
-function packItems(items: DailyPlanItem[], startDate: string, tempo: Tempo, today: string, pinned: DailyPlanItem[] = []): PackResult {
+function packItems(
+  items: DailyPlanItem[],
+  startDate: string,
+  tempo: Tempo,
+  today: string,
+  pinned: DailyPlanItem[] = [],
+  lessonOrder?: LessonOrder,
+  /** The study day before `startDate` was given to an oversized item. */
+  followsOversized = false
+): PackResult {
   const plans: DailyPlan[] = [];
   if (items.length === 0 && pinned.length === 0) return { plans, unscheduled: [] };
 
@@ -273,6 +304,8 @@ function packItems(items: DailyPlanItem[], startDate: string, tempo: Tempo, toda
     }
     queue.items.push({ ...item });
   }
+  // Each branch in lesson order, whatever days its tasks came from.
+  if (lessonOrder) for (const q of queues) q.items.sort((a, b) => (lessonOrder.get(a.id) ?? 0) - (lessonOrder.get(b.id) ?? 0));
 
   // From the last tempo change on, the current tempo alone decides: what it
   // cannot place (no study weekday, or a manual branch on no weekday) never
@@ -288,7 +321,7 @@ function packItems(items: DailyPlanItem[], startDate: string, tempo: Tempo, toda
   const reweigh = tempo.past.length > 0;
 
   let start = 0;
-  let afterOversized: boolean = false;
+  let afterOversized: boolean = followsOversized;
   let date = startDate;
   // Each 7-day window under the current tempo has a study day for every
   // remaining branch and each such day places an item, so this bound is never
@@ -421,16 +454,34 @@ export function buildSchedule(
     current: rules,
   };
   const today = options.today ?? todayKey();
-  const packed = packItems(buildItems(playlists, pref), pref.startDate, tempo, today);
+  const items = buildItems(playlists, pref);
+  const lessonOrder: LessonOrder = new Map(items.map((item, index) => [item.id, index]));
+  const packed = packItems(items, pref.startDate, tempo, today);
 
   let plans = packed.plans;
   const events = normalizeShiftEvents(options.shiftEvents ?? []);
+  const days = options.completionDays;
+  // Shifts and early ticks replay in the order they happened. An event made
+  // on day d resumes on d or d + 1, so the ticks of the days before its
+  // `resumeDate` came first.
+  const finishOps = finishOpsOf(days, options.completedMap ?? {});
+  const ahead = new Set<string>();
+  let nextOp = 0;
+  const finishUntil = (resumeDate: string | null) => {
+    for (; nextOp < finishOps.length && (resumeDate === null || finishOps[nextOp].date < resumeDate); nextOp++) {
+      plans = applyFinishOps(plans, finishOps[nextOp], ahead, tempo, today, lessonOrder);
+    }
+  };
   for (const event of events) {
     // Safety net: an event that resumes before the camp's start can never
     // place a task earlier than `startDate`, so replay ignores it.
     if (event.resumeDate < pref.startDate) continue;
-    plans = applyShift(plans, event, tempo, today);
+    finishUntil(event.resumeDate);
+    // Events made since early ticks exist re-lay each branch in lesson order:
+    // a task taken back after it was done ahead may sit after later lessons.
+    plans = applyShift(plans, event, tempo, today, days && event.resumeDate > days.aheadSince ? lessonOrder : undefined);
   }
+  finishUntil(null);
   plans = withCompletion(plans, options.completedMap ?? {}, postponeCounts(events), today);
 
   const capacityMinutes = getDailyCapacityMinutes(pref);
@@ -533,7 +584,7 @@ export function createShiftEvent(date: string, plans: DailyPlan[], today: string
   return event;
 }
 
-function applyShift(plans: DailyPlan[], event: ShiftEvent, tempo: Tempo, today: string): DailyPlan[] {
+function applyShift(plans: DailyPlan[], event: ShiftEvent, tempo: Tempo, today: string, lessonOrder?: LessonOrder): DailyPlan[] {
   const carried = new Set(event.itemIds);
   const sorted = [...plans].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const kept: DailyPlan[] = [];
@@ -555,12 +606,132 @@ function applyShift(plans: DailyPlan[], event: ShiftEvent, tempo: Tempo, today: 
     }
   }
 
-  const packed = packItems(replan, event.resumeDate, tempo, today, pinned);
+  const packed = packItems(replan, event.resumeDate, tempo, today, pinned, lessonOrder);
   if (packed.unscheduled.length > 0) {
     // No study day to move to: leave the plan as it was rather than drop tasks.
     return sorted.map(plan => makeDay(plan.date, kindOfPlan(plan), plan.items.map(item => ({ ...item })), today));
   }
   return [...kept, ...packed.plans];
+}
+
+const byDate = (a: DailyPlan, b: DailyPlan) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+// ---------------------------------------------------------------------------
+// Early finishes. A task ticked before its planned day counts on the day it
+// was done: it moves there, and every task from its old day on is laid out
+// again, so the open ones move up into the freed time and the plan can end
+// sooner. `buildSchedule` replays the ticks day by day between the shift
+// events, and each day's ticks only re-lay that day's later days, so the
+// days before today never change.
+
+/** One day's early-finish work: ticks taken back (`reopened`), then ticks. Video ids. */
+interface FinishOps {
+  date: string;
+  ticked: Set<string>;
+  reopened: Set<string>;
+}
+
+function finishOpsOf(days: CompletionDays | undefined, completedMap: Record<string, boolean>): FinishOps[] {
+  if (!days || !isDateKey(days.aheadSince)) return [];
+  const byDay = new Map<string, FinishOps>();
+  const on = (date: string) => {
+    let ops = byDay.get(date);
+    if (!ops) byDay.set(date, (ops = { date, ticked: new Set(), reopened: new Set() }));
+    return ops;
+  };
+  const counts = (date: unknown): date is string => isDateKey(date) && date >= days.aheadSince;
+  for (const [videoId, pairs] of Object.entries(days.reopened ?? {})) {
+    for (const [ticked, unticked] of pairs) {
+      if (!counts(ticked) || !isDateKey(unticked) || unticked <= ticked) continue;
+      on(ticked).ticked.add(videoId);
+      on(unticked).reopened.add(videoId);
+    }
+  }
+  for (const [videoId, date] of Object.entries(days.dates)) {
+    if (completedMap[videoId] === true && counts(date)) on(date).ticked.add(videoId);
+  }
+  return [...byDay.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+/**
+ * The plan with `removed` taken out and every item from `from` on (plus
+ * `extra`) laid out again from `from`, each branch in lesson order. Days
+ * before `from` keep their layout. Null when something could not be placed.
+ */
+function relayFrom(
+  plans: DailyPlan[],
+  from: string,
+  removed: ReadonlySet<string>,
+  extra: DailyPlanItem[],
+  tempo: Tempo,
+  today: string,
+  lessonOrder: LessonOrder
+): DailyPlan[] | null {
+  const kept: DailyPlan[] = [];
+  const replan: DailyPlanItem[] = [];
+  for (const plan of plans) {
+    const items = plan.items.filter(item => !removed.has(item.id));
+    if (plan.date < from) kept.push(makeDay(plan.date, kindOfPlan(plan), items, today));
+    else replan.push(...items);
+  }
+  replan.push(...extra);
+  // The long-video rotation carries on across `from`: if the last study day
+  // before it went to one oversized item, the other branches go first.
+  const lastStudy = [...kept].reverse().find(plan => !plan.isRestDay && !plan.isMockExamDay);
+  const followsOversized =
+    lastStudy !== undefined && lastStudy.items.length === 1 && isOversizedItem(lastStudy.items[0], rulesOn(tempo, lastStudy.date).pref);
+  const packed = packItems(replan, from, tempo, today, [], lessonOrder, followsOversized);
+  return packed.unscheduled.length > 0 ? null : [...kept, ...packed.plans];
+}
+
+/** Adds done items to `date` (or the plan's first day, if it starts later). */
+function placeOn(plans: DailyPlan[], date: string, items: DailyPlanItem[], tempo: Tempo, today: string): DailyPlan[] {
+  const target = plans.length > 0 && plans[0].date > date ? plans[0].date : date;
+  const at = plans.findIndex(plan => plan.date === target);
+  if (at >= 0) {
+    const plan = plans[at];
+    const kind = kindOfPlan(plan);
+    return plans.map((p, i) => (i === at ? makeDay(p.date, kind === 'free' ? 'study' : kind, [...p.items, ...items], today) : p));
+  }
+  const day = makeDay(target, dayKindOf(target, rulesOn(tempo, target).pref), items, today);
+  return [...plans, day].sort(byDate);
+}
+
+/**
+ * One day's early finishes, in place of a stored event. `ahead` holds the
+ * items moved so far. A tick taken back on a later day returns its task to the
+ * open plan from that day, in lesson order (the day it was done on loses it).
+ * Then each task ticked this day but planned for a later one moves to this
+ * day, and the plan is laid out again from the earliest day it left.
+ */
+function applyFinishOps(
+  plans: DailyPlan[],
+  ops: FinishOps,
+  ahead: Set<string>,
+  tempo: Tempo,
+  today: string,
+  lessonOrder: LessonOrder
+): DailyPlan[] {
+  let sorted = [...plans].sort(byDate);
+  if (ops.reopened.size > 0) {
+    const back = sorted.flatMap(plan => plan.items.filter(item => ahead.has(item.id) && ops.reopened.has(item.videoId)));
+    const relaid = back.length > 0 ? relayFrom(sorted, ops.date, new Set(back.map(item => item.id)), back, tempo, today, lessonOrder) : null;
+    if (relaid) {
+      sorted = relaid;
+      for (const item of back) ahead.delete(item.id);
+    }
+  }
+
+  const early = sorted.flatMap(plan => (plan.date > ops.date ? plan.items.filter(item => ops.ticked.has(item.videoId)).map(item => ({ item, date: plan.date })) : []));
+  if (early.length === 0) return sorted;
+  const moved = new Set(early.map(({ item }) => item.id));
+  // Should the rest not fit (no study day left to move to), the task still
+  // counts on its day; the others simply stay where they were.
+  const relaid =
+    relayFrom(sorted, early[0].date, moved, [], tempo, today, lessonOrder) ??
+    sorted.map(plan => makeDay(plan.date, kindOfPlan(plan), plan.items.filter(item => !moved.has(item.id)), today));
+  for (const id of moved) ahead.add(id);
+  return placeOn(relaid, ops.date, early.map(({ item }) => item), tempo, today);
 }
 
 /**
@@ -683,14 +854,22 @@ type ScheduledCamp = Pick<StudyCamp, 'branches' | 'schedule' | 'shiftEvents' | '
  */
 export function dailyHoursForDeadline(
   camp: ScheduledCamp,
-  options: { today?: string; maxHours?: number; step?: number; withHours?: (hours: number) => ScheduledCamp } = {}
+  options: {
+    today?: string;
+    maxHours?: number;
+    step?: number;
+    withHours?: (hours: number) => ScheduledCamp;
+    /** Pass the plan's completion so tasks done ahead free their days here too. */
+    completedMap?: Record<string, boolean>;
+    completionDays?: CompletionDays;
+  } = {}
 ): number | null {
   const target = camp.schedule.targetEndDate;
   if (!target) return null;
   const step = options.step ?? 0.5;
   const withHours = options.withHours ?? ((hours: number) => ({ ...camp, schedule: { ...camp.schedule, dailyStudyHours: hours } }));
   const finishesWith = (hours: number) => {
-    const result = buildCampSchedule(withHours(hours), { today: options.today });
+    const result = buildCampSchedule(withHours(hours), { today: options.today, completedMap: options.completedMap, completionDays: options.completionDays });
     if (result.unscheduledItems.length > 0) return false;
     const end = planEndDate(result.plans);
     return end === null || end <= target;
