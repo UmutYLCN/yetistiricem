@@ -249,7 +249,12 @@ interface Queue {
  * current tempo cannot be placed and come back as `unscheduled`.
  *
  * Either way a branch whose next item is longer than a whole day gets the
- * next (eligible) study day to itself, and under the current tempo each 7-day
+ * next (eligible) study day to itself. The study day after one given to an
+ * oversized item goes to the other branches that have open work first (their
+ * heads fit a day), so long videos alternate with them instead of starving
+ * them; with no such branch, oversized items keep taking consecutive days.
+ * This rotation applies from `today` on only: earlier days keep the layout
+ * they had. Under the current tempo each 7-day
  * window places at least one item, so this always finishes. Completion is
  * ignored here on purpose.
  */
@@ -283,6 +288,7 @@ function packItems(items: DailyPlanItem[], startDate: string, tempo: Tempo, toda
   const reweigh = tempo.past.length > 0;
 
   let start = 0;
+  let afterOversized: boolean = false;
   let date = startDate;
   // Each 7-day window under the current tempo has a study day for every
   // remaining branch and each such day places an item, so this bound is never
@@ -325,10 +331,14 @@ function packItems(items: DailyPlanItem[], startDate: string, tempo: Tempo, toda
     let lastQueue = start;
 
     // A day that already holds pinned work cannot also take an oversized item alone.
-    const oversizedQueue = dayItems.length > 0 ? undefined : order.find(qi => {
+    const isOversizedHead = (qi: number) => {
       const q = queues[qi];
       return hasLeft(q) && minutesOf(q.items[q.pos]) > capacity + EPSILON;
-    });
+    };
+    // After an oversized day the others go first, but only from today on.
+    const othersFirst: boolean = afterOversized && date >= today && order.some(qi => hasLeft(queues[qi]) && !isOversizedHead(qi));
+    const oversizedQueue: number | undefined = dayItems.length > 0 || othersFirst ? undefined : order.find(isOversizedHead);
+    afterOversized = oversizedQueue !== undefined;
 
     if (oversizedQueue !== undefined) {
       dayItems.push(take(queues[oversizedQueue]));
