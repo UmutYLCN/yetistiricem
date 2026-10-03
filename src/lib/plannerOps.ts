@@ -97,8 +97,16 @@ function tempoKey(schedule: CampSchedule): string {
  * the tempo it replaces joins `tempoHistory` with `until = today`, so every
  * day before today keeps exactly the layout it had. A camp that has not
  * started takes the new tempo for its whole plan and needs no history.
+ * Moving the start date resets the shift events and the history (see below).
  */
 export function withTempo(camp: StudyCamp, schedule: CampSchedule, today: string): StudyCamp {
+  if (schedule.startDate !== camp.schedule.startDate) {
+    // A moved start date re-lays the plan from scratch with the new tempo only:
+    // the stored shift events and the tempo history are discarded (ticks stay).
+    const next: StudyCamp = { ...camp, schedule, shiftEvents: [] };
+    delete next.tempoHistory;
+    return next;
+  }
   if (camp.schedule.startDate >= today) {
     const next: StudyCamp = { ...camp, schedule };
     delete next.tempoHistory;
