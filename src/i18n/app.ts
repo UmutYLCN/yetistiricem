@@ -36,6 +36,7 @@ const entries: Record<string, LocalizedText> = {
   'Videoların kanalı': ['Video channel', 'Canal de los vídeos', 'Chaîne des vidéos'],
   'Kaynağa dönmek için saklanır. Videoları listeden almak için “Oynatma listesi” ile içe aktar.': ['Saved so you can return to the source. To import videos, use “Playlist”.', 'Se guarda para volver a la fuente. Para importar vídeos, usa «Lista de reproducción».', 'Enregistré pour retrouver la source. Pour importer les vidéos, choisissez « Playlist ».'],
   'Bu değişiklik yalnızca': ['This change applies only to', 'Este cambio solo se aplica a', 'Cette modification s’applique uniquement à'],
+  'Kamp başladığı için yeni tempo bugünden itibaren geçerli; geçmiş günler olduğu gibi kalır.': ['This plan has started, so the new pace applies from today; past days stay as they were.', 'Como el plan ya empezó, el nuevo ritmo se aplica desde hoy; los días pasados quedan como estaban.', 'Le programme a commencé : le nouveau rythme s’applique à partir d’aujourd’hui et les jours passés restent inchangés.'],
   'için geçerli. Tamamlanan görevlerin ve ileri taşımaların korunur.': ['. Completed tasks and reschedules will be kept.', '. Se conservarán las tareas completadas y los cambios de fecha.', '. Les tâches terminées et les reports seront conservés.'],
   'Planlanacak video yok': ['No videos to schedule', 'No hay vídeos para planificar', 'Aucune vidéo à planifier'],
   'Değişiklik yok': ['No changes', 'Sin cambios', 'Aucun changement'],

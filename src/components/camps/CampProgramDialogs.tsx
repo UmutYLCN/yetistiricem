@@ -6,6 +6,7 @@ import { detailErrors, hasRhythmErrors, rhythmDraftOf, rhythmErrors, sameSchedul
 import { focusFirstInvalid } from '../../lib/dom';
 import { assessDeadline, buildCampSchedule, planEndDate } from '../../lib/engine';
 import { formatLongDate } from '../../lib/format';
+import { withTempo } from '../../lib/plannerOps';
 import { MAX_CAMP_NAME } from '../../lib/studyCamp';
 import { RhythmEditor } from '../rhythm/RhythmEditor';
 import { Dialog } from '../ui/Dialog';
@@ -15,7 +16,8 @@ import { msg } from '../../lib/messages';
 
 /**
  * Edits one camp's tempo: dates, how the week is formed and its values.
- * Other camps keep their own tempo. Completion and shifts are kept.
+ * Other camps keep their own tempo. Completion and shifts are kept; once the
+ * camp has started the new tempo applies from today (`withTempo`).
  */
 export function CampTempoDialog({
   camp,
@@ -29,6 +31,7 @@ export function CampTempoDialog({
   onClose: () => void;
 }) {
   const branchIds = camp.branches.map(b => b.id);
+  const started = camp.schedule.startDate < today;
   const [rhythm, setRhythm] = useState<RhythmDraft>(() => rhythmDraftOf(camp.schedule, branchIds));
   const [startDate, setStartDate] = useState(camp.schedule.startDate);
   const [targetEndDate, setTargetEndDate] = useState(camp.schedule.targetEndDate ?? '');
@@ -42,7 +45,7 @@ export function CampTempoDialog({
   const unchanged = schedule !== null && sameSchedule(schedule, camp.schedule, branchIds);
   const effect = useMemo(() => {
     if (!schedule) return null;
-    const result = buildCampSchedule({ ...camp, schedule }, { today });
+    const result = buildCampSchedule(withTempo(camp, schedule, today), { today });
     const finish = planEndDate(result.plans);
     return { finish, deadline: assessDeadline({ finishDate: finish, targetEndDate: schedule.targetEndDate, unscheduledCount: result.unscheduledItems.length }) };
   }, [schedule, camp, today]);
@@ -64,7 +67,9 @@ export function CampTempoDialog({
       title={msg("Tempoyu düzenle")}
       description={
         <>
-          {msg("\n          Bu değişiklik yalnızca ")}<span className="font-semibold text-ink">{msg("“")}{camp.name}{msg("”")}</span> {msg(" için geçerli. Tamamlanan görevlerin ve\n          ileri taşımaların korunur.\n        ")}</>
+          {msg("\n          Bu değişiklik yalnızca ")}<span className="font-semibold text-ink">{msg("“")}{camp.name}{msg("”")}</span> {msg(" için geçerli. Tamamlanan görevlerin ve\n          ileri taşımaların korunur.\n        ")}
+          {started && <> {msg("Kamp başladığı için yeni tempo bugünden itibaren geçerli; geçmiş günler olduğu gibi kalır.")}</>}
+        </>
       }
       width={760}
       dismissOnBackdrop={false}

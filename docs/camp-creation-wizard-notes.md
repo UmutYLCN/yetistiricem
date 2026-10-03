@@ -45,5 +45,5 @@ Saving keeps the camp's id, name, dates and tempo, its branches, completion mark
 - A branch keeps one source link, so every imported playlist becomes its own branch; merging lists into one branch is manual (pasted video links). Importing into an existing branch via "Video ekle" fills the link only if the branch had none.
 - Manual days take their branches in camp order, round-robin until the day is full; there is no per-branch time share or fixed video count per day, and no drag-and-drop of branches or videos.
 - The target date is advisory: suggestions only change the daily time; the plan is never compressed to fit it.
-- Presets are fixed. Changing a running camp's tempo relays its plan; completion and stored shifts are kept and replayed under the new rules.
+- Presets are fixed. Changing a started camp's tempo applies from today: the days before today keep their layout (see `tempoHistory` in [planner-engine.md](planner-engine.md)); completion and stored shifts are kept. A camp that has not started takes the new tempo for its whole plan.
 - The migrated older keys are not deleted, so a very large library briefly uses about twice the storage.

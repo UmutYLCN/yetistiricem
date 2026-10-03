@@ -28,6 +28,16 @@ From two camps on the plan screens always combine them (`combinesCamps`); there 
 - Invalid settings (0, negative, NaN, missing) fall back to defaults and are reported as `invalid-preference` issues. If no weekday is a study day, `plans` is `[]`, `unscheduledItems` holds everything, and the issues contain `no-study-days`. Nothing can loop: every 7-day window places at least one item.
 - `item.id === videoId`, unless the same video appears twice in a camp. Later copies get `${playlistId}:${videoId}`. Completion stays shared through `videoId`.
 
+## Tempo changes
+
+"Tempoyu düzenle" saves through `withTempo(camp, schedule, today)` (`src/lib/plannerOps.ts`, `tests/tempoChange.test.ts`).
+
+- A camp that has not started (`startDate >= today`) takes the new tempo for its whole plan, as before.
+- A started camp keeps the tempo it replaces in `camp.tempoHistory` (`PastTempo = { until: today, schedule }`, oldest first): that tempo laid out the days before `until`, and `camp.schedule` lays out the days from the last `until` on. Changing it again the same day replaces only the current tempo; a change of dates alone (start, target) records nothing.
+- `buildCampSchedule` packs each day with the rules in force on it (`rulesOn`): capacity, study/rest/mock weekdays, branches per day, manual weekdays, and the speed and practice share that weigh the day's items. Shift events replay with the same per-day rules, including tasks a red card pinned to its `resumeDate` (`keepOnResume`), which count against that day's capacity under the tempo in force on it. Packing only looks forward, so the days before the change are laid out exactly as before it: a plan on track up to today has nothing overdue afterwards, and each branch keeps its lesson order.
+- Camps without `tempoHistory` (every camp saved before it existed) lay out exactly as before; `tests/fixtures/layout-before-tempo-history.json` pins that. The history is stored only after a later tempo change; nothing is migrated.
+- What the current tempo cannot place (a manual branch on none of its weekdays, no study weekday) is unscheduled as before; an earlier tempo may still have placed some of that branch's tasks on its own days.
+
 ## Target end date
 
 `targetEndDate` never changes the layout: nothing is squeezed, skipped or overbooked to meet it.

@@ -85,9 +85,35 @@ export function renameCamp(data: PlannerData, campId: string, name: string): Pla
   return mapCamp(data, campId, c => ({ ...c, name }));
 }
 
-/** Replaces one camp's tempo (schedule). Other camps are left as they are. */
-export function setCampSchedule(data: PlannerData, campId: string, schedule: CampSchedule): PlannerData {
-  return mapCamp(data, campId, c => ({ ...c, schedule }));
+/** The fields that decide how days are filled (not the start or target date). */
+function tempoKey(schedule: CampSchedule): string {
+  const { dailyStudyHours, playbackSpeed, practiceMultiplier, maxSubjectsPerDay, activeDays, restDays, mockExamDays, mode, weekPlan } = schedule;
+  return JSON.stringify([dailyStudyHours, playbackSpeed, practiceMultiplier, maxSubjectsPerDay, activeDays, restDays, mockExamDays, mode, mode === 'manual' ? weekPlan : null]);
+}
+
+/**
+ * `camp` with a new tempo ("Tempoyu düzenle"). Once the camp has started
+ * (its start day is before `today`), the new tempo applies from today on:
+ * the tempo it replaces joins `tempoHistory` with `until = today`, so every
+ * day before today keeps exactly the layout it had. A camp that has not
+ * started takes the new tempo for its whole plan and needs no history.
+ */
+export function withTempo(camp: StudyCamp, schedule: CampSchedule, today: string): StudyCamp {
+  if (camp.schedule.startDate >= today) {
+    const next: StudyCamp = { ...camp, schedule };
+    delete next.tempoHistory;
+    return next;
+  }
+  const history = camp.tempoHistory ?? [];
+  const last = history[history.length - 1];
+  // Same rules, or the current tempo only took over today: nothing to keep.
+  if (tempoKey(schedule) === tempoKey(camp.schedule) || (last && last.until >= today)) return { ...camp, schedule };
+  return { ...camp, schedule, tempoHistory: [...history, { until: today, schedule: camp.schedule }] };
+}
+
+/** Sets one camp's tempo (see `withTempo`). Other camps are left as they are. */
+export function setCampSchedule(data: PlannerData, campId: string, schedule: CampSchedule, today: string): PlannerData {
+  return mapCamp(data, campId, c => withTempo(c, schedule, today));
 }
 
 export function removeCamp(data: PlannerData, campId: string): PlannerData {

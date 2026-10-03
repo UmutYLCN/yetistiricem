@@ -657,7 +657,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
 
   const handleSaveTempo = (target: StudyCamp, next: CampSchedule) => {
     actions.setCampSchedule(target.id, next);
-    notify({ message: `“${target.name}” temposu kaydedildi; plan yeniden dağıtıldı.`, tone: 'info' });
+    const started = target.schedule.startDate < today;
+    notify({ message: `“${target.name}” temposu kaydedildi; ${started ? 'yeni tempo bugünden başlıyor.' : 'plan yeniden dağıtıldı.'}`, tone: 'info' });
   };
 
   const handleBackup = () => {
