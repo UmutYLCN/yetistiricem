@@ -56,6 +56,13 @@ export interface ShiftEvent {
   resumeDate: string;
   /** `DailyPlanItem.id`s carried forward, frozen when the shift was made. */
   itemIds: string[];
+  /**
+   * Items already ticked on `resumeDate` when an overdue shift restarted today:
+   * on replay they stay on that day and count against its capacity, so the
+   * carried items only fill what is left. Frozen at creation; missing on older
+   * events, which replay as they always did.
+   */
+  keepOnResume?: string[];
   /** The reason the user picked. Missing on older events and when they skipped the question. */
   reason?: PostponeReason;
   /** A short note the user added to the reason. */

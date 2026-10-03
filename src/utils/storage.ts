@@ -126,6 +126,8 @@ export function normalizeShiftEvents(raw: unknown): ShiftEvent[] {
     const itemIds = event.itemIds.filter((id): id is string => typeof id === 'string');
     if (itemIds.length === 0) return [];
     const normalized: ShiftEvent = { date: event.date, resumeDate: event.resumeDate, itemIds };
+    const keep = Array.isArray(event.keepOnResume) ? event.keepOnResume.filter((id): id is string => typeof id === 'string') : [];
+    if (keep.length > 0) normalized.keepOnResume = keep;
     if (isPostponeReason(event.reason)) normalized.reason = event.reason;
     const note = typeof event.note === 'string' ? event.note.trim().slice(0, MAX_SHIFT_NOTE_LENGTH) : '';
     if (note) normalized.note = note;
