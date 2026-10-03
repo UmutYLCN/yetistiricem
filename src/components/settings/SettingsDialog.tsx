@@ -1,9 +1,10 @@
 import { Dialog } from '../ui/Dialog';
 import { ThemeSegmented } from '../ui/ThemeToggle';
+import { DailyLimitSetting } from './DailyLimitSetting';
 import { LanguageSelect } from './LanguageSelect';
 import { msg } from '../../lib/messages';
 
-/** Preferences for appearance and language, opened from the gear next to the profile. */
+/** Preferences for appearance, language and the daily study ceiling, opened from the gear next to the profile. */
 export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog open={open} onClose={onClose} title={msg('Tercihler')} width={540}>
@@ -16,6 +17,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
           <ThemeSegmented />
         </li>
         <LanguageSelect />
+        <DailyLimitSetting />
       </ul>
     </Dialog>
   );

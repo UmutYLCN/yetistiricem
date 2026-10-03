@@ -727,6 +727,62 @@ const entries: Record<string, LocalizedText> = {
     '; también se eliminarán {count} registros de tareas completadas',
     '; {count} enregistrements de tâches terminées seront également supprimés',
   ],
+  // Deadline-overrun prompt after a postponement, and the daily ceiling in Tercihler.
+  'Hedef tarih': ['Target date', 'Fecha objetivo', 'Date cible'],
+  'Plan hedef tarihini aşıyor': ['Your plan now runs past its target date', 'Tu plan ahora termina después de la fecha objetivo', 'Votre programme dépasse maintenant la date cible'],
+  '“{camp}” için hedefin {target}. Bu ertelemeyle plan {finish} tarihinde bitiyor, {days} gün geç.': [
+    'Your target for “{camp}” is {target}. With this change, the plan ends on {finish}, {days} days late.',
+    'Tu objetivo para «{camp}» es el {target}. Con este cambio, el plan termina el {finish}, {days} días tarde.',
+    'Votre objectif pour « {camp} » est le {target}. Avec ce changement, le programme se termine le {finish}, avec {days} jours de retard.',
+  ],
+  'Günde {hours} çalışırsan plan {finish} tarihinde biter ve hedefe yetişirsin. Yeni süre bugünden başlar; geçmiş günler olduğu gibi kalır.': [
+    'If you study {hours} a day, the plan ends on {finish} and you meet your target. The new time starts today; past days stay as they are.',
+    'Si estudias {hours} al día, el plan termina el {finish} y llegas a tu objetivo. El nuevo tiempo empieza hoy; los días pasados quedan como están.',
+    'Si vous étudiez {hours} par jour, le programme se termine le {finish} et vous atteignez votre objectif. La nouvelle durée commence aujourd’hui ; les jours passés restent inchangés.',
+  ],
+  'Günlük süreyi {hours} saate çıkar': ['Raise daily time to {hours} hours', 'Subir el tiempo diario a {hours} horas', 'Passer le temps quotidien à {hours} heures'],
+  'Hedef tarihi ertele': ['Move the target date', 'Aplazar la fecha objetivo', 'Reporter la date cible'],
+  'Böyle kalsın': ['Keep it as is', 'Dejarlo así', 'Garder tel quel'],
+  'Bu çok yoğun olabilir.': ['This may be too intense.', 'Esto puede ser demasiado intenso.', 'Cela risque d’être trop intense.'],
+  'Önerilen süre, şu anki günlük sürenin ({current}) 1,5 katından fazla. Sürdürebileceğin bir tempo değilse hedef tarihi ertelemek de olur.': [
+    'The suggested time is more than 1.5 times your current daily time ({current}). If you can’t keep that pace up, moving the target date is fine too.',
+    'El tiempo sugerido es más de 1,5 veces tu tiempo diario actual ({current}). Si no puedes mantener ese ritmo, también puedes aplazar la fecha objetivo.',
+    'La durée proposée dépasse 1,5 fois votre temps quotidien actuel ({current}). Si ce rythme n’est pas tenable, vous pouvez aussi reporter la date cible.',
+  ],
+  'Önerilen süre, günlük üst sınırın olan {limit} saatin üstünde.': [
+    'The suggested time is above your daily limit of {limit} hours.',
+    'El tiempo sugerido supera tu límite diario de {limit} horas.',
+    'La durée proposée dépasse votre limite quotidienne de {limit} heures.',
+  ],
+  'Günlük üst sınırın olan {limit} bile hedefe yetiştirmiyor. Hedef tarihi erteleyebilir ya da üst sınırı Tercihler’den değiştirebilirsin.': [
+    'Even your daily limit of {limit} is not enough to meet the target. You can move the target date or change the limit in Preferences.',
+    'Ni siquiera tu límite diario de {limit} basta para llegar al objetivo. Puedes aplazar la fecha objetivo o cambiar el límite en Preferencias.',
+    'Même votre limite quotidienne de {limit} ne suffit pas pour atteindre l’objectif. Vous pouvez reporter la date cible ou modifier la limite dans Préférences.',
+  ],
+  'Hedef tarih geçti; günlük süreyi artırmak artık yetiştirmez. Yeni bir hedef tarih seçebilirsin.': [
+    'The target date has passed, so more daily time can no longer meet it. You can pick a new target date.',
+    'La fecha objetivo ya pasó, así que más tiempo diario ya no basta. Puedes elegir una nueva fecha objetivo.',
+    'La date cible est passée : plus de temps quotidien ne suffit plus. Vous pouvez choisir une nouvelle date cible.',
+  ],
+  'Yeni hedef tarih': ['New target date', 'Nueva fecha objetivo', 'Nouvelle date cible'],
+  'Bu ritimle plan {finish} tarihinde bitiyor.': ['At this pace, the plan ends on {finish}.', 'A este ritmo, el plan termina el {finish}.', 'À ce rythme, le programme se termine le {finish}.'],
+  'Hedefi kaydet': ['Save target', 'Guardar objetivo', 'Enregistrer l’objectif'],
+  'Bir tarih seç.': ['Pick a date.', 'Elige una fecha.', 'Choisissez une date.'],
+  'Hedef tarih başlangıçtan önce olamaz.': ['The target date can’t be before the start date.', 'La fecha objetivo no puede ser anterior al inicio.', 'La date cible ne peut pas précéder la date de début.'],
+  '“{camp}” için günlük süre {hours} saat oldu; yeni tempo bugünden başlıyor.': [
+    'Daily time for “{camp}” is now {hours} hours; the new pace starts today.',
+    'El tiempo diario de «{camp}» ahora es de {hours} horas; el nuevo ritmo empieza hoy.',
+    'Le temps quotidien de « {camp} » est maintenant de {hours} heures ; le nouveau rythme commence aujourd’hui.',
+  ],
+  '“{camp}” için hedef tarih {date} oldu.': ['The target date for “{camp}” is now {date}.', 'La fecha objetivo de «{camp}» ahora es el {date}.', 'La date cible de « {camp} » est maintenant le {date}.'],
+  'Günlük üst sınır': ['Daily limit', 'Límite diario', 'Limite quotidienne'],
+  'Hedef tarihe yetişmek için önerilen günlük süre bunu geçmez.': [
+    'Suggestions to meet a target date never go above this daily time.',
+    'Las sugerencias para llegar a una fecha objetivo nunca superan este tiempo diario.',
+    'Les suggestions pour atteindre une date cible ne dépassent jamais cette durée quotidienne.',
+  ],
+  'Günlük üst sınırı yarım saat azalt': ['Lower the daily limit by half an hour', 'Bajar el límite diario media hora', 'Réduire la limite quotidienne d’une demi-heure'],
+  'Günlük üst sınırı yarım saat artır': ['Raise the daily limit by half an hour', 'Subir el límite diario media hora', 'Augmenter la limite quotidienne d’une demi-heure'],
 };
 
 const asCatalog = (index: number) => Object.fromEntries(Object.entries(entries).map(([key, value]) => [key, value[index]]));

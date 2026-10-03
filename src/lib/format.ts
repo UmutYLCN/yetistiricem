@@ -55,6 +55,11 @@ export function formatMinutes(minutes: number): string {
   return `${number(h)} ${labels.hour} ${number(m)} ${labels.minute}`;
 }
 
+/** A daily time as a plain hour count for "{hours} saat": "3", "3,5". */
+export function formatHourCount(hours: number): string {
+  return new Intl.NumberFormat(dateLocale(), { maximumFractionDigits: 1 }).format(Number.isFinite(hours) ? hours : 0);
+}
+
 /** Exact video length: "4:05", "38:23", "1:02:03". */
 export function formatClock(totalSeconds: number): string {
   const seconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.round(totalSeconds)) : 0;

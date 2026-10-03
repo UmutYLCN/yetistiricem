@@ -21,12 +21,14 @@ import type { SharedCamp } from './lib/campShare';
 import { campFromShare, decodeCampShare } from './lib/campShare';
 import { discardMcpCampDraft, readMcpCampDraft } from './lib/mcpDrafts';
 import { classifyCamp, isLegacyKind } from './lib/camps';
+import { getDailyLimit } from './lib/dailyLimit';
+import { deadlineOverrun } from './lib/deadlineOverrun';
 import { focusTotals, focusableVideoId, nextFocusItem } from './lib/focus';
 import { progressInsights } from './lib/insights';
-import { formatDayTitle, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
+import { formatDayTitle, formatHourCount, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
 import { indexCamps, indexPlans, summarizeDay, weeksOverview } from './lib/planView';
-import { withAddedBranches, withAppendedVideos, withResumed } from './lib/plannerOps';
+import { addShiftEvents, withAddedBranches, withAppendedVideos, withResumed } from './lib/plannerOps';
 import type { SyncNotification } from './lib/playlistSync';
 import { draftFromPending, syncNotifications, syncTargets } from './lib/playlistSync';
 import { allBranches, defaultSchedule } from './lib/studyCamp';
@@ -56,6 +58,7 @@ import { APP_PATH, campImportUrl, clearMcpDraftRequest, discoverReturnUrl } from
 import type { FocusTarget } from './components/focus/FocusModal';
 import { FocusModal } from './components/focus/FocusModal';
 import { PostponeReasonDialog } from './components/camps/PostponeReasonDialog';
+import { DeadlineOverrunDialog } from './components/camps/DeadlineOverrunDialog';
 import { PathView } from './components/path/PathView';
 import type { Profile, View } from './components/layout/Navigation';
 import { MobileTabBar, MobileTopBar, Sidebar } from './components/layout/Navigation';
@@ -131,6 +134,8 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [legacyDismissed, setLegacyDismissed] = useState(false);
   const [pendingShift, setPendingShift] = useState<PendingShift | null>(null);
+  /** Postponements that pushed their camp past its target date, asked about one by one. */
+  const [deadlineQueue, setDeadlineQueue] = useState<CampShift[]>([]);
   /** The task playing in focus mode (its id and day in the plan shown). */
   const [focus, setFocus] = useState<{ itemId: string; date: string } | null>(null);
   const [signInOpen, setSignInOpen] = useState(false);
@@ -359,6 +364,15 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
       event: { ...event, ...(reason ? { reason } : {}), ...(reason && note ? { note } : {}) },
     }));
     actions.addShiftEvents(shifts);
+    // Each postponed camp with a target is checked alone, as stored after this shift.
+    const limit = getDailyLimit();
+    const after = addShiftEvents(data, shifts).camps;
+    setDeadlineQueue(
+      shifts.filter(({ campId }) => {
+        const shifted = after.find(c => c.id === campId);
+        return shifted !== undefined && deadlineOverrun(shifted, { today, limit }) !== null;
+      })
+    );
     if (reason) {
       setPendingShift({ ...pendingShift, saved: { shifts, reason } });
     } else {
@@ -375,7 +389,45 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
   const undoShift = () => {
     if (pendingShift?.saved) actions.removeShiftEvents(pendingShift.saved.shifts);
     setPendingShift(null);
+    setDeadlineQueue([]);
     notify({ message: 'Taşıma geri alındı; görevler yerinde.', tone: 'info' });
+  };
+
+  // The deadline prompt waits for the reason dialog and the focus player to
+  // close, and reads each camp as it is now: a postponement undone meanwhile
+  // (its event gone from the camp) is never asked about.
+  const deadlineCase = (() => {
+    if (pendingShift || focus) return null;
+    for (const shift of deadlineQueue) {
+      const target = data.camps.find(c => c.id === shift.campId);
+      if (!target || target.pausedAt || !target.shiftEvents.includes(shift.event)) continue;
+      const overrun = deadlineOverrun(target, { today, limit: getDailyLimit() });
+      if (overrun) return { shift, camp: target, overrun };
+    }
+    return null;
+  })();
+  const nextDeadlineCase = () => {
+    if (deadlineCase) setDeadlineQueue(queue => queue.filter(shift => shift !== deadlineCase.shift));
+  };
+  const raiseDailyHours = (hours: number) => {
+    if (!deadlineCase) return;
+    const { camp: target } = deadlineCase;
+    actions.setCampSchedule(target.id, { ...target.schedule, dailyStudyHours: hours });
+    notify({
+      message: translateTemplate('“{camp}” için günlük süre {hours} saat oldu; yeni tempo bugünden başlıyor.', { camp: target.name, hours: formatHourCount(hours) }),
+      tone: 'info',
+    });
+    nextDeadlineCase();
+  };
+  const moveTargetDate = (targetEndDate: string) => {
+    if (!deadlineCase) return;
+    const { camp: target } = deadlineCase;
+    actions.setCampSchedule(target.id, { ...target.schedule, targetEndDate });
+    notify({
+      message: translateTemplate('“{camp}” için hedef tarih {date} oldu.', { camp: target.name, date: formatLongDate(targetEndDate) }),
+      tone: 'info',
+    });
+    nextDeadlineCase();
   };
 
   const openFocus = (item: DailyPlanItem) => {
@@ -1144,6 +1196,17 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
         onClose={closeShiftDialog}
         onStartFocus={focusCandidate ? startFocusFromTip : undefined}
       />
+      {deadlineCase && (
+        <DeadlineOverrunDialog
+          key={deadlineCase.camp.id}
+          campName={deadlineCase.camp.name}
+          startDate={deadlineCase.camp.schedule.startDate}
+          overrun={deadlineCase.overrun}
+          onRaiseHours={raiseDailyHours}
+          onMoveTarget={moveTargetDate}
+          onKeep={nextDeadlineCase}
+        />
+      )}
       <FocusModal
         target={focusTarget}
         next={nextFocus?.item ?? null}

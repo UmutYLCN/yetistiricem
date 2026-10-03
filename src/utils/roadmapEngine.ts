@@ -658,20 +658,26 @@ export function assessDeadline(input: {
     : { kind: 'on-track', finishDate, targetEndDate, spareDays: Math.max(0, -gap) };
 }
 
+type ScheduledCamp = Pick<StudyCamp, 'branches' | 'schedule' | 'shiftEvents' | 'tempoHistory'>;
+
 /**
  * The smallest daily study time (in `step`-hour steps above the current one,
  * at most `maxHours`) with which the camp's plan ends by its target date, or
  * null when no such time exists (e.g. manual weekdays are the bottleneck).
+ * `withHours` says how a daily time is applied; by default it replaces the
+ * camp's whole tempo, which is right only for a camp that has not started
+ * (a started camp's change applies from today: see `hoursToMeetTarget`).
  */
 export function dailyHoursForDeadline(
-  camp: Pick<StudyCamp, 'branches' | 'schedule' | 'shiftEvents' | 'tempoHistory'>,
-  options: { today?: string; maxHours?: number; step?: number } = {}
+  camp: ScheduledCamp,
+  options: { today?: string; maxHours?: number; step?: number; withHours?: (hours: number) => ScheduledCamp } = {}
 ): number | null {
   const target = camp.schedule.targetEndDate;
   if (!target) return null;
   const step = options.step ?? 0.5;
+  const withHours = options.withHours ?? ((hours: number) => ({ ...camp, schedule: { ...camp.schedule, dailyStudyHours: hours } }));
   const finishesWith = (hours: number) => {
-    const result = buildCampSchedule({ ...camp, schedule: { ...camp.schedule, dailyStudyHours: hours } }, { today: options.today });
+    const result = buildCampSchedule(withHours(hours), { today: options.today });
     if (result.unscheduledItems.length > 0) return false;
     const end = planEndDate(result.plans);
     return end === null || end <= target;

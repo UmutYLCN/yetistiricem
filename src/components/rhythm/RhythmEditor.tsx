@@ -354,7 +354,19 @@ export function WeekdayToggles({
   );
 }
 
-export function HoursStepper({ labelledBy, hours, onChange }: { labelledBy: string; hours: number; onChange: (hours: number) => void }) {
+export function HoursStepper({
+  labelledBy,
+  hours,
+  onChange,
+  decreaseLabel = 'Günlük süreyi yarım saat azalt',
+  increaseLabel = 'Günlük süreyi yarım saat artır',
+}: {
+  labelledBy: string;
+  hours: number;
+  onChange: (hours: number) => void;
+  decreaseLabel?: string;
+  increaseLabel?: string;
+}) {
   return (
     <Stepper
       labelledBy={labelledBy}
@@ -363,8 +375,8 @@ export function HoursStepper({ labelledBy, hours, onChange }: { labelledBy: stri
       max={MAX_DAILY_HOURS}
       step={0.5}
       format={h => formatMinutes(h * 60)}
-      decreaseLabel="Günlük süreyi yarım saat azalt"
-      increaseLabel="Günlük süreyi yarım saat artır"
+      decreaseLabel={decreaseLabel}
+      increaseLabel={increaseLabel}
       onChange={onChange}
     />
   );

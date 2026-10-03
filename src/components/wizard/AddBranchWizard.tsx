@@ -3,8 +3,9 @@ import { ArrowLeft, ArrowRight, Forward, Gauge, Plus } from 'lucide-react';
 import type { StudyCamp, SubjectPlaylist } from '../../types';
 import { hasSourceErrors, sourceErrors } from '../../lib/campDraft';
 import { totalMinutesOf, youtubeIdsOf } from '../../lib/camps';
+import { hoursToMeetTarget } from '../../lib/deadlineOverrun';
 import { focusFirstInvalid } from '../../lib/dom';
-import { addDays, assessDeadline, buildCampSchedule, dailyHoursForDeadline, dayOfWeek, diffDays, planEndDate } from '../../lib/engine';
+import { addDays, assessDeadline, buildCampSchedule, dayOfWeek, diffDays, planEndDate } from '../../lib/engine';
 import { LONG_WEEKDAYS, SHORT_WEEKDAYS, WEEK_ORDER, formatHours, formatLongDate, formatMinutes, formatShortDate, relativeDayLabel } from '../../lib/format';
 import { withAddedBranches } from '../../lib/plannerOps';
 import { tempoSummary, weekdaysLabel } from '../../lib/planView';
@@ -288,8 +289,9 @@ function AdditionPreview({
       finishBefore,
       finishAfter,
       deadline,
-      // Only a late plan needs the (heavier) search for a daily time that fits.
-      suggestion: deadline.kind === 'late' ? dailyHoursForDeadline(next, { today }) : null,
+      // Only a late plan needs the (heavier) search for a daily time that fits,
+      // counted from today on: that is how "Tempoyu düzenle" would apply it.
+      suggestion: deadline.kind === 'late' ? hoursToMeetTarget(next, { today }) : null,
     };
   }, [camp, branches, weekdays, completedMap, today]);
 
