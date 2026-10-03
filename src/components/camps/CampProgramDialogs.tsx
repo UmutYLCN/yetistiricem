@@ -12,6 +12,7 @@ import { RhythmEditor } from '../rhythm/RhythmEditor';
 import { Dialog } from '../ui/Dialog';
 import { CampDatesFields } from '../wizard/CampDetails';
 import { msg } from '../../lib/messages';
+import { useConfirm } from '../ui/ConfirmDialog';
 
 
 /**
@@ -36,6 +37,7 @@ export function CampTempoDialog({
   const [startDate, setStartDate] = useState(camp.schedule.startDate);
   const [targetEndDate, setTargetEndDate] = useState(camp.schedule.targetEndDate ?? '');
   const [tried, setTried] = useState(false);
+  const confirm = useConfirm();
 
   const dates = detailErrors({ name: camp.name, startDate, targetEndDate });
   const rhythmProblems = rhythmErrors(rhythm, camp.branches);
@@ -50,11 +52,23 @@ export function CampTempoDialog({
     return { finish, deadline: assessDeadline({ finishDate: finish, targetEndDate: schedule.targetEndDate, unscheduledCount: result.unscheduledItems.length }) };
   }, [schedule, camp, today]);
 
-  const save = () => {
+  // A moved start date re-lays the plan from scratch and drops the camp's stored shifts and earlier tempos.
+  const resetsShifts = schedule !== null && schedule.startDate !== camp.schedule.startDate && (camp.shiftEvents.length > 0 || (camp.tempoHistory?.length ?? 0) > 0);
+
+  const save = async () => {
     setTried(true);
     if (!schedule) {
       focusFirstInvalid(document.querySelector('dialog[open]'));
       return;
+    }
+    if (resetsShifts) {
+      const ok = await confirm({
+        title: msg('Plan baştan dizilsin mi?'),
+        tone: 'danger',
+        confirmLabel: msg('Baştan diz'),
+        body: <p>{msg('Başlangıç tarihi değişince plan yeni tarihten, yalnızca şimdi seçtiğin tempoyla sıfırdan dizilir; bu kampta yaptığın erteleme, kaydırma ve önceki tempo değişiklikleri silinir. Tamamlama işaretlerin korunur.')}</p>,
+      });
+      if (!ok) return;
     }
     if (!unchanged) onSave(schedule);
     onClose();
@@ -67,8 +81,8 @@ export function CampTempoDialog({
       title={msg("Tempoyu düzenle")}
       description={
         <>
-          {msg("\n          Bu değişiklik yalnızca ")}<span className="font-semibold text-ink">{msg("“")}{camp.name}{msg("”")}</span> {msg(" için geçerli. Tamamlanan görevlerin ve\n          ileri taşımaların korunur.\n        ")}
-          {started && <> {msg("Kamp başladığı için yeni tempo bugünden itibaren geçerli; geçmiş günler olduğu gibi kalır.")}</>}
+          {msg("\n          Bu değişiklik yalnızca ")}<span className="font-semibold text-ink">{msg("“")}{camp.name}{msg("”")}</span> {msg(" için geçerli. Tamamlanan görevlerin ve\n          ileri taşımaların korunur; başlangıç tarihini değiştirirsen ertelemeler sıfırlanır.\n        ")}
+          {started && startDate === camp.schedule.startDate && <> {msg("Kamp başladığı için yeni tempo bugünden itibaren geçerli; geçmiş günler olduğu gibi kalır.")}</>}
         </>
       }
       width={760}
@@ -113,6 +127,12 @@ export function CampTempoDialog({
             if (patch.targetEndDate !== undefined) setTargetEndDate(patch.targetEndDate);
           }}
         />
+        {resetsShifts && (
+          <p role="status" className="flex items-start gap-2 rounded-xl border border-line bg-sunk px-3 py-2 text-[13px] text-ink-2">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-accent-strong" aria-hidden="true" />
+            {msg('Başlangıç tarihini değiştirirsen plan yeni tarihten, yalnızca şimdi seçtiğin tempoyla sıfırdan dizilir ve bu kampta yaptığın erteleme, kaydırma ve önceki tempo değişiklikleri silinir. Tamamlama işaretlerin korunur.')}
+          </p>
+        )}
         <RhythmEditor value={rhythm} onChange={setRhythm} branches={camp.branches} errors={rhythmProblems} showErrors={tried} />
       </div>
     </Dialog>

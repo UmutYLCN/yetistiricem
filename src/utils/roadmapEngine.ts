@@ -416,6 +416,9 @@ export function buildSchedule(
   let plans = packed.plans;
   const events = normalizeShiftEvents(options.shiftEvents ?? []);
   for (const event of events) {
+    // Safety net: an event that resumes before the camp's start can never
+    // place a task earlier than `startDate`, so replay ignores it.
+    if (event.resumeDate < pref.startDate) continue;
     plans = applyShift(plans, event, tempo, today);
   }
   plans = withCompletion(plans, options.completedMap ?? {}, postponeCounts(events), today);
