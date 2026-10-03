@@ -109,7 +109,7 @@ export function usePlanner(today: string, { startInDemo = false }: { startInDemo
       renameCamp: (campId: string, name: string) => update(d => ops.renameCamp(d, campId, name)),
       pauseCamp: (campId: string) => update(d => ops.pauseCamp(d, campId, today)),
       resumeCamp: (campId: string) => update(d => ops.resumeCamp(d, campId, today)),
-      setCampSchedule: (campId: string, schedule: CampSchedule) => update(d => ops.setCampSchedule(d, campId, schedule)),
+      setCampSchedule: (campId: string, schedule: CampSchedule) => update(d => ops.setCampSchedule(d, campId, schedule, today)),
       removeCamp: (campId: string) => update(d => ops.removeCamp(d, campId)),
       addBranches: (campId: string, branches: SubjectPlaylist[], options: { weekdays?: number[]; today: string }) =>
         update(d => ops.addBranches(d, campId, branches, options)),

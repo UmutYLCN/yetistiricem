@@ -1,0 +1,2443 @@
+[
+ {
+  "name": "auto, Sunday rest, three branches a day",
+  "plans": [
+   {
+    "date": "2026-09-21",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-1",
+      "videoId": "mat-1",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 1",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=mat1"
+     },
+     {
+      "id": "fiz-1",
+      "videoId": "fiz-1",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 1",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=fiz1"
+     },
+     {
+      "id": "kim-1",
+      "videoId": "kim-1",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 1",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=kim1"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": true
+   },
+   {
+    "date": "2026-09-22",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-2",
+      "videoId": "mat-2",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 2",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=mat2"
+     },
+     {
+      "id": "fiz-2",
+      "videoId": "fiz-2",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 2",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz2"
+     },
+     {
+      "id": "kim-2",
+      "videoId": "kim-2",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 2",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim2"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-23",
+    "dayName": "Çarşamba",
+    "isToday": true,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-3",
+      "videoId": "mat-3",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 3",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat3"
+     },
+     {
+      "id": "fiz-3",
+      "videoId": "fiz-3",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 3",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz3"
+     },
+     {
+      "id": "kim-3",
+      "videoId": "kim-3",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 3",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim3"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-24",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-4",
+      "videoId": "mat-4",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 4",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat4"
+     },
+     {
+      "id": "fiz-4",
+      "videoId": "fiz-4",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 4",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz4"
+     },
+     {
+      "id": "kim-4",
+      "videoId": "kim-4",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 4",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim4"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-25",
+    "dayName": "Cuma",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-5",
+      "videoId": "mat-5",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 5",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat5"
+     },
+     {
+      "id": "fiz-5",
+      "videoId": "fiz-5",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 5",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz5"
+     },
+     {
+      "id": "kim-5",
+      "videoId": "kim-5",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 5",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim5"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-26",
+    "dayName": "Cumartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-6",
+      "videoId": "mat-6",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 6",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat6"
+     },
+     {
+      "id": "fiz-6",
+      "videoId": "fiz-6",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 6",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz6"
+     }
+    ],
+    "totalMinutes": 90,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-27",
+    "dayName": "Pazar",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-28",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-7",
+      "videoId": "mat-7",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 7",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat7"
+     },
+     {
+      "id": "mat-8",
+      "videoId": "mat-8",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 8",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat8"
+     }
+    ],
+    "totalMinutes": 80,
+    "isAllCompleted": false
+   }
+  ],
+  "unscheduledItems": [],
+  "issues": [],
+  "capacityMinutes": 120
+ },
+ {
+  "name": "auto, two branches a day, speed and practice share, mock Saturday",
+  "plans": [
+   {
+    "date": "2026-09-21",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-1",
+      "videoId": "mat-1",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 1",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat1"
+     },
+     {
+      "id": "fiz-1",
+      "videoId": "fiz-1",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 1",
+      "durationMinutes": 50,
+      "effectiveMinutes": 48,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz1"
+     }
+    ],
+    "totalMinutes": 86.4,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-22",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-1",
+      "videoId": "kim-1",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 1",
+      "durationMinutes": 30,
+      "effectiveMinutes": 28.799999999999997,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim1"
+     },
+     {
+      "id": "mat-2",
+      "videoId": "mat-2",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 2",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat2"
+     },
+     {
+      "id": "kim-2",
+      "videoId": "kim-2",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 2",
+      "durationMinutes": 30,
+      "effectiveMinutes": 28.799999999999997,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim2"
+     }
+    ],
+    "totalMinutes": 95.99999999999999,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-23",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-3",
+      "videoId": "mat-3",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 3",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat3"
+     },
+     {
+      "id": "fiz-2",
+      "videoId": "fiz-2",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 2",
+      "durationMinutes": 50,
+      "effectiveMinutes": 48,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz2"
+     }
+    ],
+    "totalMinutes": 86.4,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-24",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-3",
+      "videoId": "kim-3",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 3",
+      "durationMinutes": 30,
+      "effectiveMinutes": 28.799999999999997,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim3"
+     },
+     {
+      "id": "mat-4",
+      "videoId": "mat-4",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 4",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat4"
+     },
+     {
+      "id": "kim-4",
+      "videoId": "kim-4",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 4",
+      "durationMinutes": 30,
+      "effectiveMinutes": 28.799999999999997,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim4"
+     }
+    ],
+    "totalMinutes": 95.99999999999999,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-25",
+    "dayName": "Cuma",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-5",
+      "videoId": "mat-5",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 5",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat5"
+     },
+     {
+      "id": "fiz-3",
+      "videoId": "fiz-3",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 3",
+      "durationMinutes": 50,
+      "effectiveMinutes": 48,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz3"
+     }
+    ],
+    "totalMinutes": 86.4,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-26",
+    "dayName": "Cumartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": true,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-27",
+    "dayName": "Pazar",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-28",
+    "dayName": "Pazartesi",
+    "isToday": true,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-5",
+      "videoId": "kim-5",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 5",
+      "durationMinutes": 30,
+      "effectiveMinutes": 28.799999999999997,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim5"
+     },
+     {
+      "id": "mat-6",
+      "videoId": "mat-6",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 6",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat6"
+     },
+     {
+      "id": "mat-7",
+      "videoId": "mat-7",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 7",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat7"
+     }
+    ],
+    "totalMinutes": 105.6,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-29",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-4",
+      "videoId": "fiz-4",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 4",
+      "durationMinutes": 50,
+      "effectiveMinutes": 48,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz4"
+     },
+     {
+      "id": "mat-8",
+      "videoId": "mat-8",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 8",
+      "durationMinutes": 40,
+      "effectiveMinutes": 38.4,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat8"
+     }
+    ],
+    "totalMinutes": 86.4,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-30",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-5",
+      "videoId": "fiz-5",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 5",
+      "durationMinutes": 50,
+      "effectiveMinutes": 48,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz5"
+     },
+     {
+      "id": "fiz-6",
+      "videoId": "fiz-6",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 6",
+      "durationMinutes": 50,
+      "effectiveMinutes": 48,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz6"
+     }
+    ],
+    "totalMinutes": 96,
+    "isAllCompleted": false
+   }
+  ],
+  "unscheduledItems": [],
+  "issues": [],
+  "capacityMinutes": 120
+ },
+ {
+  "name": "auto with a red-card shift, a today shift and a branch-added event",
+  "plans": [
+   {
+    "date": "2026-09-21",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-1",
+      "videoId": "mat-1",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 1",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=mat1"
+     },
+     {
+      "id": "fiz-1",
+      "videoId": "fiz-1",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 1",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=fiz1"
+     },
+     {
+      "id": "kim-1",
+      "videoId": "kim-1",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 1",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=kim1"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": true
+   },
+   {
+    "date": "2026-09-22",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-23",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-2",
+      "videoId": "mat-2",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 2",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=mat2",
+      "postponeCount": 1
+     },
+     {
+      "id": "kim-2",
+      "videoId": "kim-2",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 2",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=kim2",
+      "postponeCount": 1
+     }
+    ],
+    "totalMinutes": 70,
+    "isAllCompleted": true
+   },
+   {
+    "date": "2026-09-24",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-2",
+      "videoId": "fiz-2",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 2",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=fiz2",
+      "postponeCount": 1
+     },
+     {
+      "id": "mat-3",
+      "videoId": "mat-3",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 3",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=mat3"
+     },
+     {
+      "id": "kim-3",
+      "videoId": "kim-3",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 3",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim3"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-25",
+    "dayName": "Cuma",
+    "isToday": true,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "bio-3",
+      "videoId": "bio-3",
+      "playlistId": "bio",
+      "subject": "Biyoloji",
+      "title": "bio ders 3",
+      "durationMinutes": 35,
+      "effectiveMinutes": 35,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=bio3"
+     },
+     {
+      "id": "fiz-3",
+      "videoId": "fiz-3",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 3",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz3"
+     },
+     {
+      "id": "kim-4",
+      "videoId": "kim-4",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 4",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim4"
+     }
+    ],
+    "totalMinutes": 115,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-26",
+    "dayName": "Cumartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "bio-1",
+      "videoId": "bio-1",
+      "playlistId": "bio",
+      "subject": "Biyoloji",
+      "title": "bio ders 1",
+      "durationMinutes": 35,
+      "effectiveMinutes": 35,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=bio1"
+     },
+     {
+      "id": "mat-4",
+      "videoId": "mat-4",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 4",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat4",
+      "postponeCount": 1
+     },
+     {
+      "id": "kim-5",
+      "videoId": "kim-5",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 5",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim5"
+     }
+    ],
+    "totalMinutes": 105,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-27",
+    "dayName": "Pazar",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-28",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "bio-2",
+      "videoId": "bio-2",
+      "playlistId": "bio",
+      "subject": "Biyoloji",
+      "title": "bio ders 2",
+      "durationMinutes": 35,
+      "effectiveMinutes": 35,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=bio2"
+     },
+     {
+      "id": "mat-5",
+      "videoId": "mat-5",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 5",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat5"
+     },
+     {
+      "id": "mat-6",
+      "videoId": "mat-6",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 6",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat6"
+     }
+    ],
+    "totalMinutes": 115,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-29",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-4",
+      "videoId": "fiz-4",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 4",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz4",
+      "postponeCount": 1
+     },
+     {
+      "id": "mat-7",
+      "videoId": "mat-7",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 7",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat7"
+     }
+    ],
+    "totalMinutes": 90,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-30",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-5",
+      "videoId": "fiz-5",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 5",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz5"
+     },
+     {
+      "id": "mat-8",
+      "videoId": "mat-8",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 8",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat8"
+     }
+    ],
+    "totalMinutes": 90,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-01",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-6",
+      "videoId": "fiz-6",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 6",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz6"
+     }
+    ],
+    "totalMinutes": 50,
+    "isAllCompleted": false
+   }
+  ],
+  "unscheduledItems": [],
+  "issues": [],
+  "capacityMinutes": 120
+ },
+ {
+  "name": "auto with a red-card shift that kept a task ticked that day",
+  "plans": [
+   {
+    "date": "2026-09-21",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-1",
+      "videoId": "mat-1",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 1",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=mat1"
+     },
+     {
+      "id": "fiz-1",
+      "videoId": "fiz-1",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 1",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=fiz1"
+     },
+     {
+      "id": "kim-1",
+      "videoId": "kim-1",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 1",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=kim1"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": true
+   },
+   {
+    "date": "2026-09-22",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-2",
+      "videoId": "mat-2",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 2",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=mat2"
+     },
+     {
+      "id": "fiz-2",
+      "videoId": "fiz-2",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 2",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=fiz2"
+     },
+     {
+      "id": "kim-2",
+      "videoId": "kim-2",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 2",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=kim2"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": true
+   },
+   {
+    "date": "2026-09-23",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-3",
+      "videoId": "fiz-3",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 3",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=fiz3"
+     },
+     {
+      "id": "kim-3",
+      "videoId": "kim-3",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 3",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=kim3"
+     }
+    ],
+    "totalMinutes": 80,
+    "isAllCompleted": true
+   },
+   {
+    "date": "2026-09-24",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-4",
+      "videoId": "fiz-4",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 4",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=fiz4"
+     },
+     {
+      "id": "kim-4",
+      "videoId": "kim-4",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 4",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=kim4"
+     },
+     {
+      "id": "mat-3",
+      "videoId": "mat-3",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 3",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat3",
+      "postponeCount": 1
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-25",
+    "dayName": "Cuma",
+    "isToday": true,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-5",
+      "videoId": "fiz-5",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 5",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz5"
+     },
+     {
+      "id": "kim-5",
+      "videoId": "kim-5",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 5",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim5"
+     },
+     {
+      "id": "mat-4",
+      "videoId": "mat-4",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 4",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat4",
+      "postponeCount": 1
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-26",
+    "dayName": "Cumartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "fiz-6",
+      "videoId": "fiz-6",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 6",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz6"
+     },
+     {
+      "id": "mat-5",
+      "videoId": "mat-5",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 5",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat5"
+     }
+    ],
+    "totalMinutes": 90,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-27",
+    "dayName": "Pazar",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-28",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-6",
+      "videoId": "mat-6",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 6",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat6"
+     },
+     {
+      "id": "mat-7",
+      "videoId": "mat-7",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 7",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat7"
+     },
+     {
+      "id": "mat-8",
+      "videoId": "mat-8",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 8",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat8"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   }
+  ],
+  "unscheduledItems": [],
+  "issues": [],
+  "capacityMinutes": 120
+ },
+ {
+  "name": "manual week with free days and a branch on no weekday",
+  "plans": [
+   {
+    "date": "2026-09-21",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "geo-1",
+      "videoId": "geo-1",
+      "playlistId": "geo",
+      "subject": "Geometri",
+      "title": "geo ders 1",
+      "durationMinutes": 45,
+      "effectiveMinutes": 45,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=geo1"
+     },
+     {
+      "id": "geo-2",
+      "videoId": "geo-2",
+      "playlistId": "geo",
+      "subject": "Geometri",
+      "title": "geo ders 2",
+      "durationMinutes": 45,
+      "effectiveMinutes": 45,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=geo2"
+     }
+    ],
+    "totalMinutes": 90,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-22",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-23",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-3",
+      "videoId": "kim-3",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 3",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim3"
+     }
+    ],
+    "totalMinutes": 30,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-24",
+    "dayName": "Perşembe",
+    "isToday": true,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-25",
+    "dayName": "Cuma",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-1",
+      "videoId": "kim-1",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 1",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim1",
+      "postponeCount": 1
+     },
+     {
+      "id": "geo-3",
+      "videoId": "geo-3",
+      "playlistId": "geo",
+      "subject": "Geometri",
+      "title": "geo ders 3",
+      "durationMinutes": 45,
+      "effectiveMinutes": 45,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=geo3"
+     }
+    ],
+    "totalMinutes": 75,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-26",
+    "dayName": "Cumartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-27",
+    "dayName": "Pazar",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-28",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "geo-4",
+      "videoId": "geo-4",
+      "playlistId": "geo",
+      "subject": "Geometri",
+      "title": "geo ders 4",
+      "durationMinutes": 45,
+      "effectiveMinutes": 45,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=geo4"
+     }
+    ],
+    "totalMinutes": 45,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-29",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-30",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-2",
+      "videoId": "kim-2",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 2",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim2",
+      "postponeCount": 1
+     },
+     {
+      "id": "kim-4",
+      "videoId": "kim-4",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 4",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim4"
+     },
+     {
+      "id": "kim-5",
+      "videoId": "kim-5",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 5",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim5"
+     }
+    ],
+    "totalMinutes": 90,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-01",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-02",
+    "dayName": "Cuma",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-6",
+      "videoId": "kim-6",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 6",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim6"
+     },
+     {
+      "id": "kim-7",
+      "videoId": "kim-7",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 7",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim7"
+     },
+     {
+      "id": "kim-8",
+      "videoId": "kim-8",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 8",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim8"
+     }
+    ],
+    "totalMinutes": 90,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-03",
+    "dayName": "Cumartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-04",
+    "dayName": "Pazar",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-05",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "isFreeDay": true,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-06",
+    "dayName": "Salı",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": true,
+    "isMockExamDay": false,
+    "items": [],
+    "totalMinutes": 0,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-10-07",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kim-9",
+      "videoId": "kim-9",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 9",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim9"
+     }
+    ],
+    "totalMinutes": 30,
+    "isAllCompleted": false
+   }
+  ],
+  "unscheduledItems": [
+   {
+    "id": "tar-1",
+    "videoId": "tar-1",
+    "playlistId": "tar",
+    "subject": "Tarih",
+    "title": "tar ders 1",
+    "durationMinutes": 20,
+    "effectiveMinutes": 20,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=tar1"
+   },
+   {
+    "id": "tar-2",
+    "videoId": "tar-2",
+    "playlistId": "tar",
+    "subject": "Tarih",
+    "title": "tar ders 2",
+    "durationMinutes": 20,
+    "effectiveMinutes": 20,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=tar2"
+   },
+   {
+    "id": "tar-3",
+    "videoId": "tar-3",
+    "playlistId": "tar",
+    "subject": "Tarih",
+    "title": "tar ders 3",
+    "durationMinutes": 20,
+    "effectiveMinutes": 20,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=tar3"
+   }
+  ],
+  "issues": [
+   {
+    "kind": "unassigned-branch",
+    "playlistId": "tar",
+    "unscheduledCount": 3
+   }
+  ],
+  "capacityMinutes": 90
+ },
+ {
+  "name": "oversized videos and a repeated video",
+  "plans": [
+   {
+    "date": "2026-09-21",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "uzun-1",
+      "videoId": "uzun-1",
+      "playlistId": "uzun",
+      "subject": "Uzun",
+      "title": "uzun ders 1",
+      "durationMinutes": 150,
+      "effectiveMinutes": 150,
+      "completed": true,
+      "videoUrl": "https://youtube.com/watch?v=uzun1"
+     }
+    ],
+    "totalMinutes": 150,
+    "isAllCompleted": true
+   },
+   {
+    "date": "2026-09-22",
+    "dayName": "Salı",
+    "isToday": true,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kisa-1",
+      "videoId": "kisa-1",
+      "playlistId": "kisa",
+      "subject": "Kısa",
+      "title": "kisa ders 1",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa1"
+     },
+     {
+      "id": "tekrar:kisa-1",
+      "videoId": "kisa-1",
+      "playlistId": "tekrar",
+      "subject": "Tekrar",
+      "title": "kisa ders 1",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa1"
+     },
+     {
+      "id": "uzun-2",
+      "videoId": "uzun-2",
+      "playlistId": "uzun",
+      "subject": "Uzun",
+      "title": "uzun ders 2",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=uzun2"
+     },
+     {
+      "id": "kisa-2",
+      "videoId": "kisa-2",
+      "playlistId": "kisa",
+      "subject": "Kısa",
+      "title": "kisa ders 2",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa2"
+     }
+    ],
+    "totalMinutes": 105,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-23",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "uzun-3",
+      "videoId": "uzun-3",
+      "playlistId": "uzun",
+      "subject": "Uzun",
+      "title": "uzun ders 3",
+      "durationMinutes": 200,
+      "effectiveMinutes": 200,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=uzun3"
+     }
+    ],
+    "totalMinutes": 200,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-24",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kisa-3",
+      "videoId": "kisa-3",
+      "playlistId": "kisa",
+      "subject": "Kısa",
+      "title": "kisa ders 3",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa3"
+     },
+     {
+      "id": "tekrar:kisa-2",
+      "videoId": "kisa-2",
+      "playlistId": "tekrar",
+      "subject": "Tekrar",
+      "title": "kisa ders 2",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa2"
+     },
+     {
+      "id": "uzun-4",
+      "videoId": "uzun-4",
+      "playlistId": "uzun",
+      "subject": "Uzun",
+      "title": "uzun ders 4",
+      "durationMinutes": 20,
+      "effectiveMinutes": 20,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=uzun4"
+     },
+     {
+      "id": "kisa-4",
+      "videoId": "kisa-4",
+      "playlistId": "kisa",
+      "subject": "Kısa",
+      "title": "kisa ders 4",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa4"
+     },
+     {
+      "id": "kisa-5",
+      "videoId": "kisa-5",
+      "playlistId": "kisa",
+      "subject": "Kısa",
+      "title": "kisa ders 5",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa5"
+     }
+    ],
+    "totalMinutes": 120,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-25",
+    "dayName": "Cuma",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "kisa-6",
+      "videoId": "kisa-6",
+      "playlistId": "kisa",
+      "subject": "Kısa",
+      "title": "kisa ders 6",
+      "durationMinutes": 25,
+      "effectiveMinutes": 25,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kisa6"
+     }
+    ],
+    "totalMinutes": 25,
+    "isAllCompleted": false
+   }
+  ],
+  "unscheduledItems": [],
+  "issues": [
+   {
+    "kind": "oversized-item",
+    "itemId": "uzun-1",
+    "date": "2026-09-21",
+    "effectiveMinutes": 150,
+    "capacityMinutes": 120
+   },
+   {
+    "kind": "oversized-item",
+    "itemId": "uzun-3",
+    "date": "2026-09-23",
+    "effectiveMinutes": 200,
+    "capacityMinutes": 120
+   }
+  ],
+  "capacityMinutes": 120
+ },
+ {
+  "name": "no study weekday",
+  "plans": [],
+  "unscheduledItems": [
+   {
+    "id": "mat-1",
+    "videoId": "mat-1",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 1",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat1"
+   },
+   {
+    "id": "mat-2",
+    "videoId": "mat-2",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 2",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat2"
+   },
+   {
+    "id": "mat-3",
+    "videoId": "mat-3",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 3",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat3"
+   },
+   {
+    "id": "mat-4",
+    "videoId": "mat-4",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 4",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat4"
+   },
+   {
+    "id": "mat-5",
+    "videoId": "mat-5",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 5",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat5"
+   },
+   {
+    "id": "mat-6",
+    "videoId": "mat-6",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 6",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat6"
+   },
+   {
+    "id": "mat-7",
+    "videoId": "mat-7",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 7",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat7"
+   },
+   {
+    "id": "mat-8",
+    "videoId": "mat-8",
+    "playlistId": "mat",
+    "subject": "Matematik",
+    "title": "mat ders 8",
+    "durationMinutes": 40,
+    "effectiveMinutes": 40,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=mat8"
+   },
+   {
+    "id": "fiz-1",
+    "videoId": "fiz-1",
+    "playlistId": "fiz",
+    "subject": "Fizik",
+    "title": "fiz ders 1",
+    "durationMinutes": 50,
+    "effectiveMinutes": 50,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=fiz1"
+   },
+   {
+    "id": "fiz-2",
+    "videoId": "fiz-2",
+    "playlistId": "fiz",
+    "subject": "Fizik",
+    "title": "fiz ders 2",
+    "durationMinutes": 50,
+    "effectiveMinutes": 50,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=fiz2"
+   },
+   {
+    "id": "fiz-3",
+    "videoId": "fiz-3",
+    "playlistId": "fiz",
+    "subject": "Fizik",
+    "title": "fiz ders 3",
+    "durationMinutes": 50,
+    "effectiveMinutes": 50,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=fiz3"
+   },
+   {
+    "id": "fiz-4",
+    "videoId": "fiz-4",
+    "playlistId": "fiz",
+    "subject": "Fizik",
+    "title": "fiz ders 4",
+    "durationMinutes": 50,
+    "effectiveMinutes": 50,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=fiz4"
+   },
+   {
+    "id": "fiz-5",
+    "videoId": "fiz-5",
+    "playlistId": "fiz",
+    "subject": "Fizik",
+    "title": "fiz ders 5",
+    "durationMinutes": 50,
+    "effectiveMinutes": 50,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=fiz5"
+   },
+   {
+    "id": "fiz-6",
+    "videoId": "fiz-6",
+    "playlistId": "fiz",
+    "subject": "Fizik",
+    "title": "fiz ders 6",
+    "durationMinutes": 50,
+    "effectiveMinutes": 50,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=fiz6"
+   },
+   {
+    "id": "kim-1",
+    "videoId": "kim-1",
+    "playlistId": "kim",
+    "subject": "Kimya",
+    "title": "kim ders 1",
+    "durationMinutes": 30,
+    "effectiveMinutes": 30,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=kim1"
+   },
+   {
+    "id": "kim-2",
+    "videoId": "kim-2",
+    "playlistId": "kim",
+    "subject": "Kimya",
+    "title": "kim ders 2",
+    "durationMinutes": 30,
+    "effectiveMinutes": 30,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=kim2"
+   },
+   {
+    "id": "kim-3",
+    "videoId": "kim-3",
+    "playlistId": "kim",
+    "subject": "Kimya",
+    "title": "kim ders 3",
+    "durationMinutes": 30,
+    "effectiveMinutes": 30,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=kim3"
+   },
+   {
+    "id": "kim-4",
+    "videoId": "kim-4",
+    "playlistId": "kim",
+    "subject": "Kimya",
+    "title": "kim ders 4",
+    "durationMinutes": 30,
+    "effectiveMinutes": 30,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=kim4"
+   },
+   {
+    "id": "kim-5",
+    "videoId": "kim-5",
+    "playlistId": "kim",
+    "subject": "Kimya",
+    "title": "kim ders 5",
+    "durationMinutes": 30,
+    "effectiveMinutes": 30,
+    "completed": false,
+    "videoUrl": "https://youtube.com/watch?v=kim5"
+   }
+  ],
+  "issues": [
+   {
+    "kind": "no-study-days",
+    "unscheduledCount": 19
+   }
+  ],
+  "capacityMinutes": 120
+ },
+ {
+  "name": "invalid stored hours fall back to the default",
+  "plans": [
+   {
+    "date": "2026-09-21",
+    "dayName": "Pazartesi",
+    "isToday": false,
+    "isPast": true,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-1",
+      "videoId": "mat-1",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 1",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat1"
+     },
+     {
+      "id": "fiz-1",
+      "videoId": "fiz-1",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 1",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz1"
+     },
+     {
+      "id": "kim-1",
+      "videoId": "kim-1",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 1",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim1"
+     },
+     {
+      "id": "mat-2",
+      "videoId": "mat-2",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 2",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat2"
+     },
+     {
+      "id": "fiz-2",
+      "videoId": "fiz-2",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 2",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz2"
+     },
+     {
+      "id": "kim-2",
+      "videoId": "kim-2",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 2",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim2"
+     }
+    ],
+    "totalMinutes": 240,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-22",
+    "dayName": "Salı",
+    "isToday": true,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-3",
+      "videoId": "mat-3",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 3",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat3"
+     },
+     {
+      "id": "fiz-3",
+      "videoId": "fiz-3",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 3",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz3"
+     },
+     {
+      "id": "kim-3",
+      "videoId": "kim-3",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 3",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim3"
+     },
+     {
+      "id": "mat-4",
+      "videoId": "mat-4",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 4",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat4"
+     },
+     {
+      "id": "fiz-4",
+      "videoId": "fiz-4",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 4",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz4"
+     },
+     {
+      "id": "kim-4",
+      "videoId": "kim-4",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 4",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim4"
+     }
+    ],
+    "totalMinutes": 240,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-23",
+    "dayName": "Çarşamba",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-5",
+      "videoId": "mat-5",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 5",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat5"
+     },
+     {
+      "id": "fiz-5",
+      "videoId": "fiz-5",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 5",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz5"
+     },
+     {
+      "id": "kim-5",
+      "videoId": "kim-5",
+      "playlistId": "kim",
+      "subject": "Kimya",
+      "title": "kim ders 5",
+      "durationMinutes": 30,
+      "effectiveMinutes": 30,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=kim5"
+     },
+     {
+      "id": "mat-6",
+      "videoId": "mat-6",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 6",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat6"
+     },
+     {
+      "id": "fiz-6",
+      "videoId": "fiz-6",
+      "playlistId": "fiz",
+      "subject": "Fizik",
+      "title": "fiz ders 6",
+      "durationMinutes": 50,
+      "effectiveMinutes": 50,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=fiz6"
+     }
+    ],
+    "totalMinutes": 210,
+    "isAllCompleted": false
+   },
+   {
+    "date": "2026-09-24",
+    "dayName": "Perşembe",
+    "isToday": false,
+    "isPast": false,
+    "isRestDay": false,
+    "isMockExamDay": false,
+    "items": [
+     {
+      "id": "mat-7",
+      "videoId": "mat-7",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 7",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat7"
+     },
+     {
+      "id": "mat-8",
+      "videoId": "mat-8",
+      "playlistId": "mat",
+      "subject": "Matematik",
+      "title": "mat ders 8",
+      "durationMinutes": 40,
+      "effectiveMinutes": 40,
+      "completed": false,
+      "videoUrl": "https://youtube.com/watch?v=mat8"
+     }
+    ],
+    "totalMinutes": 80,
+    "isAllCompleted": false
+   }
+  ],
+  "unscheduledItems": [],
+  "issues": [
+   {
+    "kind": "invalid-preference",
+    "field": "dailyStudyHours"
+   }
+  ],
+  "capacityMinutes": 240
+ }
+]

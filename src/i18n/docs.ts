@@ -78,7 +78,7 @@ const entries: Record<string, LocalizedText> = {
   'ile bir daha sorulmaz.': ['dismisses them.', 'se descartan.', 'elles sont ignorées.'],
   'Tempo kampa aittir ve': ['Pace belongs to each plan and can be changed in', 'El ritmo pertenece a cada plan y se cambia en', 'Le rythme est propre à chaque programme et se modifie dans'],
   'Kamplar → Tempoyu düzenle': ['Plans → Edit pace', 'Planes → Editar ritmo', 'Programmes → Modifier le rythme'],
-  'ile değişir. Takvim tempodan yeniden hesaplanır; tamamladığın görevler ve ritim güncellemelerin korunur.': ['. The calendar is recalculated, while completed tasks and previous pace changes are kept.', '. El calendario se recalcula, pero se conservan las tareas completadas y los cambios de ritmo anteriores.', '. Le calendrier est recalculé, mais les tâches terminées et les précédents ajustements de rythme sont conservés.'],
+  'ile değişir. Kamp başladıysa yeni tempo bugünden itibaren geçerli olur ve geçmiş günler olduğu gibi kalır; tamamladığın görevler ve ritim güncellemelerin korunur.': ['. Once a plan has started, the new pace applies from today and past days stay as they were; completed tasks and previous pace changes are kept.', '. Si el plan ya empezó, el nuevo ritmo se aplica desde hoy y los días pasados quedan como estaban; se conservan las tareas completadas y los cambios de ritmo anteriores.', '. Si le programme a commencé, le nouveau rythme s’applique à partir d’aujourd’hui et les jours passés restent inchangés ; les tâches terminées et les précédents ajustements de rythme sont conservés.'],
   'Tempo ayarları': ['Pace settings', 'Ajustes del ritmo', 'Réglages du rythme'],
   'Ayar': ['Setting', 'Ajuste', 'Réglage'],
   'Ne yapar': ['What it does', 'Descripción', 'Description'],

@@ -99,6 +99,18 @@ export interface CampSchedule extends UserPreferences {
   preset?: RhythmPreset;
 }
 
+/**
+ * A tempo a started camp followed before "Tempoyu düzenle" changed it. It
+ * laid out the days before `until` (and from the previous entry's `until`
+ * on), so those days stay as they were; `startDate` and `targetEndDate` in
+ * it are not read.
+ */
+export interface PastTempo {
+  /** The day the next tempo took over (the day of the change). */
+  until: string;
+  schedule: CampSchedule;
+}
+
 /** A named study program (e.g. "TYT 2027") with its branches and schedule. */
 export type CampOrigin = 'migrated' | 'kesfet' | 'link';
 
@@ -108,7 +120,10 @@ export interface StudyCamp {
   /** Local date key of creation (or of the migration that created it). */
   createdAt: string;
   branches: SubjectPlaylist[];
+  /** The tempo in force: from the last `tempoHistory` change on, or for the whole plan. */
   schedule: CampSchedule;
+  /** Earlier tempos, oldest first (see `withTempo`). Missing = one tempo since the start. */
+  tempoHistory?: PastTempo[];
   shiftEvents: ShiftEvent[];
   /**
    * `migrated`: built from an older version's flat data. `kesfet` / `link`:

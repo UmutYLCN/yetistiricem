@@ -1,4 +1,4 @@
-import type { CampOrigin, CampSchedule, PlanMode, RhythmPreset, ShiftEvent, StudyCamp, SubjectPlaylist, UserPreferences, Video } from '../types/index.ts';
+import type { CampOrigin, CampSchedule, PastTempo, PlanMode, RhythmPreset, ShiftEvent, StudyCamp, SubjectPlaylist, UserPreferences, Video } from '../types/index.ts';
 import {
   defaultPreferences,
   inspectPreferences,
@@ -312,6 +312,17 @@ export function normalizeCampSchedule(raw: unknown, branchIds: readonly string[]
   return { schedule, invalidFields };
 }
 
+/** Stored earlier tempos (`StudyCamp.tempoHistory`): dated entries only, oldest first, one per day. */
+export function normalizeTempoHistory(raw: unknown, branchIds: readonly string[]): PastTempo[] {
+  if (!Array.isArray(raw)) return [];
+  const byDay = new Map<string, PastTempo>();
+  for (const entry of raw) {
+    if (!isRecord(entry) || !isDateKey(entry.until) || byDay.has(entry.until)) continue;
+    byDay.set(entry.until, { until: entry.until, schedule: normalizeCampSchedule(entry.schedule, branchIds).schedule });
+  }
+  return [...byDay.values()].sort((a, b) => (a.until < b.until ? -1 : 1));
+}
+
 export interface CampsNormalization {
   camps: StudyCamp[];
   droppedCamps: number;
@@ -336,14 +347,17 @@ export function normalizeCamps(raw: unknown, today: string = todayKey()): CampsN
     result.droppedBranches += branches.droppedCamps;
     result.droppedVideos += branches.droppedVideos;
     const name = typeof item.name === 'string' && item.name.trim() ? item.name.trim().slice(0, MAX_CAMP_NAME) : DEFAULT_CAMP_NAME;
-    const { schedule, invalidFields } = normalizeCampSchedule(item.schedule, branches.playlists.map(b => b.id));
+    const ids = branches.playlists.map(b => b.id);
+    const { schedule, invalidFields } = normalizeCampSchedule(item.schedule, ids);
     if (invalidFields.length > 0) result.invalidSchedules.push({ name, fields: invalidFields });
+    const tempoHistory = normalizeTempoHistory(item.tempoHistory, ids);
     result.camps.push({
       id: item.id,
       name,
       createdAt: normalizeDateKey(item.createdAt, today),
       branches: branches.playlists,
       schedule,
+      ...(tempoHistory.length > 0 ? { tempoHistory } : {}),
       shiftEvents: normalizeShiftEvents(item.shiftEvents),
       ...(isCampOrigin(item.origin) ? { origin: item.origin } : {}),
       ...(isDateKey(item.pausedAt) ? { pausedAt: item.pausedAt } : {}),

@@ -47,7 +47,7 @@ test('editing camp A tempo leaves camp B, its plan and shared progress untouched
   const bPlanBefore = layout(buildCampSchedule(b, { today: '2026-09-21' }).plans);
 
   const faster = scheduleFromAuto({ ...base, startDate: '2026-10-01', targetEndDate: '2026-12-01' }, { ...DEFAULT_AUTO_RHYTHM, preset: 'intense', perDay: 1 });
-  const next = ops.setCampSchedule(data, a.id, faster);
+  const next = ops.setCampSchedule(data, a.id, faster, '2026-09-21');
 
   const [aAfter, bAfter] = next.camps;
   assert.deepEqual(aAfter.schedule, faster, 'A has the new tempo');
@@ -60,7 +60,7 @@ test('editing camp A tempo leaves camp B, its plan and shared progress untouched
 
 test('switching the active camp keeps each camp’s own tempo, also after a save and reload', () => {
   const { data, a, b } = twoCamps();
-  const edited = ops.setCampSchedule(data, b.id, { ...b.schedule, dailyStudyHours: 5 });
+  const edited = ops.setCampSchedule(data, b.id, { ...b.schedule, dailyStudyHours: 5 }, '2026-09-21');
   const onB = ops.setActiveCamp(edited, b.id);
   assert.equal(activeCampOf(onB)!.schedule.dailyStudyHours, 5);
   assert.equal(activeCampOf(onB)!.schedule.mode, 'manual');

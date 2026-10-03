@@ -128,7 +128,7 @@ export function Tempo() {
   return (
     <>
       <p>
-        {msg("\n        Tempo kampa aittir ve ")}<strong>{msg("Kamplar → Tempoyu düzenle")}</strong> {msg(" ile değişir. Takvim tempodan yeniden hesaplanır; tamamladığın\n        görevler ve ritim güncellemelerin korunur.\n      ")}</p>
+        {msg("\n        Tempo kampa aittir ve ")}<strong>{msg("Kamplar → Tempoyu düzenle")}</strong> {msg(" ile değişir. Kamp başladıysa yeni tempo bugünden itibaren geçerli olur ve geçmiş\n        günler olduğu gibi kalır; tamamladığın görevler ve ritim güncellemelerin korunur.\n      ")}</p>
       <H2 id="ayarlar">{msg("Tempo ayarları")}</H2>
       <table>
         <thead>
