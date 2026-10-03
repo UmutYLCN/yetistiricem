@@ -166,6 +166,9 @@ export function Tempo() {
       <p>
         {msg("\n        Hedef tarih seçtiğinde son görevin günü hedefle karşılaştırılır. Yetişiyorsa ")}<strong>{msg("Panik yok, yetişir.")}</strong> {msg(" ve kaç gün\n        erken bittiği yazar. Yetişmiyorsa kaç gün geride olduğunu ve günlük süreyi ne kadar yaparsan yetişeceğini söyler; tek dokunuşla\n        uygulayabilirsin.\n      ")}</p>
       <Callout tone="info">{msg("Hedef tarih planı sıkıştırmaz: hiçbir video atlanmaz, günler taşırılmaz. Öneriler yalnızca günlük süreyi değiştirir.")}</Callout>
+      <p>
+        {msg("Bir erteleme planı hedef tarihin ötesine iterse Yetişir hemen sorar: günlük süreyi önerilen saate çıkarabilir (yeni süre bugünden başlar), hedef tarihi erteleyebilir ya da planı böyle bırakabilirsin. Öneri, Tercihler’deki günlük üst sınırı (başta 8 saat) geçmez; şu anki sürenin 1,5 katını aşarsa “Bu çok yoğun olabilir” uyarısı çıkar.")}
+      </p>
     </>
   );
 }
