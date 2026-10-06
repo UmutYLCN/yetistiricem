@@ -140,7 +140,6 @@ const entries: Record<string, LocalizedText> = {
     'Si vous ajustez votre rythme, toutes les tâches en retard seront redistribuées dans l’ordre à partir d’aujourd’hui ; celles d’aujourd’hui viendront ensuite.',
   ],
   'Bazı görevlerin bağlantısı çalışmıyor.': ['Some task links are not working.', 'Algunos enlaces de las tareas no funcionan.', 'Certains liens de tâches ne fonctionnent pas.'],
-  'Kalanları yarına kaydır': ['Move the remaining tasks to tomorrow', 'Pasar las tareas pendientes a mañana', 'Reporter les tâches restantes à demain'],
   'Bugünün': ['Today’s', 'De hoy', 'Du jour'],
   'Bu günün': ['Today’s', 'De hoy', 'Du jour'],
   'tüm görevleri tamam.': ['all tasks are complete.', 'todas las tareas están completadas.', 'toutes les tâches sont terminées.'],

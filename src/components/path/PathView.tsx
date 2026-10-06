@@ -114,15 +114,6 @@ export function PathView({
               onOpen={item => setOpenId(item.id)}
             />
           </div>
-
-          {isToday && open > 0 && (
-            <div className="mx-auto flex max-w-[600px] flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-line pt-4 text-center">
-              <p className="text-[13px] text-ink-3">{msg("Bugün yetişmeyecek mi?")}</p>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onShift(date)}>
-                <Forward aria-hidden="true" />
-                {msg("\n                Kalanları yarına kaydır\n              ")}</button>
-            </div>
-          )}
         </>
       ) : (
         <section className="card overflow-hidden" aria-label={`${formatDayTitle(date)}: görev yok`}>

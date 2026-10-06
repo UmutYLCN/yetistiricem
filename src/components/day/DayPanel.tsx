@@ -206,15 +206,6 @@ export function DayPanel({
       ) : null}
 
       {body}
-
-      {isToday && open > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-paper/60 px-4 py-3 sm:px-5">
-          <p className="text-[13px] text-ink-2">{msg("Bugün yetişmeyecek mi?")}</p>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onShift(date)}>
-            <Forward aria-hidden="true" />
-            {msg("\n            Kalanları yarına kaydır\n          ")}</button>
-        </div>
-      )}
     </section>
   );
 }
