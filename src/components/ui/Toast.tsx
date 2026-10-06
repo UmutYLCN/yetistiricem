@@ -6,6 +6,7 @@ import { msg } from '../../lib/messages';
 
 export interface ToastOptions {
   message: string;
+  subtitle?: string;
   actionLabel?: string;
   onAction?: () => void;
   tone?: 'success' | 'info';
@@ -61,7 +62,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             onBlur={() => setPaused(false)}
           >
             <Icon className="size-4 shrink-0 text-forest" aria-hidden="true" />
-            <p className="min-w-0 flex-1 leading-snug">{toast.message}</p>
+            <div className="min-w-0 flex-1 leading-snug">
+              <p>{toast.message}</p>
+              {toast.subtitle && <p className="mt-1 text-[12.5px] text-ink-3">{toast.subtitle}</p>}
+            </div>
             {toast.actionLabel && toast.onAction && (
               <button
                 type="button"

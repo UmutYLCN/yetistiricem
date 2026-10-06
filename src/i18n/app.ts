@@ -2,6 +2,7 @@ type LocalizedText = readonly [string, string, string];
 
 // Common planner, import, and editing flows. Tuple order: en, es, fr.
 const entries: Record<string, LocalizedText> = {
+  'Bugüne eklendi': ['Added to today', 'Añadido al plan de hoy', 'Ajouté au programme du jour'],
   'Sonra dönmek istediğin bir kampın kalbine bas; burada toplanır.': ['Tap the heart on a plan to save it here for later.', 'Toca el corazón de un plan para guardarlo aquí y volver más tarde.', 'Touchez le cœur d’un programme pour l’enregistrer ici et y revenir plus tard.'],
   'Aramayı ya da süzgeçleri değiştirip tekrar dene.': ['Change your search or filters and try again.', 'Modifica la búsqueda o los filtros y vuelve a intentarlo.', 'Modifiez la recherche ou les filtres, puis réessayez.'],
   'tarihinden beri duraklatıldı; Rotam’da görünmüyor.': ['has been paused since this date and is hidden from My path.', 'está en pausa desde esta fecha y no aparece en Mi ruta.', 'est en pause depuis cette date et n’apparaît pas dans Mon parcours.'],
