@@ -54,6 +54,11 @@ export function indexPlans<P extends DailyPlan>(plans: readonly P[], today: stri
   };
 }
 
+/** Source copy for a task completed from a future day, using its date before the tick. */
+export function completionToastSubtitle(plannedDate: string | undefined, today: string): string | undefined {
+  return plannedDate && plannedDate > today ? 'Bugüne eklendi' : undefined;
+}
+
 export type DayKind = 'study' | 'rest' | 'mock';
 
 /** Same precedence as the engine: mock exam, then rest, then study. */

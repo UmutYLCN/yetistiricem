@@ -27,7 +27,7 @@ import { focusTotals, focusableVideoId, nextFocusItem } from './lib/focus';
 import { progressInsights } from './lib/insights';
 import { formatDayTitle, formatHourCount, formatLongDate, relativeDayLabel, weekKeys } from './lib/format';
 import { activeCampOf, backupFileName, createBackup, parseBackup } from './lib/persistence';
-import { indexCamps, indexPlans, summarizeDay, weeksOverview } from './lib/planView';
+import { completionToastSubtitle, indexCamps, indexPlans, summarizeDay, weeksOverview } from './lib/planView';
 import { addShiftEvents, withAddedBranches, withAppendedVideos, withResumed } from './lib/plannerOps';
 import type { SyncNotification } from './lib/playlistSync';
 import { draftFromPending, syncNotifications, syncTargets } from './lib/playlistSync';
@@ -315,9 +315,11 @@ function Planner({ startInDemo, importPayload, mcpDraftId, openDiscover, account
     const date = index.items.find(s => s.item.id === item.id)?.date;
     const dayItems = date ? (index.byDate.get(date)?.items ?? []) : [];
     const dayDone = dayItems.length > 0 && dayItems.every(i => i.videoId === item.videoId || i.completed);
+    const subtitle = completionToastSubtitle(date, today);
     if (dayDone) celebrate();
     notify({
       message: dayDone ? `Günün tüm görevleri tamam! “${item.title}” işaretlendi.` : `“${item.title}” tamamlandı.`,
+      subtitle: subtitle ? msg(subtitle) : undefined,
       actionLabel: 'Geri al',
       onAction: () => actions.setCompleted(item.videoId, false),
     });
